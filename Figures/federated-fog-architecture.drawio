@@ -1,0 +1,109 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="fog-arch" name="Federated Fog Architecture">
+    <mxGraphModel dx="900" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Federation boundary -->
+        <mxCell id="fed" value="Federated fog — high-bandwidth inter-fog links" style="rounded=1;dashed=1;html=1;fillColor=none;strokeColor=#82b366;fontColor=#82b366;fontSize=13;fontStyle=1;align=center;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="170" width="640" height="400" as="geometry"/>
+        </mxCell>
+
+        <!-- Cloud (unreachable) -->
+        <mxCell id="cloud" value="Cloud&#10;(unreachable during event)" style="shape=cloud;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;fontSize=11;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="30" width="150" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="cloudx" value="✕" style="text;html=1;fontSize=28;fontColor=#c0392b;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="786" y="52" width="20" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Scheduler -->
+        <mxCell id="sched" value="Data-aware scheduler&#10;MILP · relaxation · greedy · GA" style="rounded=1;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#0d2c54;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="270" y="225" width="180" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Fog nodes -->
+        <mxCell id="fg1" value="FG1" style="shape=mxgraph.networks.server;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="340" width="70" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg2" value="FG2" style="shape=mxgraph.networks.server;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="340" width="70" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg3" value="FG3" style="shape=mxgraph.networks.server;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="340" width="70" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg4" value="FG4" style="shape=mxgraph.networks.server;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="340" width="70" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg5" value="FG5" style="shape=mxgraph.networks.server;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="340" width="70" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Inter-fog links -->
+        <mxCell id="link12" value="B&lt;sub&gt;12&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;endFill=0;strokeColor=#666666;fontSize=9;fontColor=#666666;" edge="1" parent="1" source="fg1" target="fg2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="link23" value="B&lt;sub&gt;23&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;endFill=0;strokeColor=#666666;fontSize=9;fontColor=#666666;" edge="1" parent="1" source="fg2" target="fg3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="link34" value="B&lt;sub&gt;34&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;endFill=0;strokeColor=#666666;fontSize=9;fontColor=#666666;" edge="1" parent="1" source="fg3" target="fg4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="link45" value="B&lt;sub&gt;45&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;endFill=0;strokeColor=#666666;fontSize=9;fontColor=#666666;" edge="1" parent="1" source="fg4" target="fg5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="link13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;strokeColor=#bbbbbb;" edge="1" parent="1" source="fg1" target="fg3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="115" y="430"/><mxPoint x="355" y="430"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="link35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;strokeColor=#bbbbbb;" edge="1" parent="1" source="fg3" target="fg5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="355" y="440"/><mxPoint x="595" y="440"/></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Scheduler to fog nodes -->
+        <mxCell id="sch_fg1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1f78b4;" edge="1" parent="1" source="sched" target="fg1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="sch_fg2" value="e&lt;sub&gt;ia&lt;/sub&gt;, l&lt;sub&gt;ia&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1f78b4;fontSize=9;fontColor=#1f78b4;" edge="1" parent="1" source="sched" target="fg2"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="sch_fg3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1f78b4;" edge="1" parent="1" source="sched" target="fg3"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="sch_fg4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1f78b4;" edge="1" parent="1" source="sched" target="fg4"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="sch_fg5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1f78b4;" edge="1" parent="1" source="sched" target="fg5"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Sensors -->
+        <mxCell id="sens1" value="pipeline sensors" style="ellipse;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#0d2c54;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="480" width="110" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="sens2" value="buoys" style="ellipse;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#0d2c54;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="185" y="480" width="80" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="sens3" value="drones" style="ellipse;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#0d2c54;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="280" y="480" width="80" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="sens_fg1" value="raw data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#82b366;fontSize=9;fontColor=#82b366;" edge="1" parent="1" source="sens1" target="fg1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="sens_fg2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#82b366;" edge="1" parent="1" source="sens2" target="fg2"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="sens_fg3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#82b366;" edge="1" parent="1" source="sens3" target="fg3"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Database / decision support -->
+        <mxCell id="db" value="decision support&#10;+ temporary storage" style="shape=cylinder3;html=1;boundedLbl=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#0d2c54;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="460" y="480" width="90" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg5_db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#82b366;" edge="1" parent="1" source="fg5" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Alerts -->
+        <mxCell id="alerts" value="alerts &amp; control&#10;(shutdowns, teams)" style="rounded=1;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#0d2c54;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="570" y="480" width="100" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg5_al" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1f78b4;" edge="1" parent="1" source="fg5" target="alerts"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Cloud link (dead) -->
+        <mxCell id="fg5_cloud" value="uplink" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;strokeColor=#aaaaaa;fontSize=9;fontColor=#999999;" edge="1" parent="1" source="fg5" target="cloud">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="650" y="260"/><mxPoint x="800" y="260"/></Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

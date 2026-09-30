@@ -1,0 +1,106 @@
+\section{Reproducibility, Provenance, and FAIR Workflow Methodology}
+\label{sec:reproducibility}
+
+A Compute-Continuum workflow is not reproducible solely because its optimisation model is published. Another researcher must be able to determine which DAG, data-transfer assumptions, resource graph, solver settings, and scheduler version produced a reported result. The FAIR principles apply to algorithms, tools, and workflows as well as to conventional data objects \cite{wilkinson2016fair}. Accordingly, this section specifies a minimal experiment-artifact package for the proposed workflow scheduler. It is a methodology and release checklist; it does not claim that a public artifact repository has already been deposited.
+
+\subsection{Portable Workflow Description}
+
+Each experiment should publish a machine-readable workflow descriptor containing the DAG topology, task identifiers, precedence edges, expected input/output data sizes, task execution-time profile, permitted-resource matrix, deadline, and approximation policy. The descriptor should be independent of a particular deployment. A separate resource descriptor should record the candidate edge, fog, cloud, and HPC resources, including capability class, current availability, network bandwidth, and access constraints. Keeping workflow and resource descriptors separate permits a workflow to be reused across different Compute-Continuum deployments while retaining a complete record of the placement context.
+
+The descriptor must also identify the workflow language or schema version, the data formats used for task inputs and outputs, and the semantics of every model field. These practices support interoperability by allowing an orchestrator or a third-party analysis tool to determine the expected meaning of a task, link, or configuration parameter without relying on undocumented implementation details. Standardised metadata and versioned configurations are consistent with FAIR workflow recommendations \cite{devisser2023fairworkflows}.
+
+\subsection{Run-Level Provenance}
+
+A scheduler run should produce a provenance record that links the following objects: the workflow descriptor version; resource descriptor version; random seed where randomized rounding or a genetic algorithm is used; scheduler and solver version; parameter settings; resulting task placement; execution fractions; start and completion times; and summary metrics. The record should include stable identifiers or content hashes for input files and generated result tables. This enables an evaluator to trace a figure back to the inputs and settings used to generate it.
+
+For data that cannot be released because of sensitivity, operational restrictions, or size, a release package should provide a documented synthetic or de-identified substitute, the schema, and the precise steps required to recreate the reported experiment. The provenance record remains useful in that setting because it distinguishes what was directly available from what was generated or transformed. A deployment should apply its own security and access-control policy to private data; metadata and run provenance can still be retained without exposing protected payloads.
+
+\subsection{Experiment Artifact Checklist}
+
+Table~\ref{tab:artifact_checklist} lists the artifacts needed to make the results inspectable and reusable. The checklist supports both initial publication and future replication studies.
+
+\begin{table*}[t]
+\centering
+\caption{Recommended artifact package for reproducible Compute-Continuum workflow scheduling experiments.}
+\label{tab:artifact_checklist}
+\small
+\begin{tabular}{|p{0.22\textwidth}|p{0.37\textwidth}|p{0.31\textwidth}|}
+\hline
+\textbf{Artifact} & \textbf{Minimum content} & \textbf{Purpose} \\
+\hline
+Workflow descriptor & DAG nodes and edges, data sizes, task profiles, eligibility constraints, deadline, schema version. & Enables a third party to reconstruct the scheduling problem. \\
+\hline
+Resource descriptor & Resource capability, availability, link bandwidth/latency, tier type, and access policy reference. & Separates deployment-specific resource state from the portable workflow. \\
+\hline
+Configuration profile & Scheduler parameters, solver options, random seeds, stopping criteria, and experiment scenario. & Makes results repeatable across scheduler implementations. \\
+\hline
+Input catalogue & Identifiers, hashes, licence/access status, and generation method for synthetic or sensitive data. & Supports traceability without requiring inappropriate release of protected data. \\
+\hline
+Run provenance & Descriptor versions, code version, placement output, metrics, timestamps, and result-file hashes. & Links reported figures and tables to exact experimental conditions. \\
+\hline
+Result package & Tabular values used by plots, captions, scripts, and a rendered report. & Allows verification, replotting, and comparative analysis. \\
+\hline
+\end{tabular}
+\end{table*}
+
+\subsection{Mapping the Model to the FAIR Principles}
+\label{subsec:fair_mapping}
+
+The FAIR principles were formulated for data objects and have since been restated for computational
+workflows, where the object of interest is simultaneously a research artifact, a piece of software,
+and a description of a method~\cite{wilkinson2016fair,swilkinson2025fairworkflows}.
+Table~\ref{tab:fair_mapping} maps the elements of the scheduling model onto that restatement. The
+claim made here is deliberately narrow: the model's inputs and outputs are \emph{structurally
+compatible} with FAIR workflow practice, in that every quantity the scheduler consumes or produces
+is an explicit, typed, externally representable parameter rather than a value embedded in
+implementation code. This paper does not deposit a research object, does not package an RO-Crate,
+and does not claim a persistent identifier for any artifact. Those are deployment steps, and they
+are listed as such in Table~\ref{tab:artifact_checklist}.
+
+\begin{table*}[t]
+\centering
+\caption{Mapping between the scheduling model and the FAIR principles as restated for computational
+workflows. ``Compatible'' denotes that the required information exists in an externally
+representable form; it does not denote a deposited artifact.}
+\label{tab:fair_mapping}
+\small
+\begin{tabular}{|p{0.12\textwidth}|p{0.38\textwidth}|p{0.40\textwidth}|}
+\hline
+\textbf{Principle} & \textbf{Corresponding model element} & \textbf{Mechanism} \\
+\hline
+Findable & Task set $T$, precedence edges $(T_j,T_i)$, per-task identifiers, deadline $t_{\max}$,
+slack factor $\alpha$ & Expressible as a versioned workflow descriptor in a standard workflow
+language~\cite{crusoe2022cwl}; registry deposition would supply the persistent identifier. \\
+\hline
+Accessible & Execution-time profile $t_{ia}$, eligibility matrix $P_{ia}$, inter-node bandwidth
+$B_{ba}$, resource availability & Held in the resource descriptor, kept separate from the portable
+workflow descriptor so that access policy applies to deployment state alone. \\
+\hline
+Interoperable & Data volume $D_{ji}$ and bandwidth $B_{ba}$ as explicit typed parameters with
+declared units, rather than constants internal to a solver script & Packageable alongside the
+workflow descriptor; the semantics of each field are declared in the schema, permitting a
+third-party orchestrator to interpret the model without access to the implementation. \\
+\hline
+Reusable & Scheduler output: placement $e_{ia}$, execution fractions $l_{ia}$, completion times
+$y_i$, achieved accuracy $A_i l_{ia}$, together with solver version, random seed and termination
+status & Run-level provenance record linking outputs to descriptor versions and
+configuration~\cite{leo2024workflowruncrate}; capture cost on constrained resources is itself
+non-negligible and schedulable~\cite{rosendo2023provlight}. \\
+\hline
+\end{tabular}
+\end{table*}
+
+Two properties of the model are worth stating explicitly because they are uncommon in scheduling
+work. First, the dependency edge $(T_j,T_i)$ is already a qualified reference in the FAIR sense: it
+carries both a relationship type (precedence) and a quantified payload $D_{ji}$, so the workflow
+description records \emph{why} two tasks are related and \emph{how much} data that relation moves.
+Second, the separation of workflow from resource descriptor means that metadata about an execution
+remain meaningful even when the underlying data cannot be released, which is the situation in most
+of the operational settings this class of workflow targets.
+
+
+\subsection{Interoperability and Reuse Boundaries}
+
+The model exposes interoperable inputs rather than imposing a specific workflow-management system, message bus, or data catalogue. An implementation may map the descriptors to a standard workflow language, a container-based execution system, or a site-specific orchestration service. The important requirement is that the mapping preserve the task identifiers, dependency semantics, data-size assumptions, resource eligibility, and configuration provenance. This boundary permits the scheduling contribution to be adopted in eScience platforms with different operational constraints while keeping the interpretation of the optimisation result stable.
+
+The methodology also makes clear what should not be inferred from this paper. The supplied experiments report comparative scheduling accuracy under the stated simulated scenarios. They do not establish measured energy consumption, public-data availability, security compliance, or performance on a specific exascale platform. Those claims require additional deployment artifacts and trace-level measurements. Stating these boundaries protects reproducibility and enables a subsequent implementation study to extend the evidence responsibly.

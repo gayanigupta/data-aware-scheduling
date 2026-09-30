@@ -1,0 +1,473 @@
+\documentclass[conference]{IEEEtran}
+
+% Essential Packages
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{float}
+\usepackage[colorlinks, citecolor=blue]{hyperref}
+\usepackage{balance}
+\usepackage{xcolor}
+\usepackage{cleveref}
+\usepackage{placeins}
+
+% Theorem-like environments
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{observation}{Observation}
+\newtheorem{definition}{Definition}
+
+% Custom commands for annotations (if needed, otherwise remove)
+% \newif\ifannote
+% \annotetrue  % comment this line to disable annotations
+% \ifannote
+%     \newcommand{\anninsert}[2]{{\color{#1}#2}}
+%     \newcommand{\anncomment}[3]{{\color{#1}[#2: #3]}}
+% \else
+%     \newcommand{\anninsert}[2]{#2}
+%     \newcommand{\anncomment}[3]{}
+% \fi
+% \newcommand{\TA}[1]{\anncomment{red}{TA}{#1}}
+% \newcommand{\AF}[1]{\anncomment{violet}{AF}{#1}}
+% \newcommand{\CG}[1]{\anncomment{orange}{CG}{#1}}
+% \newcommand{\NN}[1]{\anncomment{blue}{NN}{#1}}
+% \newcommand{\JW}[1]{\anncomment{brown}{JW}{#1}}
+% \newcommand{\ta}[1]{\anninsert{red}{#1}}
+% \newcommand{\af}[1]{\anninsert{violet}{#1}}
+% \newcommand{\cg}[1]{\anninsert{orange}{#1}}
+% \newcommand{\nn}[1]{\anninsert{blue}{#1}}
+% \newcommand{\jw}[1]{\anninsert{cyan}{#1}}
+
+\title{Data-Aware Task Scheduling for Approximate Computing of Directed Acyclic Graphs (DAGs) in Federated Fog Systems}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Modern natural disaster management increasingly relies on distributed intelligent systems capable of running complex, time-critical analytics close to where hazards occur. Applications such as real-time flood modeling, wildfire spread prediction, structural health monitoring, and evacuation optimization are often expressed as Directed Acyclic Graphs (DAGs) deployed across edge and fog computing platforms embedded in remote, infrastructure-constrained environments. However, during extreme events where cloud connectivity becomes unreliable or unavailable, local fog systems face severe resource inelasticity, hindering their ability to meet strict latency requirements for life-saving computations.
+
+To address this challenge, this work introduces a data-aware and bandwidth-conscious approximate computing framework designed for distributed intelligent sensing and disaster-response analytics. Our approach enables elastic, cooperative processing by (a) federating geographically proximate fog nodes through high-bandwidth/low-latency inter-fog links, and (b) selectively offloading and approximately executing DAG subgraphs across this federated network to ensure real-time decision support with minimal loss in analytical fidelity.
+
+We formulate the resource allocation and task-approximation problem using a Mixed-Integer Linear Programming (MILP) model that jointly considers (i) sensor data size and inter-node bandwidth, (ii) topological and environmental constraints of the distributed computing network, and (iii) per-node computational and memory capabilities. To support large-scale disaster scenarios involving complex multi-sensor pipelines, we further propose meta-heuristic relaxations based on genetic algorithms and simulated annealing, enabling scalable near-optimal solutions.
+
+Experiments performed under realistic disaster-response network conditions demonstrate that the proposed strategies significantly improve situational awareness and processing elasticity, allowing distributed fog systems to meet stringent deadlines while preserving high analytical accuracy. These results highlight the potential of federated fog intelligence as a foundation for resilient, real-time natural disaster management.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Natural Disaster Management, Distributed Intelligence, Federated Fog Systems, Directed Acyclic Graphs, Approximate Computing, Edge Computing, Mixed-Integer Linear Programming, Genetic Algorithms, Simulated Annealing, Real-Time Environmental Monitoring.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+The Fourth Industrial Revolution (Industry 4.0) has transformed industrial operations through the integration of automation, artificial intelligence, and real-time data analytics. However, deploying these advancements in remote or extreme environments—such as offshore platforms, deep-sea facilities, or space stations—introduces significant challenges due to high communication latency, intermittent connectivity, and constrained computational resources \cite{wang2021adaptive}. These limitations necessitate decentralized computing paradigms capable of operating autonomously and efficiently without continuous cloud access \cite{dragoni2017microservices}.
+
+Federated fog computing has emerged as a promising solution to enhance computational elasticity by interconnecting multiple fog nodes \cite{mattia2023fogcontrol}. Unlike isolated fog systems, a federated fog environment enables cooperative scheduling, data sharing, and adaptive workload balancing across geographically distributed nodes \cite{provisioning2023}. This architecture is particularly critical for real-time and mission-sensitive applications such as disaster response, predictive maintenance, and AI-driven industrial analytics, where even small delays can lead to system degradation or operational failure \cite{fgcs2024}.
+
+In these environments, workflows are typically modeled as Directed Acyclic Graphs (DAGs), where each node represents a computational task and edges represent data dependencies. However, the execution of such DAG-based workflows is constrained by heterogeneous fog node capabilities and the limited bandwidth of inter-node communication links. To address these challenges, this study introduces a \textbf{data- and bandwidth-aware resource allocation framework} based on Mixed-Integer Linear Programming (MILP), designed to optimally partition and distribute DAG tasks across federated fog nodes while accounting for task-level data transfer sizes, communication delays, and network bandwidth limitations.
+
+To ensure scalability for large and complex workflows, we further develop relaxation meta-heuristics based on genetic algorithms and simulated annealing \cite{kumar2023workload}, enabling near-optimal solutions within practical time bounds. The proposed approach enhances federated fog efficiency by jointly optimizing computational accuracy, data transfer cost, and execution latency. Overall, this research advances the adaptability, resilience, and scalability of Industry 4.0 systems operating in dynamic, resource-constrained, and data-intensive fog environments \cite{fgcs2024}.
+
+\section{Overview and Motivation}
+
+Modern industrial systems are increasingly adopting DAG-based applications powered by AI-driven tasks, deployed on fog computing platforms (mini–data centers) to achieve real-time autonomous control. This transition is particularly crucial in remote locations, such as offshore oil fields \cite{hussain2024resource}, space stations \cite{rehman2018}, and underwater robotic platforms \cite{kabanov2022}, where cloud access is unreliable or nonexistent, and human operators are scarce. DAG-based applications—including disaster simulations, predictive maintenance, and emergency response coordination—must be executed with strict latency and reliability constraints to ensure system safety and operational continuity \cite{wang2021adaptive, rehman2018, cai2019}.
+
+Industrial workloads in such environments demand real-time data processing under harsh operational conditions, where conventional cloud computing models are impractical. However, even when long-distance communication with cloud providers becomes unreliable, nearby fog systems can often maintain stable, high-bandwidth connectivity. For instance, offshore oil rigs located within a limited radius can exchange data over dedicated private fiber or wireless backhaul networks, allowing them to process and share mission-critical information locally even when disconnected from the cloud. This inter-fog connectivity opens an opportunity to form a \textit{federated fog} network that combines local computation and inter-node communication to ensure both resilience and performance in data-driven industrial applications \cite{mattia2023fogcontrol}.
+
+Despite this potential, most fog computing deployments remain isolated and \textit{data-unaware}, focusing solely on computational scheduling without considering the cost of data transfers between interdependent tasks. In practice, DAG-based industrial workflows involve significant intermediate data exchange among tasks---for example, transferring sensor streams, simulation checkpoints, or AI inference results between nodes. These data movements are constrained by the \textit{bandwidth capacity} of the underlying resource network and the \textit{data size} of each edge in the DAG. Ignoring these transfer dependencies often leads to suboptimal scheduling decisions that cause bandwidth congestion, delayed task starts, or violation of real-time deadlines \cite{salehi2016robust}.
+
+To address these challenges, this research introduces a twofold approach to enhance fog-based processing in remote and bandwidth-constrained environments. First, nearby fog systems are seamlessly federated to provide cloud-like elasticity and shared resource utilization. This federation enables dynamic scaling of DAG-based workloads across multiple nodes while leveraging inter-fog communication links of known bandwidth capacities. Second, we introduce a \textbf{data-aware and bandwidth-conscious DAG partitioning framework} that explicitly considers the data size and transfer cost associated with each dependency edge. By jointly optimizing computation and communication, the proposed framework ensures that high-volume data transfers occur along high-bandwidth paths, minimizing both latency and congestion across the federated fog network.
+
+To achieve this optimization, the study employs Mixed-Integer Linear Programming (MILP) formulations that integrate (i) the computational capacity of fog nodes, (ii) their local memory constraints, (iii) the data size of each inter-task edge, and (iv) the available bandwidth and latency characteristics between nodes. The objective is to minimize total workflow completion time while satisfying task precedence and deadline constraints. To enable scalability for large and dynamic workloads, relaxation meta-heuristics such as genetic algorithms and simulated annealing are developed to approximate near-optimal solutions within practical time limits.
+
+In a federated fog environment, variable link bandwidths, intermittent wireless connectivity, and heterogeneous node capacities further complicate scheduling. Without a data-aware mechanism, network saturation can degrade both computational throughput and energy efficiency, ultimately leading to operational failure in mission-critical settings. By incorporating \textbf{data-awareness} into task scheduling, our approach dynamically adapts to data locality and network conditions, ensuring efficient workflow execution and resilient system performance.
+
+Many modern industrial applications exhibit DAG structures where data-dependent tasks—such as deep learning-based anomaly detection, feature extraction, and large-scale simulation modeling—must be executed with minimal processing delays. Real-time sensor data streams impose strict deadlines that must be met to prevent catastrophic failures. For example, in a disaster-prone offshore oil field, a real-time spill monitoring application involves multiple interdependent processes: acquiring sensor data from pipelines, preprocessing and extracting relevant features, running predictive simulations for spill trajectory modeling, and issuing evacuation alerts when environmental hazards are detected. Each of these stages generates intermediate data that must be rapidly transmitted across fog nodes within the available bandwidth constraints.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\linewidth]{paper_assets/fig-001.png}
+\caption{Federated Fog System Architecture for Disaster Response. This diagram illustrates the integration of smart sensors, real-time data streams, and federated fog nodes, coordinated by a data-aware scheduler utilizing GNN and RL for optimal task placement and real-time decision support.}
+\label{fig:federated_fog_architecture}
+\end{figure}
+
+To illustrate this, Figure~\ref{fig:federated_fog_architecture} presents a DAG-based disaster-response workflow, demonstrating how data-aware and federated fog computing enables low-latency execution of mission-critical tasks. Each task node represents a computational process with associated data dependencies, while interconnecting edges denote data transfers whose sizes and rates influence scheduling decisions. The figure highlights how intelligent partitioning and data-aware scheduling across federated fog nodes ensure efficient resource utilization, meeting both latency and reliability goals even under bandwidth-limited conditions.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\linewidth]{paper_assets/fig-002.png}
+\caption{A DAG-based disaster-response workflow illustrating the microservices involved in the \textit{disaster-response application}. The system utilizes \textit{federated fog computing} to ensure real-time data collection, AI-powered anomaly detection, disaster simulation, decision support, and coordinated emergency response. This approach optimizes resource allocation and minimizes potential damage.}
+\label{fig:disaster_response_workflow}
+\end{figure}
+
+\section{Problem Statement and Contributions}
+
+As depicted in Figure~\ref{fig:disaster_response_workflow}, for real-time disaster response systems, a federated fog computing network (\( FG_1 \)--\( FG_5 \)) is established through wireless communication links between distributed fog nodes. Each fog node, represented as \( FG_i \), interconnects via bandwidth-constrained wireless channels, forming a networked infrastructure that enables dynamic, low-latency task execution and data sharing.
+
+In such environments, disaster-response workflows are structured as Directed Acyclic Graphs (DAGs) (\( T_1 \)--\( T_6 \)), where each node represents a computational task, and edges define both task dependencies and associated data transfers~\cite{dragoni2017microservices}. This DAG (\( T_1 \)--\( T_6 \)) must be efficiently mapped onto the fog network (\( FG_1 \)--\( FG_5 \)) to minimize end-to-end latency while respecting bandwidth limitations and communication delays between nodes.
+
+Each fog node exhibits heterogeneity in computational capacity, memory availability, energy consumption, and network bandwidth, introducing variability in execution time and communication latency. These factors complicate real-time task scheduling and increase the risk of deadline violations. To ensure reliable disaster-response performance, the federated fog network must dynamically adapt to resource fluctuations, heterogeneous link capacities, and variable workload intensities while maintaining real-time responsiveness.
+
+For effective execution of disaster-response applications, workflow DAGs must be intelligently partitioned and assigned to fog nodes based on each node’s computational capacity, available bandwidth, and energy profile. Mapping a DAG onto the federated fog infrastructure allows parallel execution and optimized resource utilization, crucial for meeting stringent real-time requirements.
+
+\section{Proposed Framework: Data-Aware Approximate Computing}
+
+Our framework addresses the challenges of resource allocation and task approximation in federated fog environments. It leverages a Mixed-Integer Linear Programming (MILP) model for optimal task partitioning and scheduling, complemented by meta-heuristic relaxations for scalability.
+
+\subsection{MILP Formulation}
+
+The core of our approach is an MILP model that jointly optimizes task placement and execution. The objective is to maximize the total accuracy of executed tasks while adhering to computational, memory, and bandwidth constraints. Key decision variables include:
+\begin{itemize}
+    \item \(e_{ia} \in \{0,1\}\): Binary variable indicating if task \(T_i\) is assigned to fog node \(f_a\).
+    \item \(l_{ia} \in [0,1]\): Fraction of task \(T_i\) executed on fog node \(f_a\) (for approximate computing).
+    \item \(y_i\): Completion time of task \(T_i\).
+    \item \(M_{ia}\): Earliest start time of task \(T_i\) on fog node \(f_a\).
+\end{itemize}
+
+The MILP formulation considers:
+\begin{itemize}
+    \item \textbf{Task Dependencies and Precedence:} Ensures tasks are executed in the correct order, accounting for data transfer delays between dependent tasks on different nodes.
+    \item \textbf{Resource Constraints:} Limits on computational capacity, memory, and bandwidth at each fog node and between inter-fog links.
+    \item \textbf{Approximate Computing:} Allows tasks to be partially executed to meet deadlines, with a corresponding trade-off in accuracy.
+\end{itemize}
+
+\subsection{Randomized Rounding for Scalability}
+
+To overcome the computational complexity of MILP for large-scale problems, we employ a randomized rounding technique. This approach involves:
+\begin{enumerate}
+    \item Solving a relaxed Linear Programming (LP) version of the MILP, where binary variables are treated as continuous probabilities.
+    \item Randomly rounding the continuous solutions to binary assignments, biasing towards assignments with higher probabilities.
+    \item Resolving a final LP with fixed binary assignments to determine precise start and completion times.
+\end{enumerate}
+
+This method guarantees feasibility, achieves near-optimal accuracy, and maintains polynomial-time solvability. The randomized rounding step is bandwidth-sensitive, probabilistically biasing tasks towards fog nodes with favorable data locality and communication links.
+
+\subsection{Bandwidth-Aware Approximation Implications}
+
+The inclusion of \( D_{ji} \) (data transfer size) and \( B_{ba} \) (inter-fog bandwidth) in the LP ensures that the randomized rounding step is not purely probabilistic but also \textbf{bandwidth-sensitive}. Assignments with high expected communication costs (large \( D_{ji} \) or low \( B_{ba} \)) have smaller \( r_{ia} \) values, reducing their selection probability. As a result, tasks are probabilistically biased toward fog nodes with favorable data locality and communication links, enhancing both throughput and latency performance in the federated fog environment.
+
+\subsection{Discussion}
+
+Randomized rounding thus serves as a bridge between optimal MILP-based scheduling and heuristic scheduling methods. While it does not guarantee global optimality, it provides a scalable, mathematically grounded approximation that remains responsive to real-world constraints such as bandwidth heterogeneity and data-dependent communication latency.
+
+\section{Baseline 1: Greedy DAG Scheduling across Federated Fog}
+\label{sec:baseline-greedy}
+
+We design a \emph{bandwidth- and data-aware} greedy scheduler that allocates DAG tasks across federated fog nodes by making locally optimal choices. The heuristic explicitly accounts for (i) task dependencies, (ii) execution times on heterogeneous nodes, and (iii) inter-fog communication delays driven by data sizes and link bandwidth.
+
+\subsubsection{Key Components}
+\begin{itemize}
+    \item \textbf{Tasks and Dependencies.} Each task \(T_i\) has full-accuracy value \(A_i\) and execution time \(t_{ia}\) on node \(f_a\). Dependencies are edges \((T_j,T_i)\) with data size \(D_{ji}\).
+    \item \textbf{Fog Nodes.} Each node \(f_a\) is heterogeneous. Inter-fog links \((f_b,f_a)\) have bandwidth \(B_{ba}\), inducing transfer delay \(c_{ji}^{ba}=D_{ji}/B_{ba}\).
+\end{itemize}
+
+\subsubsection{Priority Rule}
+To prefer tasks that are both important and time-critical, we use a composite priority key:
+\[
+\pi_i \;=\; \alpha \cdot A_i \;+\; (1-\alpha)\cdot \text{CP}_i,
+\]
+where \(\text{CP}_i\) is the (estimated) critical-path length from \(T_i\) to a sink under current \(t_{ia}\) and \(c_{ji}^{ba}\), and \(\alpha\in[0,1]\) trades off accuracy importance vs. schedule urgency (default \(\alpha=0.5\)). Ties are broken by larger \(A_i/t_{i\bullet}\) (accuracy density).
+
+\subsubsection{Algorithm Steps}
+\begin{itemize}
+    \item \textbf{Initialize.} Set \(y_i\gets\infty\) for all tasks. Compute \(\pi_i\) and maintain a ready set of tasks whose predecessors are finished.
+    \item \textbf{Node Selection.} For each ready task \(T_i\), evaluate all permitted nodes \(f_a\) and compute earliest start
+    \[
+    M_{ia} \;=\; \max_{T_j\in \text{in}_i}\!\left( y_j \;+\; \sum_{f_b\in F} e_{jb}\,c_{ji}^{ba}\right),
+    \quad c_{ji}^{ba}=\frac{D_{ji}}{B_{ba}}.
+    \]
+    \item \textbf{Completion Time.} With a current approximation factor \(\texttt{approx}\in(0,1]\), candidate completion is
+    \[
+    y_i^{(a)} \;=\; M_{ia} \;+\; t_{ia}\cdot \texttt{approx}.
+    \]
+    Choose \(f_a\) minimizing \(y_i^{(a)}\) and set \(e_{ia}\gets 1\), \(y_i\gets y_i^{(a)}\).
+    \item \textbf{Deadline Adaptation.} If \(\max_i y_i > t_{\max}\), reduce \(\texttt{approx}\leftarrow \texttt{approx}-\delta\) (e.g., \(\delta=5\!\times\!10^{-3}\)) and re-evaluate remaining tasks; otherwise accept schedule.
+\end{itemize}
+
+\subsubsection{Pseudocode}
+\begin{algorithm}[t]
+\caption{Bandwidth/Data-Aware Greedy DAG Scheduler}
+\label{alg:greedy_scheduler}
+\begin{algorithmic}[1]
+\STATE $\texttt{approx}\leftarrow 1$, compute priorities $\pi_i$; set $y_i\leftarrow\infty,\ \forall i$
+\REPEAT
+  \STATE \textbf{while} $\exists T_i: y_i=\infty$ \textbf{do}
+    \STATE pick ready task $T_i$ with maximum $\pi_i$
+    \STATE $y^\star\leftarrow\infty$, $a^\star\leftarrow\bot$
+    \FOR{each $f_a\in F$ with $P_{ia}=1$}
+        \STATE $M_{ia}\leftarrow \max_{T_j\in \text{in}_i}\big(y_j+\sum_{f_b\in F} e_{jb}\cdot \tfrac{D_{ji}}{B_{ba}}\big)$
+        \STATE $y_i^{(a)}\leftarrow M_{ia}+t_{ia}\cdot \texttt{approx}$
+        \IF{$y_i^{(a)}<y^\star$} 
+            \STATE $y^\star\leftarrow y_i^{(a)}$; $a^\star\leftarrow a$ 
+        \ENDIF
+    \ENDFOR
+    \STATE assign $T_i$ to $f_{a^\star}$: $e_{ia^\star}\leftarrow 1$, $e_{ib}\leftarrow 0\ \forall b\neq a^\star$, and $y_i\leftarrow y^\star$
+  \STATE \textbf{end while}
+  \STATE $Y_{\max}\leftarrow \max_i y_i$
+  \IF{$Y_{\max}>t_{\max}$} \STATE $\texttt{approx}\leftarrow \texttt{approx}-0.005$ \ENDIF
+\UNTIL{$Y_{\max}\le t_{\max}$}
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Complexity.} With topological processing and a binary heap for priorities, the selection is \(O(n\log n)\); per task we scan up to \(m\) nodes and compute a max over in-neighbors, yielding \(O\!\big(\sum_i (\deg^-(i)+m)\big)=O(|E|+nm)\).
+
+\subsubsection{Why This Greedy is a Strong Baseline}
+It is (i) deadline-aware via \(\texttt{approx}\), (ii) bandwidth-aware through \(D_{ji}/B_{ba}\), and (iii) heterogeneity-aware via \(t_{ia}\). While still myopic compared to MILP, it captures the key trade-offs that drive latency in federated fog.
+
+\section{Baseline 2: Genetic-Algorithm Metaheuristic DAG Scheduler across Federated Fog}
+\label{sec:baseline-ga}
+
+We employ a bandwidth-/data-aware GA that explores task--node assignments and approximation levels, then evaluates each candidate with exact communication delays \(c_{ji}^{ba}=D_{ji}/B_{ba}\).
+
+\subsubsection{Encoding}
+Each individual encodes:
+\begin{itemize}
+    \item \textbf{Fog assignment vector} \(\mathbf{f}\): entry \(f(i)\in F\) with \(P_{i\,f(i)}=1\).
+    \item \textbf{Execution fraction vector} \(\boldsymbol{\ell}\): entry \(\ell_i\in[0,1]\) (maps to \(l_{i\,f(i)}\)).
+\end{itemize}
+
+\subsubsection{Fitness (Bandwidth/Data-Aware)}
+Given \(\mathbf{f},\boldsymbol{\ell}\), we compute completion times by a forward pass:
+\[
+M_{i\,f(i)}=\max_{T_j\in \text{in}_i}\!\Big(y_j+\tfrac{D_{ji}}{B_{f(j),\,f(i)}}\Big),\quad
+y_i=M_{i\,f(i)}+t_{i\,f(i)}\ell_i.
+\]
+Let \(Y_{\max}=\max_i y_i\). The fitness to \emph{maximize} is
+\[
+\Phi=\frac{1}{n}\sum_i A_i \ell_i\;-\;\lambda_1\!\cdot\![Y_{\max}>t_{\max}]\;-\;\lambda_2\!\cdot\!\frac{(Y_{\max}-t_{\max})_+}{t_{\max}},
+\]
+with large \(\lambda_1\) and moderate \(\lambda_2\); infeasible assignments (e.g., \(P_{i\,f(i)}=0\)) receive \(\Phi=-\infty\).
+
+\subsubsection{Genetic Operators}
+\begin{itemize}
+    \item \textbf{Selection:} tournament or roulette.
+    \item \textbf{Crossover:} one-point on \(\mathbf{f}\) and \(\boldsymbol{\ell}\) (independently).
+    \item \textbf{Mutation:} reassign \(f(i)\) within \(\{a:P_{ia}=1\}\); jitter \(\ell_i\leftarrow\text{clip}(\ell_i+\mathcal{N}(0,\sigma^2))\).
+    \item \textbf{Repair:} if a parent of \(T_i\) maps to a slow link (small \(B\)) and \(D_{ji}\) is large, bias mutation toward co-locating \(T_i\) with \(T_j\) to reduce \(\tfrac{D_{ji}}{B}\).
+\end{itemize}
+
+\subsubsection{Pseudocode}
+\begin{algorithm}[t]
+\caption{Genetic Algorithm for Bandwidth/Data-Aware Fog Scheduling}
+\label{alg:genetic}
+\begin{algorithmic}[1]
+\STATE initialize population with feasible \((\mathbf{f},\boldsymbol{\ell})\) (respect \(P_{ia}\)), using co-location seeds for large \(D_{ji}\)
+\REPEAT
+    \STATE evaluate $\Phi$ via forward pass using $c_{ji}^{ba}=D_{ji}/B_{ba}$
+    \STATE select parents; apply crossover and mutation; repair infeasibilities
+    \STATE elitism: keep top-$k$ individuals
+\UNTIL{termination (max iters or no improvement)}
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Discussion.} The GA explores global structures (e.g., grouping high-traffic subgraphs) that the greedy may miss, while preserving feasibility and bandwidth-awareness in each fitness evaluation. In practice, a few dozen generations with modest population sizes provide strong solutions at polynomial cost and complement the LP/MILP and randomized rounding approaches.
+
+\section{Performance Evaluation} 
+\label{performance_analysis}
+
+This section evaluates the performance of the proposed task allocation strategies for Directed Acyclic Graphs (DAGs) in federated fog systems. The experiments analyze the effect of three primary parameters—slack factor ($\alpha$), the number of fog nodes ($N$), and DAG size—on scheduling performance. Comparative evaluations are conducted across four approaches: Mixed-Integer Linear Programming (MILP), Randomized Relaxation, Greedy, and Metaheuristic (Genetic Algorithm) scheduling. Performance is measured in terms of average accuracy, scalability, and communication efficiency.
+
+\section{Experimental Setup}
+
+To ensure reproducibility, all experiments were conducted using a custom Python-based simulation framework. The federated fog topology and DAG workloads were synthetically generated and serialized in JSON format, containing attributes such as task execution times, dependencies, deadlines, fog node capacities, and link bandwidths.
+
+The experiments explore how variations in deadline constraints ($t_{max}$), slack factors ($\alpha$), and fog network size ($N$) affect performance under dynamic workload and communication conditions. The simulated environment models a real-time fog federation where distributed nodes cooperate to execute dependent tasks while considering bandwidth constraints and heterogeneous resource availability.
+
+\subsection{Workload Generation}
+
+The workloads represent disaster-response workflows modeled as DAGs of varying scales. Each vertex represents a computational task, and each edge encodes a dependency requiring data transfer between fog nodes.
+\begin{itemize}
+    \item \textbf{DAG Size:}  
+    Three categories of DAGs were generated to evaluate scalability:
+    \begin{itemize}
+        \item Small-scale: 10 tasks
+        \item Medium-scale: 100 tasks
+        \item Large-scale: 1000 tasks
+    \end{itemize}
+    \item \textbf{Task Dependencies:}  
+    DAG density was varied from sparse (low inter-task dependencies) to dense (highly interdependent), influencing inter-node communication load.
+    \item \textbf{Deadline Constraints:}  
+    Deadlines were derived using the critical path length and scaled by slack factor $\alpha$, allowing evaluation under both strict and relaxed scheduling scenarios.
+    \item \textbf{Task Heterogeneity:}  
+    Tasks were categorized as compute-intensive or latency-sensitive, representing diverse operational profiles typical of edge analytics and emergency response workloads.
+\end{itemize}
+
+\subsection{Simulation of the Federated Fog Environment}
+
+A discrete-event simulation framework modeled the cooperative execution of DAGs across interconnected fog nodes. Each fog node was characterized by computational speed, available bandwidth, and link latency. 
+\begin{itemize}
+    \item \textbf{Network Size:}  
+    Simulations were performed for fog networks of varying sizes:
+    \[
+    N = \{2, 4, 6, 8, 10\}
+    \]
+    \item \textbf{Resource Heterogeneity:}  
+    Each node was assigned a unique processing rate, simulating realistic variations in CPU performance, queue length, and task concurrency.
+    \item \textbf{Communication Model:}  
+    Link bandwidths ($B_{ba}$) and data transfer sizes ($D_{ji}$) determined communication delays as $c_{ji}^{ba} = D_{ji}/B_{ba}$.  
+    This bandwidth-aware formulation ensures that offloaded tasks incur realistic data-transfer delays.
+    \item \textbf{Task Offloading Policy:}  
+    Tasks were either executed locally or offloaded to remote nodes based on current workload, available bandwidth, and the selected scheduling policy.
+\end{itemize}
+
+\subsection{Experimental Design}
+
+The experimental study investigated the following aspects:
+\begin{itemize}
+    \item \textbf{Effect of Deadline ($t_{max}$):}  
+    With $N=10$ fixed, $t_{max}$ was varied to study its influence on task completion, average accuracy, and deadline adherence.
+    \item \textbf{Impact of Slack Factor ($\alpha$):}  
+    Slack factors $\alpha = \{1.0, 1.2, 1.3, 1.5, 2.0\}$ were used to analyze flexibility versus efficiency trade-offs in meeting deadlines:
+    \[
+    t_{max} = T_{\text{critical}} + \alpha \cdot T_{\text{slack}}
+    \]
+    \item \textbf{Scalability with Fog Network Size:}  
+    Large DAGs (1000 tasks) were executed with increasing $N$ to assess how network size affects makespan and resource utilization.
+    \item \textbf{Max-Accuracy Baseline:}  
+    A relaxed configuration ($t_{max} \to \infty$) served as the upper bound for achievable average accuracy across all approaches.
+\end{itemize}
+
+\subsection{Baseline Scheduling Methods}
+
+To provide a comparative evaluation, the proposed methods were tested against the following baselines:
+\begin{itemize}
+    \item \textbf{Fixed Scheduling:}  
+    Uses a static slack factor ($\alpha = 1.0$), enforcing strict deadline constraints.
+    \item \textbf{Dynamic Slack Allocation:}  
+    Adapts $\alpha$ based on workload and network congestion to improve feasibility.
+    \item \textbf{Heuristic Scheduling:}  
+    Prioritizes tasks by fog node capacity and link latency, approximating a cost-minimization heuristic.
+    \item \textbf{Greedy Scheduling:}  
+    Allocates each ready task to the least-loaded node, ignoring global dependency structure.
+\end{itemize}
+
+\subsection{Performance Metrics}
+
+Experiments were repeated over multiple random DAGs for statistical consistency. The following performance metrics were recorded:
+\begin{itemize}
+    \item \textbf{Makespan:} Total completion time of all DAG tasks.
+    \item \textbf{Resource Utilization:} Ratio of active CPU cycles to total available capacity.
+    \item \textbf{Deadline Adherence:} Percentage of tasks completed before $t_{max}$.
+    \item \textbf{Communication Overhead:} Aggregate latency and bandwidth cost for inter-node transfers.
+    \item \textbf{Scheduling Accuracy:} Average accuracy of all tasks, considering approximate execution.
+\end{itemize}
+
+\subsection{Impact of Slack Factor ($\alpha$)}
+
+The slack factor directly scales the execution deadline, affecting latency and resource distribution. The following trends were observed:
+\begin{itemize}
+    \item Increasing $\alpha$ relaxes deadlines, improving completion rates and average accuracy across all methods.
+    \item For $\alpha < 1.0$, strict deadlines cause frequent task preemption and reduced accuracy.
+    \item For $\alpha > 2.0$, excessive slack leads to idle resources and increased makespan.
+\end{itemize}
+
+Empirical results indicate that a moderate range ($1.2 \le \alpha \le 1.5$) achieves the best trade-off between accuracy and efficiency. Figure~\ref{fig:accuracy_vs_slack} illustrates the relationship between $\alpha$ and average accuracy across scheduling approaches. MILP consistently yields the highest accuracy due to global optimization but scales poorly. Randomized Relaxation achieves near-optimal accuracy with significantly reduced complexity. The Metaheuristic (Genetic Algorithm) approach closely approximates MILP while maintaining good scalability. The Greedy baseline benefits from increased $\alpha$, but its performance plateaus early due to lack of global coordination.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\linewidth]{paper_assets/fig-003.png}
+\caption{Impact of Slack Factor ($\alpha$) on Average Accuracy. This plot compares MILP, Randomized Rounding, Genetic Algorithm, and Greedy approaches, showing how increased slack generally improves accuracy across all methods.}
+\label{fig:accuracy_vs_slack}
+\end{figure}
+
+\subsection{Impact of Fog Nodes}
+
+The number of fog nodes directly affects resource availability for task allocation. Increasing fog nodes reduces contention, leading to higher accuracy. Figure \ref{fig:scalability_vs_nodes} shows the performance of various methods as the number of fog nodes increases. MILP maximizes the benefits of additional resources, while heuristic methods (Greedy and Relaxation) show diminishing returns. The Relaxation method improves MILP's computational feasibility by providing near-optimal solutions with reduced complexity. The Metaheuristic approach balances accuracy and computational efficiency, leveraging additional resources effectively.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\linewidth]{paper_assets/fig-004.png}
+\caption{Scalability: Makespan vs. Network Size. This bar chart illustrates how increasing the number of fog nodes (N) reduces the total makespan for both baseline and proposed federated fog approaches, demonstrating improved scalability.}
+\label{fig:scalability_vs_nodes}
+\end{figure}
+
+\subsection{Impact of Task Graph Size}
+
+As the size of the task graph increases, scalability becomes critical. Figure \ref{fig:task_size_vs_accuracy} illustrates how accuracy trends across methods change with varying DAG sizes. MILP achieves the highest accuracy for small graphs but becomes computationally infeasible for larger graphs. The Relaxation method extends MILP's applicability by simplifying constraints, enabling accurate results for medium-sized graphs. Heuristic methods, while less accurate, scale efficiently and remain computationally viable for large task graphs. The Metaheuristic approach provides a balance, maintaining high accuracy and scalability.
+
+% Original figure for task graph size was commented out, using a placeholder for now.
+% \begin{figure}[h!]
+% \centering
+% \vspace{-5mm}
+% \includegraphics[width=0.5\textwidth]{task_size_vs_accuracy_corrected_1.png}
+% \caption{Impact of Task Graph Size on Average Accuracy. While MILP theoretically provides maximal accuracy, its performance for larger graphs is limited by computational constraints, leading to reduced accuracy compared to relaxation and metaheuristic approaches.}
+% \vspace{-5mm}
+% \label{fig:task_size_vs_accuracy}
+% \end{figure}
+
+\subsection{Scalability Analysis}
+
+Each method demonstrates unique scalability characteristics:
+\begin{itemize}
+\item \textbf{MILP}: Provides high accuracy for small graphs but experiences reduced accuracy for larger graphs due to computational constraints. Its exponential complexity makes it resource-intensive and less practical for large task graphs.
+\item \textbf{Greedy}: Scales efficiently but sacrifices accuracy, particularly for task graphs with complex dependencies. It remains a suitable choice for applications requiring quick, approximate solutions under strict computational constraints.
+\item \textbf{Relaxation}: Consistently achieves maximal accuracy across all task graph sizes, demonstrating its scalability and effectiveness. Relaxation serves as a practical alternative to MILP, especially for larger graphs where computational resources are limited.
+\item \textbf{Metaheuristic (Genetic Algorithm)}: Provides the best trade-off between scalability and accuracy, handling large graphs effectively. While it achieves near-optimal solutions, it does not match Relaxation’s maximal accuracy but excels in computational efficiency.
+\end{itemize}
+
+\subsection{Discussion}
+
+The experimental results highlight key insights about scalability and accuracy:
+\begin{itemize}
+\item \textbf{MILP}: While theoretically expected to provide maximal accuracy, it experiences reduced performance for larger graphs due to computational constraints. This makes it less practical for real-world large-scale applications.
+\item \textbf{Relaxation}: Demonstrates consistent maximal accuracy across all graph sizes. It bridges the gap between MILP’s theoretical guarantees and practical applicability, making it the most reliable method for achieving both accuracy and scalability.
+\item \textbf{Greedy and Metaheuristic}: Greedy offers quick, approximate solutions but sacrifices accuracy, while Metaheuristics balance scalability and accuracy well. Metaheuristics are robust and computationally efficient for handling large task graphs, though they do not achieve maximal accuracy.
+\end{itemize}
+
+\subsection{Addressing Scalability Challenges}
+
+While Relaxation consistently achieves maximal accuracy, the scalability challenges of other methods necessitate alternative approaches:
+\begin{itemize}
+\item Relaxation : Provides a reliable and scalable alternative to MILP, maintaining maximal accuracy without the computational overhead of MILP.
+\item Metaheuristics : Offer a practical trade-off between accuracy and scalability, making them effective for large-scale systems.
+\end{itemize}
+
+These findings emphasize the importance of selecting methods based on the task graph size and computational resource availability. Relaxation emerges as the optimal method for maintaining accuracy and scalability, particularly for larger graphs.
+
+\subsection{Novelty and Comparison with Existing Literature}
+
+The proposed scheduling algorithms are designed specifically for federated fog environments with dynamic task execution constraints. While our algorithms are well-structured and optimized for the given problem, they have not been directly compared with existing literature. This is primarily due to the fact that our study introduces a new problem formulation that has not been extensively explored in previous research.
+
+Unlike traditional scheduling approaches that focus on static resource allocation in fog computing, our work addresses the challenge of adaptive scheduling in federated fog environments with dynamically changing slack factors, heterogeneous fog nodes, and workload fluctuations. Existing works typically optimize for predefined objectives such as energy efficiency, latency reduction, or cost minimization, whereas our approach balances deadline adherence, resource utilization, and execution accuracy in a dynamically evolving system.
+
+Since this problem has not been explicitly addressed in prior research, direct comparisons with existing scheduling frameworks would be non-trivial. However, our experimental design includes multiple baseline methods such as fixed scheduling, heuristic scheduling, and dynamic slack allocation to ensure a fair evaluation of our approach.
+
+Future work could involve adapting existing DAG scheduling techniques and fog-based resource allocation methods to our problem domain, enabling a more comprehensive comparison with state-of-the-art techniques.
+
+\section{Conclusion and Future Work}
+ 
+This paper presents a Mixed Integer Linear Programming (MILP) model for task allocation in  fog federation environments, optimizing DAG workflows while balancing accuracy and resource efficiency. The findings reveal that Relaxation consistently achieves maximal accuracy, making it ideal for medium to large task graphs, particularly where MILP's computational complexity becomes a limitation. In contrast, Metaheuristics excel in scalability and provide a practical trade-off between accuracy and efficiency, especially for large-scale, real-time applications.
+
+These insights emphasize the importance of aligning method selection with system requirements. Relaxation is best suited for accuracy-critical scenarios, while Metaheuristics offer robust solutions for dynamic and resource-constrained environments. Future research will focus on hybrid approaches to further bridge the gap between accuracy and scalability in federated fog systems.
+
+These future directions address pressing scalability and adaptability challenges, providing a pathway for creating more robust, efficient, and versatile  fog federation systems.
+
+\begin{itemize}
+\item \textbf{Dynamic Workload Adaptation}: Investigating real-time adaptation mechanisms for fluctuating workloads in large-scale fog networks.
+
+\item \textbf{Graph Compression Techniques}: Developing innovative approaches to simplify DAG structures, reducing node and edge redundancies while preserving critical dependencies. These methods aim to improve computational efficiency without compromising task scheduling accuracy.
+
+\item \textbf{Graph Partitioning Strategies}: Exploring novel partitioning algorithms tailored for fog systems, ensuring balanced distribution of tasks across nodes and minimizing inter-node communication overhead.
+\item \textbf{Integration with Emerging Technologies}: Exploring the use of AI and Machine Learning to train datasets for improved task scheduling and resource optimization.
+\end{itemize}
+These future directions address pressing scalability and adaptability challenges, providing a pathway for creating more robust, efficient, and versatile  fog federation systems in resource constrained environments.
+In the future, we will be positioning this system in real-world infrastructure, where fog computing resources will be deployed on-site to handle real-time data processing. These resources will rely on space-sharing scheduling and isolation mechanisms to ensure efficient task execution without interference. By leveraging local processing capabilities, the system will minimize latency and reduce the dependence on unreliable cloud connections, making it suitable for mission-critical applications in environments like offshore oil rigs, smart cities, and industrial IoT systems. This approach is expected to enhance performance and scalability while addressing challenges associated with remote or resource-constrained settings.
+
+\section*{Acknowledgments}
+
+We would like to thank the anonymous reviewers for their valuable feedback and insightful suggestions. Their comments have helped improve the quality and clarity of this work. 
+
+This research is supported by the National Science Foundation (NSF).
+
+\bibliographystyle{ieeetr}
+\balance
+\bibliography{references}
+
+\end{document}
