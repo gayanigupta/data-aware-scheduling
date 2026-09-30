@@ -1,0 +1,118 @@
+\section{Scalable Scheduling Algorithms}
+\label{sec:algorithms}
+
+The exact formulation in Section~\ref{sec:system_model} provides a benchmark but may be impractical for large or rapidly changing Compute-Continuum workflows. This section retains the original two scalable scheduling algorithms. Both consume the same DAG, execution-time, data-size, bandwidth, resource-eligibility, and deadline information as the formulation. The pseudocode and decision rules below are preserved in substance so that the journal version remains traceable to the conference source paper \cite{gupta2025efficient}.
+
+\subsection{Baseline 1: Greedy DAG Scheduling across Federated Fog}
+\label{sec:baseline-greedy}
+
+We design a \emph{bandwidth- and data-aware} greedy scheduler that allocates DAG tasks across federated fog nodes by making locally optimal choices. The heuristic explicitly accounts for (i) task dependencies, (ii) execution times on heterogeneous nodes, and (iii) inter-fog communication delays driven by data sizes and link bandwidth.
+
+\subsubsection{Key Components}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Tasks and Dependencies.} Each task \(T_i\) has full-accuracy value \(A_i\) and execution time \(t_{ia}\) on node \(f_a\). Dependencies are edges \((T_j,T_i)\) with data size \(D_{ji}\).
+    \item \textbf{Fog Nodes.} Each node \(f_a\) is heterogeneous. Inter-fog links \((f_b,f_a)\) have bandwidth \(B_{ba}\), inducing transfer delay \(c_{ji}^{ba}=D_{ji}/B_{ba}\).
+\end{itemize}
+
+\subsubsection{Priority Rule}
+To prefer tasks that are both important and time-critical, we use a composite priority key:
+\[
+\pi_i \;=\; \alpha \cdot A_i \;+\; (1-\alpha)\cdot \text{CP}_i,
+\]
+where \(\text{CP}_i\) is the (estimated) critical-path length from \(T_i\) to a sink under current \(t_{ia}\) and \(c_{ji}^{ba}\), and \(\alpha\in[0,1]\) trades off accuracy importance vs. schedule urgency (default \(\alpha=0.5\)). Ties are broken by larger \(A_i/t_{i\bullet}\) (accuracy density).
+
+\subsubsection{Algorithm Steps}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Initialize.} Set \(y_i\gets\infty\) for all tasks. Compute \(\pi_i\) and maintain a ready set of tasks whose predecessors are finished.
+    \item \textbf{Node Selection.} For each ready task \(T_i\), evaluate all permitted nodes \(f_a\) and compute the earliest start
+    \[
+    M_{ia} \;=\; \max_{T_j\in \text{in}_i}\!\left( y_j \;+\; \sum_{f_b\in F} e_{jb}\,c_{ji}^{ba}\right),
+    \quad c_{ji}^{ba}=\frac{D_{ji}}{B_{ba}}.
+    \]
+    \item \textbf{Completion Time.} With a current approximation factor \(\texttt{approx}\in(0,1]\), candidate completion is
+    \[
+    y_i^{(a)} \;=\; M_{ia} \;+\; t_{ia}\cdot \texttt{approx}.
+    \]
+    Choose \(f_a\) minimizing \(y_i^{(a)}\) and set \(e_{ia}\gets 1\), \(y_i\gets y_i^{(a)}\).
+    \item \textbf{Deadline Adaptation.} If \(\max_i y_i > t_{\max}\), reduce \(\texttt{approx}\leftarrow \texttt{approx}-\delta\) (e.g., \(\delta=5\!\times\!10^{-3}\)) and re-evaluate remaining tasks; otherwise accept schedule.
+\end{itemize}
+
+\subsubsection{Pseudocode}
+\begin{algorithm}[t]
+\caption{Bandwidth/Data-Aware Greedy DAG Scheduler}
+\label{alg:greedy_scheduler}
+\begin{algorithmic}[1]
+\STATE $\texttt{approx}\leftarrow 1$, compute priorities $\pi_i$; set $y_i\leftarrow\infty,\ \forall i$
+\REPEAT
+  \STATE \textbf{while} $\exists T_i: y_i=\infty$ \textbf{do}
+    \STATE pick ready task $T_i$ with maximum $\pi_i$
+    \STATE $y^\star\leftarrow\infty$, $a^\star\leftarrow\bot$
+    \FOR{each $f_a\in F$ with $P_{ia}=1$}
+        \STATE $M_{ia}\leftarrow \max_{T_j\in \text{in}_i}\big(y_j+\sum_{f_b\in F} e_{jb}\cdot \tfrac{D_{ji}}{B_{ba}}\big)$
+        \STATE $y_i^{(a)}\leftarrow M_{ia}+t_{ia}\cdot \texttt{approx}$
+        \IF{$y_i^{(a)}<y^\star$} 
+            \STATE $y^\star\leftarrow y_i^{(a)}$; $a^\star\leftarrow a$ 
+        \ENDIF
+    \ENDFOR
+    \STATE assign $T_i$ to $f_{a^\star}$: $e_{ia^\star}\leftarrow 1$, $e_{ib}\leftarrow 0\ \forall b\neq a^\star$, and $y_i\leftarrow y^\star$
+  \STATE \textbf{end while}
+  \STATE $Y_{\max}\leftarrow \max_i y_i$
+  \IF{$Y_{\max}>t_{\max}$} \STATE $\texttt{approx}\leftarrow \texttt{approx}-0.005$ \ENDIF
+\UNTIL{$Y_{\max}\le t_{\max}$}
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Complexity.} With topological processing and a binary heap for priorities, the selection is \(O(n\log n)\); per task we scan up to \(m\) nodes and compute a max over in-neighbors, yielding \(O\!\big(\sum_i (\deg^-(i)+m)\big)=O(|E|+nm)\).
+
+\subsubsection{Why This Greedy is a Strong Baseline}
+It is (i) deadline-aware via \(\texttt{approx}\), (ii) bandwidth-aware through \(D_{ji}/B_{ba}\), and (iii) heterogeneity-aware via \(t_{ia}\). While still myopic compared to MILP, it captures the key trade-offs that drive latency in federated fog.
+
+\subsection{Baseline 2: Genetic-Algorithm Metaheuristic DAG Scheduler across Federated Fog}
+\label{sec:baseline-ga}
+
+We employ a bandwidth-/data-aware GA that explores task--node assignments and approximation levels, then evaluates each candidate with exact communication delays \(c_{ji}^{ba}=D_{ji}/B_{ba}\).
+
+\subsubsection{Encoding}
+Each individual encodes:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Fog assignment vector} \(\mathbf{f}\): entry \(f(i)\in F\) with \(P_{i\,f(i)}=1\).
+    \item \textbf{Execution fraction vector} \(\boldsymbol{\ell}\): entry \(\ell_i\in[0,1]\) (maps to \(l_{i\,f(i)}\)).
+\end{itemize}
+
+\subsubsection{Fitness (Bandwidth/Data-Aware)}
+Given \(\mathbf{f},\boldsymbol{\ell}\), we compute completion times by a forward pass:
+\[
+M_{i\,f(i)}=\max_{T_j\in \text{in}_i}\!\Big(y_j+\tfrac{D_{ji}}{B_{f(j),\,f(i)}}\Big),\quad
+y_i=M_{i\,f(i)}+t_{i\,f(i)}\ell_i.
+\]
+Let \(Y_{\max}=\max_i y_i\). The fitness to \emph{maximize} is
+\[
+\Phi=\frac{1}{n}\sum_i A_i \ell_i\;-\;\lambda_1\!\cdot\![Y_{\max}>t_{\max}]\;-\;\lambda_2\!\cdot\!\frac{(Y_{\max}-t_{\max})_+}{t_{\max}},
+\]
+with large \(\lambda_1\) and moderate \(\lambda_2\); infeasible assignments (e.g., \(P_{i\,f(i)}=0\)) receive \(\Phi=-\infty\).
+
+\subsubsection{Genetic Operators}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Selection:} tournament or roulette.
+    \item \textbf{Crossover:} one-point on \(\mathbf{f}\) and \(\boldsymbol{\ell}\) (independently).
+    \item \textbf{Mutation:} reassign \(f(i)\) within \(\{a:P_{ia}=1\}\); jitter \(\ell_i\leftarrow\text{clip}(\ell_i+\mathcal{N}(0,\sigma^2))\).
+    \item \textbf{Repair:} if a parent of \(T_i\) maps to a slow link (small \(B\)) and \(D_{ji}\) is large, bias mutation toward co-locating \(T_i\) with \(T_j\) to reduce \(\tfrac{D_{ji}}{B}\).
+\end{itemize}
+
+\subsubsection{Pseudocode}
+\begin{algorithm}[t]
+\caption{Genetic Algorithm for Bandwidth/Data-Aware Fog Scheduling}
+\label{alg:genetic}
+\begin{algorithmic}[1]
+\STATE initialize population with feasible \((\mathbf{f},\boldsymbol{\ell})\) (respect \(P_{ia}\)), using co-location seeds for large \(D_{ji}\)
+\REPEAT
+    \STATE evaluate $\Phi$ via forward pass using $c_{ji}^{ba}=D_{ji}/B_{ba}$
+    \STATE select parents; apply crossover and mutation; repair infeasibilities
+    \STATE elitism: keep top-$k$ individuals
+\UNTIL{termination (max iters or no improvement)}
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Discussion.} The GA explores global structures (e.g., grouping high-traffic subgraphs) that the greedy may miss, while preserving feasibility and bandwidth-awareness in each fitness evaluation. In practice, a few dozen generations with modest population sizes provide strong solutions at polynomial cost and complement the LP/MILP and randomized rounding approaches.

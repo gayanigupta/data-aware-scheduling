@@ -1,0 +1,67 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DBDBD 2026 - Official Template for Abstract Submission
+% Filled in for the federated-fog scheduling paper.
+% One page maximum INCLUDING references.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[11pt]{article}
+
+\usepackage{amssymb,amsmath,amsfonts,latexsym,graphicx}
+\usepackage[left=2.5cm,right=2.5cm,top=1.5cm,bottom=2.5cm,footnotesep=0.5cm]{geometry}
+
+\setlength{\oddsidemargin}{0.5cm}
+\setlength{\textwidth}{15.5cm}
+\setlength{\topmargin}{-1.5cm}
+\setlength{\textheight}{22cm}
+
+\pagestyle{empty}
+
+\begin{document}
+
+\begin{center}
+    \Large{\textbf{Data-Aware Scheduling of Approximate DAG Workflows in Federated Fog Systems}}
+
+    \vspace{0.5cm}
+
+    \large{Gayani Gupta$\,^1$, Amisha Gupta$\,^1$, Mohsen Amini Salehi$\,^1$,
+           Antonio Fern\'andez Anta$\,^2$, Sanjukta Bhowmick$\,^3$, and Jose Aguilar$\,^4$}
+
+    \vspace{0.5cm}
+
+    \normalsize
+
+    $^1$ School of Computing and Informatics, University of Louisiana at Lafayette, USA\\
+    \texttt{\{--- fill in emails ---\}}
+
+    $^2$ IMDEA Networks Institute, Madrid, Spain\\
+    \texttt{--- fill in ---}
+
+    $^3$ Dept.\ of Computer Science and Engineering, University of North Texas, USA\\
+    \texttt{--- fill in ---}
+
+    $^4$ --- fill in affiliation ---\\
+    \texttt{--- fill in ---}
+
+    \vspace{0.6cm}
+
+\end{center}
+
+% Text of the abstract (one page maximum, including references)
+Data-intensive workflows such as disaster-response pipelines exchange large
+intermediate results between dependent tasks, so where a task runs determines
+whether its input arrives in time. We formulate this as a mixed-integer
+program that jointly decides task placement across federated fog nodes and
+the degree of approximate execution each task performs, subject to per-edge
+data sizes, per-link bandwidths, node eligibility, and a workflow deadline.
+We derive scheduling algorithms from the formulation---an exact MILP solver,
+a randomized rounding of its linear relaxation, a data-aware greedy heuristic,
+and a genetic algorithm---and evaluate them on synthetic DAGs of varying size,
+deadline slack, federation size, and node-failure rate. The relaxation tracks
+the MILP within a few percent of accuracy at a fraction of its cost, and the
+data-aware greedy method outperforms placement-agnostic baselines. The work
+extends our earlier conference study~\cite{gupta2025efficient} with the full
+formulation, its linearization and proofs, and a failure-resilience analysis.
+
+\bibliographystyle{plain}
+\bibliography{cas-refs}
+
+\end{document}

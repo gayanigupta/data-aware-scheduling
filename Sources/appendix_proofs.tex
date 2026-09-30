@@ -1,0 +1,246 @@
+\noindent\textit{Notation.} This appendix retains the index convention of the original
+formulation, in which a task executed on fog $f'$ transfers to a task executed on fog $f$ with
+delay $c_{ji}^{f'f}$. This is identical to the convention $c_{ji}^{ba}$ used in
+Section~\ref{sec:system_model} under the substitution $f' \mapsto f_b$, $f \mapsto f_a$; likewise
+$e_{jf'} \equiv e_{jb}$ and $M_{if} \equiv M_{ia}$.
+
+% \section{Tasks can be run in at most one fog }
+% In this section, we consider circumstances where the same task cannot be replicated in multiple fogs and each task only executes once. 
+
+\subsection{Assumptions}
+\begin{itemize}[leftmargin=*]
+    \item Tasks are not preemptive, i.e., a task cannot be started in one fog, stopped, moved to another fog, and continued.
+    \item Tasks can be run in at most one fog.
+    \item A task can receive data from all its in-neighbors  according to the DAG simultaneously.
+    \item Running multiple tasks concurrently in the same fog does not affect their running time.
+    \item Accuracy of a workflow is driven by the lowest accuracy of the tasks in that workflow. \textit{Future work idea}: calculating the accuracy of the entire workflow as a convolution of accuracies of tasks in that workflow 
+\end{itemize}
+
+
+\subsection{Parameters}
+\begin{itemize}[leftmargin=*]
+    \item $t_{if} \geq 0$: Time to run $T_i$ on fog $f_f$
+    \item $A_i > 0$: Accuracy if $T_i$ is run completely
+    \item $t_{\max} >0$: Max completion time
+    \item $c_{ji}^{f'f} \geq 0$: Communication time from $T_j$ to $T_i$, where $T_i$ is executed in fog $f$ and $T_j$ is executed in fog $f'$
+    \item $P_{if} \in \{0,1\}$ : Binary variable indicating if task $T_i$ is permitted to be executed in fog $f_f$ 
+\end{itemize}
+Notes: 
+\begin{itemize}[leftmargin=*]
+    \item $I[P]$ is the indicator function whose value is $0$ if predicate $P=False$ and $1$ if $P=True$.
+    \item $\text{in}_i$ is the set of in-neighbor tasks of $T_i$.
+\end{itemize}
+
+\subsection{Variables}
+\begin{itemize}[leftmargin=*]
+    \item $l_{if} \in [0,1]$: Fraction of $T_{i}$ computed in fog $f_f$
+    \item $e_{if} \in \{0,1\}$: Whether $T_{i}$ is assigned to fog $f_f$
+    \item $y_{i} \in [0,t_{\max}]$: Min time to complete $T_i$ across all fogs
+    \item $M_{if} \in [0,t_{\max}]$: Soonest start time of $T_i$ on fog $f_f$ for each task i 
+\end{itemize}
+
+\subsection{Basic Formulation}
+\label{sec:basic}
+
+Objective:
+\begin{equation}
+\label{eq:objective}
+    \text{Maximize } \sum_i A_i \max_f \{ l_{if} \}
+\end{equation}
+Subject to
+\begin{align}
+    &e_{if} \geq I[l_{if}>0], \quad \forall i, f \label{eq:lvse} \\ 
+    &\sum_f e_{if} = 1, \quad \forall i \label{eq:onefog} \\
+    &M_{if} = \max_{j \in \text{in}_i} \left( y_j + \sum_{f'} e_{jf'}  \cdot c_{ji}^{f'f} \right), \quad \forall f, i: \text{in}_i \neq \emptyset
+    \label{eq:resMif-noempty}\\
+    &M_{if} = 0, \quad \forall f, i: \text{in}_i = \emptyset
+    \label{eq:resMif} \\
+%    &y_i = \min_f \{ M_{if} + t_{if} l_{if} \} , \quad \forall i  \\
+    &y_i = \sum_f e_{if} \left( M_{if} + t_{if} l_{if} \right) , \quad \forall i  \label{eq-36}\\
+%    &y_i = \sum_f e_{if} \left( \max_{j \in \text{in}_i} \left( y_j + \sum_{f'} e_{jf'}  \cdot c_{ij}^{f'f} \right) + t_{if} l_{if} \right) , \quad \forall i  \\
+    &y_i \leq t_{\max}, \quad \forall i \label{eq:yitmax} \\
+    &e_{if} \leq P_{if}, \quad \forall i,f \label{eq:permitted}
+\end{align}
+
+\subsection{Proof of Correctness of Basic Formulation}
+
+Let us consider a solution to the optimization problem defined in \Cref{sec:basic}. Observe that the solution is completely determined by the values of variables $l_{if}$ and $e_{if}, \forall i,f$.
+Let us show the properties of the solution $(l_{if}, e_{if})$.
+
+\begin{lemma}
+\label{lem:pif}
+        No task $T_i$ is assigned to fog $f$ if $P_{if}=0$. I.e., $\forall i,f$, if $P_{if}=0$ then $e_{if} = 0$.
+\end{lemma}
+\begin{proof}
+If $P_{if}=0$, from \Cref{eq:permitted} $e_{if} \leq P_{if}= 0$. Since $e_{if} \in \{0,1\}$, it must hold that $e_{if} = 0$. 
+\end{proof}
+
+\begin{lemma}
+\label{lem:eif}
+    Every task $T_i$ is assigned to exactly one fog. I.e., $\forall i$, exactly one variable $e_{if}=1, \forall f$.
+\end{lemma}
+\begin{proof}
+From \Cref{eq:onefog}, and the fact that $e_{if} \in \{0,1\}, \forall f$, 
+we have one variable $e_{if}=1$. 
+\end{proof}
+
+\begin{lemma}
+\label{lem:lifnozero}
+For each task $T_i$ at most one variable $l_{if}$ is larger than 0. I.e., $\forall i$, at most one variable $l_{if} > 0, \forall f$.
+\end{lemma}
+\begin{proof}
+\Cref{lem:eif} and \Cref{eq:lvse} imply that at most one $l_{ij}>0$.
+\end{proof}
+
+\begin{lemma}
+\label{lem:ewhenl}
+For each task $T_i$ and fog $f$, if $l_{if}>0$ then $e_{if} = 1$.
+\end{lemma}
+\begin{proof}
+\Cref{lem:eif} and \Cref{eq:lvse} imply that at most one $l_{ij}>0$.
+\end{proof}
+
+\begin{lemma}
+$M_{if}$ is the time task $T_i$ can start if assigned to fog $f$, and
+$y_i$ is the time to approximate task $T_i$ to level $l_{if}$ in the fog $f$ to which it was assigned ($e_{if}=1$).
+\end{lemma}
+\begin{proof}
+We use induction on the maximal distance to a source. A task $T_i$ is a source if its set of in-neighbors, $\text{in}_i$, is empty. 
+
+The base case is when a task is at a distance $0$ from a source (i.e., it is a source itself). For a source task $T_i$, we have $\text{in}_i = \emptyset$ and hence $M_{if}=0, \forall f$, from \Cref{eq:resMif}. 
+Then, let us assume $T_i$ is assigned to fog $f$, i.e, $e_{if}=1$. From \Cref{lem:eif} it holds that $e_{if'}=0, \forall f' \neq f$. Hence, \Cref{eq-36} becomes
+\begin{align}
+    y_i &= M_{if} + t_{if} l_{if}\\ 
+    &= t_{if} l_{if},
+\end{align}
+which is the time to approximate task $T_i$ to level $l_{if}$ in fog $f$.
+
+Let us now assume by induction that for all tasks $T_j$ whose maximal distance to a source is less than $k>0$, $M_{jf}$ is the time $T_j$ can start if assigned to fog $f$, and $y_j$ is the time to approximate task $T_j$ to level $l_{jf^*}$ in the fog $f^*$ to which it was assigned.
+
+Let us consider a task $T_i$ whose maximal distance to a source is $k>0$. Then, all the tasks in the set $\text{in}_i$ have maximal distance from a source smaller than $k$. Let us consider any $j \in \text{in}_i$ and assume $T_j$ was assigned to fog $f^*$ (i.e., $e_{jf^*}=1$). Then, if $T_i$ is assigned to fog $f$, it needs to wait until the output data from $T_j$ at $f^*$ is transferred to fog $f$. By induction hypothesis, $y_j$ is the time to approximate task $T_j$ to level $l_{jf^*}$ in fog $f^*$. Hence,  $T_i$ cannot be started before time 
+$y_j + c_{ji}^{f^*f}$. From \Cref{lem:eif} it holds that $e_{jf'}=0, \forall f' \neq f^*$. Hence, $c_{ji}^{f^*f} = \sum_{f'} e_{jf'}  \cdot c_{ji}^{f'f}$.
+
+Since this holds for all $j \in \text{in}_i$, the time $T_i$ can start if assigned to fog $f$ is
+$$
+M_{if} = \max_{j \in \text{in}_i} \left( y_j + \sum_{f'} e_{jf'}  \cdot c_{ji}^{f'f} \right)
+$$
+Moreover, if $T_i$ is assigned to fog $f$, then $e_{if}=1$ and $e_{if'}=0, \forall f' \neq f$, and the time to approximate task $T_i$ to level $l_{if}$ in the fog $f$ is
+\begin{align}
+    y_i &= \sum_{f'} e_{if'} \left( M_{if'} + t_{if'} l_{if'} \right) \\
+    &= M_{if} + t_{if} l_{if}
+\end{align}
+\end{proof}
+
+\begin{lemma}
+\label{lem:tmax}
+    All tasks complete by time $t_{\max}$.
+\end{lemma}
+\begin{proof}
+    The claim follows from the previous lemma and \Cref{eq:yitmax}.
+\end{proof}
+
+\begin{observation}
+If some task $T_i$ has $l_{if}=0$ for all fogs $f$, the solution has accuracy $0$. I.e., $(\exists i: \forall f, l_{if}=0) \implies (\min_i \{A_i \max_f \{ l_{if} \} \} = 0)$.
+\end{observation}
+
+Observe that the above situation in which some task $T_i$ is not run in any fog is only possible in unfeasible instances of the problem (e.g., one in which some task is not permitted in any fog, or when all the communication times $c_{ji}^{f'f}$ for a task $T_i$ are larger than $t_{\max}$). We say that a solution $(l_{ij}^*, e_{ij}^*)$ is \textit{feasible} if
+\begin{itemize}
+    \item If $P_{if}=0$ then $e_{if}^*=0$.
+    \item For each task $T_i$, $l_{if}^*>0$ for at most one fog $f$.
+    \item For each task $T_i$, $e_{if}^*=1$ for exactly one fog $f$.
+    \item For each task $T_i$ and fog $f$, if $l_{if}^* >0$ then $e_{if}^* = 1$.
+    \item All tasks complete by time $t_{\max}$.
+\end{itemize} 
+
+\begin{lemma}
+\label{lem:feasible}
+If there is a feasible solution $(l_{ij}^*, e_{ij}^*)$ with accuracy $\min_i \{A_i \max_f \{ l_{if}^* \} \}$ larger than $0$, then $\min_i \{A_i \max_f \{ l_{if} \} \} \geq \min_i \{A_i \max_f \{ l_{if}^* \} \} >0$.
+\end{lemma}
+\begin{proof}
+From the definition of feasible solution, $(l_{ij}^*, e_{ij}^*)$ satisfies the constraints \Cref{eq:lvse}-\Cref{eq:permitted}. Then, since $(l_{ij}, e_{ij})$ is the solution that satisfies constraints \Cref{eq:lvse}-\Cref{eq:permitted} and maximized the objective (\Cref{eq:objective}) it must hold that $\min_i \{A_i \max_f \{ l_{if} \} \} \geq \min_i \{A_i \max_f \{ l_{if}^* \} \}$.
+\end{proof}
+
+\begin{theorem}
+The solution $(l_{ij}, e_{ij})$ of the basic formulation is feasible and maximizes the minimum accuracy for all tasks.
+\end{theorem}
+\begin{proof}
+From \Cref{lem:pif} to \Cref{lem:tmax} the solution $(l_{ij}, e_{ij})$ is feasible, and from \Cref{lem:feasible} there is no other feasible solution with larger accuracy.
+\end{proof}
+
+\subsection{Linearization of the Problem Formulation}
+
+Simplifications: 
+Equation \ref{eq-36}:
+$$
+y_i = \sum_f e_{if} \left( M_{if} + t_{if} l_{if} \right) , \quad \forall i
+$$ 
+can become 
+$$
+y_i = \sum_f e_{if} M_{if} + \sum_f t_{if} l_{if} , \quad \forall i
+$$ 
+because $e_{if}=1$ if and only if $l_{if}>0$.
+
+Then, we can add a variable $z_{if}=e_{if} M_{if}$, so that
+$$
+y_i = \sum_f z_{if} + \sum_f t_{if} l_{if} , \quad \forall i
+$$ 
+
+Then, $z_{if}=e_{if} M_{if}$ can be replaced by
+\begin{align}
+    z_{if} \leq t_{\max} \cdot e_{if} \\
+    z_{if} \leq M_{if} \\
+    z_{if} \geq M_{if} - (1 - e_{if}) t_{\max}
+\end{align}
+
+\subsection{Parameters}
+\begin{itemize}[leftmargin=*]
+    \item $t_{if}$: Time to run $T_i$ on fog $f$
+    \item $A_i$: Accuracy if $T_i$ is run completely
+    \item $t_{\max}$: Max completion time
+    \item $c_{ij}^{f'f}$: Communication time between $T_i$ and $T_j$, where $T_i$ is executed in fog $f$ and $T_j$ is executed in fog $f'$
+    \item $P_{if} \in \{0,1\}$ : Binary variable indicating if task $T_i$ is permitted to be executed in fog $f$
+\end{itemize}
+Notes: 
+\begin{itemize}[leftmargin=*]
+    \item $I[P]$ is the indicator function whose value is $0$ if predicate $P=False$ and $1$ if $P=True$.
+    \item $\text{in}_i$ is the set of in-neighbors of $T_i$.
+\end{itemize}
+
+\subsection{Variables}
+\begin{itemize}[leftmargin=*]
+    \item $l_{if} \in [0,1]$: Fraction of $T_{i}$ computed in fog $f$
+    \item $e_{if} \in \{0,1\}$: Whether $T_{i}$ is executed in fog $f$
+    \item $y_{i} \in [0,t_{\max}]$: Min time to complete $T_i$ across all fogs
+    \item $M_{if} \in [0,t_{\max}]$: Soonest start time of $T_i$ on fog $f$ for each task 
+    \item $z_{if}$: auxilliary variable representing the product $z_{if}=e_{if} M_{if}$ 
+\end{itemize}
+
+\subsection*{Objective}
+\begin{equation}
+    \text{Maximize } \sum_i A_i \sum_f l_{if}  
+\end{equation}
+\subsection*{Constraints}
+
+\begin{align}
+    &l_{if} \leq e_{if}, \forall i, f \\ 
+    &\sum_f e_{if} \leq 1, \forall i \\
+    &M_{if} \geq y_j + \sum_{f'} e_{jf'} \cdot c_{ff'}^{ij}, \forall i, f, f', j \in in_i  \\
+    &y_i = \sum_f z_{if} + \sum_f t_{if} l_{if} , \quad \forall i \\
+%    y_i \leq M_{if} + t_{if} \cdot l_{if}, \forall i, f   \\
+    &z_{if} \leq t_{\max} \cdot e_{if}, \forall i,f\\
+    &z_{if} \leq M_{if}, \forall i,f \\
+    &z_{if} \geq M_{if} - (1 - e_{if}) t_{\max}, \forall i,f \\
+    &y_i \leq t_{\max}, \forall i \\
+    &l_{if} \leq P_{if}, \forall i,f 
+\end{align}
+
+\begin{theorem}
+    The linearized formulation has the same solution as the basic formulation.
+\end{theorem}
+\begin{proof}
+    Linear transformations do not change the solution of a problem. In the context of optimization problems like the resource allocation problem in fog computing, transforming constraints using linear techniques, such as replacing non-linear constraints with linear approximations (as done in the linearized formulation), does not alter the feasible region or the optimal solution.
+    
+    The basic formulation and the linearized formulation share the same set of feasible solutions because the transformations applied to the constraints are equivalent in terms of the solutions they admit. Specifically, the transformation from the original constraint \( x_i \leq \max_j \{l_{ij}\} \) to \( x_i \leq \sum_f l_{if} \) using binary variables \( P_{if} \) preserves the feasibility and optimality conditions of the original problem.
+    
+    Therefore, the linearized formulation accurately represents the constraints of the basic formulation and yields identical optimal solutions. Thus, the theorem holds true.
+\end{proof}

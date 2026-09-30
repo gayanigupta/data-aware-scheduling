@@ -1,0 +1,89 @@
+\section{System Model and Optimisation Problem}
+\label{sec:system_model}
+
+\subsection{Compute-Continuum Execution Context}
+
+We consider a Compute Continuum in which edge sources, a federated fog tier, and optional cloud/HPC resources cooperate to execute a data-intensive scientific workflow. Edge resources collect sensor data and can execute immediate acquisition functions. The federated fog tier is the primary execution target for latency-sensitive DAG tasks. Cloud and HPC resources are treated as complementary, higher-capacity resources that can be represented in the resource set when their communication delay is compatible with a task's deadline. This abstraction allows the same workflow description to be evaluated under a local-only, federated-fog, or broader continuum deployment without changing the semantics of the DAG.
+
+Let $T=\{T_1,T_2,\ldots,T_n\}$ be the set of workflow tasks and let $F=\{f_1,f_2,\ldots,f_m\}$ be the set of available execution resources. Each task is assigned to exactly one resource during a run. The resource set may include fog nodes directly and can include a cloud or HPC endpoint when its capability, network path, access policy, and deadline compatibility make it an eligible placement. This paper evaluates the federated fog case because it captures the most constrained, latency-sensitive portion of the continuum.
+
+The workflow is a DAG $G=(T,E)$. An edge $(T_j,T_i)\in E$ means that $T_i$ needs an output produced by $T_j$ before it can begin. The edge carries $D_{ji}$ units of data. When predecessor $T_j$ executes on resource $f_b$ and successor $T_i$ executes on resource $f_a$, the inter-resource communication delay is determined by the available bandwidth $B_{ba}$:
+\begin{equation}
+ c_{ji}^{ba}=\begin{cases}
+ 0, & \text{if } f_b=f_a,\\[2pt]
+ \dfrac{D_{ji}}{B_{ba}}, & \text{if } f_b\neq f_a.
+ \end{cases}
+ \label{eq:continuum_comm_delay}
+\end{equation}
+
+Equation~\ref{eq:continuum_comm_delay} is the key link between data movement and scheduling. It makes a placement sensitive both to workflow-data volume and to the connectivity of the selected execution resources. It also accommodates streaming or in-transit processing: an implementation may update $D_{ji}$ and $B_{ba}$ as a stream evolves, then re-run the placement logic with the current resource state.
+
+\subsection{Assumptions and Metadata}
+
+The scheduling model retains the following assumptions. Tasks are non-preemptive once scheduled on a resource; each task executes on at most one resource; task dependencies are respected; and predecessor outputs can be received concurrently when network resources permit. Each task can be executed approximately, expressed as a fraction of its full computation. The workflow is accompanied by portable metadata that records the task graph, expected data sizes, candidate resource types and capabilities, permitted placements, deadlines, and configuration version. This metadata enables an orchestrator to reproduce the conditions used by a scheduling run and makes the model portable across Compute-Continuum deployments.
+
+Table~\ref{tab:continuum_variables} summarises the primary notation. The remaining symbols in the original formulation and its proof are retained verbatim in Appendix~\ref{app:original_proofs}.
+
+\begin{table*}[t]
+\centering
+\caption{Parameters and decision variables in the data- and bandwidth-aware workflow model.}
+\label{tab:continuum_variables}
+\small
+\begin{tabular}{p{0.18\textwidth}p{0.72\textwidth}}
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+$T_i$ & Workflow task $i$; a DAG node representing a scientific computation, data transformation, inference, simulation, or control function. \\
+\addlinespace
+$f_a$ & Candidate execution resource $a$, such as a fog node or an eligible cloud/HPC endpoint. \\
+\addlinespace
+$t_{ia}$ & Time required to execute task $T_i$ completely on resource $f_a$. \\
+\addlinespace
+$A_i$ & Accuracy achieved when task $T_i$ receives its full computation. \\
+\addlinespace
+$D_{ji}$ & Data transferred from predecessor $T_j$ to successor $T_i$. \\
+\addlinespace
+$B_{ba}$ & Available bandwidth from resource $f_b$ to $f_a$. \\
+\addlinespace
+$c_{ji}^{ba}$ & Communication delay between $T_j$ on $f_b$ and $T_i$ on $f_a$. \\
+\addlinespace
+$P_{ia}$ & Binary eligibility indicator; it is one only if $T_i$ is permitted to execute on $f_a$. \\
+\addlinespace
+$l_{ia}$ & Fraction of task $T_i$ executed on resource $f_a$ for approximate computing. \\
+\addlinespace
+$e_{ia}$ & Binary assignment variable; it is $1$ if and only if $T_i$ is assigned to $f_a$. \\
+\addlinespace
+$M_{ia}$ and $y_i$ & Earliest start time of $T_i$ on $f_a$ and completion time of $T_i$, respectively. \\
+\addlinespace
+$t_{\max}$ & Workflow deadline. \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Data- and Bandwidth-Aware Formulation}
+
+The optimisation objective is to maximise achieved workflow accuracy while satisfying placement, precedence, communication, and deadline constraints. A compact version of the original model is:
+\begin{equation}
+ \text{Maximise}\qquad \frac{1}{n}\sum_{T_i\in T} A_i\max_{f_a\in F}\{l_{ia}\}.
+ \label{eq:continuum_objective}
+\end{equation}
+
+The key constraints are
+\begin{align}
+ e_{ia} &\geq l_{ia}, &&\forall T_i\in T, f_a\in F, \label{eq:continuum_fraction_assignment}\\
+ \sum_{f_a\in F}e_{ia} &=1, &&\forall T_i\in T, \label{eq:continuum_one_assignment}\\
+ M_{ia} &=\max_{T_j\in\mathrm{in}_i}\left(y_j+\sum_{f_b\in F} e_{jb}c_{ji}^{ba}\right), &&\forall T_i\in T, f_a\in F, \label{eq:continuum_start_time}\\
+ y_i &=\sum_{f_a\in F}e_{ia}\left(M_{ia}+t_{ia}l_{ia}\right), &&\forall T_i\in T, \label{eq:continuum_completion_time}\\
+ y_i &\leq t_{\max}, &&\forall T_i\in T, \label{eq:continuum_deadline}\\
+ e_{ia} &\leq P_{ia}, &&\forall T_i\in T, f_a\in F. \label{eq:continuum_eligibility}
+\end{align}
+
+For source tasks, $\mathrm{in}_i=\emptyset$ and $M_{ia}=0$. Constraints~\ref{eq:continuum_fraction_assignment}--\ref{eq:continuum_eligibility} ensure that a nonzero execution fraction implies an assignment, every task obtains exactly one eligible placement, and its completion time includes the readiness of all predecessor data. The expression in Constraint~\ref{eq:continuum_start_time} is data- and bandwidth-aware through Equation~\ref{eq:continuum_comm_delay}. Large intermediate data objects and low-bandwidth links therefore reduce the attractiveness of a remote placement even when that resource has strong compute capability.
+
+\subsection{Complexity and Scalable Solution Strategy}
+
+The formulation contains binary assignment decisions coupled with DAG precedence and communication constraints. Even simplified scheduling problems on unrelated parallel machines are NP-hard \cite{lenstra1990approximation}; exact optimisation is therefore practical only for small or moderate instances. The purpose of the MILP is twofold: it gives a global benchmark for the reported experiments and establishes the complete set of constraints that scalable methods must respect. For larger workflows, the paper retains randomized rounding \cite{raghavan1987randomized}, a greedy scheduler, and a genetic algorithm. These methods use the same task, resource, bandwidth, and deadline metadata but trade exactness for practical scalability.
+
+\subsection{Continuum-Orchestration Interpretation}
+
+The model can be used by an orchestrator in a receding-horizon fashion. At a scheduling point, the orchestrator reads the current workflow state, resource eligibility, link bandwidth, and deadline budget. It then invokes the selected scheduler to produce a placement and execution-fraction plan. As new stream data arrive, a resource fails, or a cloud/HPC endpoint becomes unavailable, the metadata state is updated and the workflow can be re-evaluated. This mechanism does not claim a particular middleware implementation; it specifies the information and decision semantics needed by one.

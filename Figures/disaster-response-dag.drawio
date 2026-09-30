@@ -1,0 +1,74 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="dag" name="Disaster Response DAG">
+    <mxGraphModel dx="900" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="650" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Fog column -->
+        <mxCell id="foglbl" value="Fog nodes&#10;(bandwidth B&lt;sub&gt;ba&lt;/sub&gt; per link)" style="text;html=1;fontSize=10;fontColor=#666666;align=center;" vertex="1" parent="1">
+          <mxGeometry x="55" y="25" width="110" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg1" value="FG1" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="70" width="80" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg2" value="FG2" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="190" width="80" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg3" value="FG3" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="310" width="80" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg4" value="FG4" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="430" width="80" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="fg5" value="FG5" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="550" width="80" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="f12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;strokeColor=#666666;" edge="1" parent="1" source="fg1" target="fg2"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="f23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;strokeColor=#666666;" edge="1" parent="1" source="fg2" target="fg3"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="f34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;strokeColor=#666666;" edge="1" parent="1" source="fg3" target="fg4"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="f45" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;strokeColor=#666666;" edge="1" parent="1" source="fg4" target="fg5"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Task DAG -->
+        <mxCell id="t1" value="T1 — sensor data collection" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="340" y="60" width="200" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="t2" value="T2 — preprocessing &amp; feature extraction" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="340" y="180" width="200" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="t6" value="T6 — emergency response coordination" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="340" y="300" width="200" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="t3" value="T3 — disaster simulation&#10;(spill trajectory)" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="640" y="115" width="190" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="t5" value="T5 — decision support &amp; planning" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#1f78b4;fontColor=#0d2c54;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="640" y="295" width="190" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="t4" value="T4 — emergency alerts&#10;(shutdowns, response teams)" style="rounded=1;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#0d2c54;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="475" width="190" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- DAG edges with data labels -->
+        <mxCell id="e12" value="D&lt;sub&gt;12&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#0d2c54;fontSize=9;fontColor=#0d2c54;" edge="1" parent="1" source="t1" target="t2"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e16" value="D&lt;sub&gt;16&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#0d2c54;fontSize=9;fontColor=#0d2c54;" edge="1" parent="1" source="t1" target="t6"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e23" value="D&lt;sub&gt;23&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#0d2c54;fontSize=9;fontColor=#0d2c54;" edge="1" parent="1" source="t2" target="t3"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e26" value="D&lt;sub&gt;26&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#0d2c54;fontSize=9;fontColor=#0d2c54;" edge="1" parent="1" source="t2" target="t6"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e35" value="D&lt;sub&gt;35&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#0d2c54;fontSize=9;fontColor=#0d2c54;" edge="1" parent="1" source="t3" target="t5"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e65" value="D&lt;sub&gt;65&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#0d2c54;fontSize=9;fontColor=#0d2c54;" edge="1" parent="1" source="t6" target="t5"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e54" value="D&lt;sub&gt;54&lt;/sub&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#0d2c54;fontSize=9;fontColor=#0d2c54;" edge="1" parent="1" source="t5" target="t4"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Example assignments task->fog -->
+        <mxCell id="a1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;strokeColor=#1f78b4;" edge="1" parent="1" source="t1" target="fg1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;strokeColor=#1f78b4;" edge="1" parent="1" source="t2" target="fg3"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;strokeColor=#1f78b4;" edge="1" parent="1" source="t6" target="fg4"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;strokeColor=#1f78b4;" edge="1" parent="1" source="t4" target="fg5"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend" value="solid arrow = DAG edge carrying D&lt;sub&gt;ji&lt;/sub&gt; bytes&#10;dashed blue = task-to-node assignment e&lt;sub&gt;ia&lt;/sub&gt;&#10;dashed grey = inter-fog link (bandwidth B&lt;sub&gt;ba&lt;/sub&gt;)" style="rounded=1;html=1;fillColor=#f5f5f5;strokeColor=#cccccc;fontColor=#666666;fontSize=9;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="340" y="550" width="320" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

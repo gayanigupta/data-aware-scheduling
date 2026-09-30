@@ -1,0 +1,158 @@
+\section{Introduction}
+
+The convergence of high-performance computing (HPC), cloud, and edge infrastructures is changing the way eScience workflows are designed and executed. Rather than relying on a single execution site, a scientific workflow can now place latency-sensitive acquisition and inference tasks close to instruments, coordinate intermediate processing across fog resources, and use cloud or HPC capacity for computationally intensive stages. This \,\emph{Compute Continuum} creates an opportunity to couple responsiveness with scale, but it also turns workflow execution into a cross-layer scheduling problem. The workflow manager must account for heterogeneous compute capacities, data dependencies, network variability, failures, and the reproducibility requirements of scientific experiments.
+
+This challenge is especially evident in remote and infrastructure-constrained settings. Modern disaster management, industrial monitoring, and environmental analytics depend on distributed intelligent systems that must execute complex, time-critical pipelines near the data source. Applications such as real-time flood modelling, wildfire-spread prediction, structural-health monitoring, and evacuation optimisation are naturally represented as directed acyclic graphs (DAGs). However, cloud connectivity can be unreliable during the very events that make rapid analysis most important. In such settings, local edge and fog resources must make scheduling decisions autonomously while preserving a path to higher-capacity cloud and HPC resources when they are available \cite{wang2021adaptive,dragoni2017microservices}.
+
+Federated fog computing provides a practical execution tier within this continuum. By interconnecting nearby fog systems, federation supplies elasticity beyond an isolated fog node without forcing all data to cross a distant wide-area network \cite{mattia2023fogcontrol,fgcs2024}. The resulting environment is heterogeneous: task execution times differ across resources, data must traverse links with different bandwidths, and resource availability can change because of failures or workload fluctuations. These properties make placement decisions intrinsically data-aware and bandwidth-aware. A policy that only balances computation can incur large communication delays, congest critical links, or violate workflow deadlines \cite{salehi2016robust}.
+
+This paper presents a data- and bandwidth-aware optimisation framework for approximate DAG execution across a federated fog tier of the Compute Continuum. The framework combines a mixed-integer linear programming (MILP) formulation with a randomized relaxation and two practical baseline schedulers. The formulation jointly models task placement, execution fraction, precedence constraints, communication delay, and deadline compliance. The accompanying algorithms make the same workload and network information available to scalable scheduling methods. The result is a workflow-oriented contribution that can serve latency-sensitive edge/fog stages while remaining compatible with upstream cloud and HPC execution.
+
+\subsection{Compute-Continuum Workflow Motivation}
+
+The execution model considered in this study distinguishes four complementary roles. Edge devices and sensors generate streams and perform immediate acquisition. Federated fog nodes run deadline-sensitive DAG tasks, coordinate nearby resources, and transfer intermediate data only when the resulting latency is justified. Cloud and HPC systems provide elastic capacity for global optimisation, large simulation campaigns, archival processing, and training workloads that are not suitable for the constrained fog tier. This separation does not require every workflow task to traverse every tier; instead, it allows the scheduler to make placement decisions based on the data location, task deadline, resource capability, and inter-tier communication cost.
+
+The design is relevant to high-performance scientific workflows because scientific pipelines frequently combine short control-loop stages with larger batch or ensemble stages. The same application may therefore need to preserve low-latency response locally while sending selected checkpoints, derived features, or nonurgent tasks to more powerful resources. The proposed DAG model captures these dependencies explicitly. Data size on each DAG edge and bandwidth on every resource link determine the communication component of a candidate placement. This view makes the federated fog tier an interoperable component of a broader Compute Continuum rather than a standalone deployment.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  scale=0.94, transform shape,
+  font=\small,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=8mm, inner sep=4pt},
+  tier/.style={box, fill=black!4, minimum width=29mm, minimum height=15mm},
+  ctrl/.style={box, fill=black!8, minimum width=42mm},
+  store/.style={box, fill=black!2, minimum width=41mm, minimum height=12mm},
+  ar/.style={-{Latex[length=2mm]}, thick},
+  dbl/.style={{Latex[length=2mm]}-{Latex[length=2mm]}, thick, dashed}
+]
+\node[ctrl] (orc) {\textbf{Workflow Orchestrator}};
+\node[ctrl, below=7mm of orc] (sch)
+  {\textbf{Scheduler}\\[1pt]\footnotesize MILP $\vert$ LP relaxation $\vert$ greedy $\vert$ GA};
+\draw[ar] (orc) -- node[right=1mm, font=\scriptsize, align=left]
+  {workflow descriptor:\\ $T$, edges $(T_j,T_i)$, $D_{ji}$, $t_{\max}$} (sch);
+
+\node[tier, below left=13mm and 26mm of sch] (edge)
+  {\textbf{Edge tier}\\\footnotesize data capture,\\\footnotesize initial processing};
+\node[tier, below=13mm of sch] (fog)
+  {\textbf{Federated Fog tier}\\\footnotesize \emph{modelled and}\\\footnotesize \emph{evaluated here}};
+\node[tier, below right=13mm and 26mm of sch] (cloud)
+  {\textbf{Cloud / HPC tier}\\\footnotesize large-scale storage,\\\footnotesize HPC analytics};
+
+\draw[ar] (sch) -- node[left=1mm, font=\scriptsize] {$e_{ia}, l_{ia}$} (fog);
+\draw[ar] (sch.south west) -- (edge.north);
+\draw[ar] (sch.south east) -- (cloud.north);
+\draw[dbl] (edge) -- node[below, font=\scriptsize] {$c_{ji}^{ba}=D_{ji}/B_{ba}$} (fog);
+\draw[dbl] (fog)  -- node[below, font=\scriptsize] {$c_{ji}^{ba}=D_{ji}/B_{ba}$} (cloud);
+\begin{scope}[on background layer]
+  \node[draw, dashed, thick, rounded corners=3pt, fit=(fog), inner sep=3pt] {};
+\end{scope}
+
+\node[store, below left=14mm and 4mm of fog] (meta)
+  {\textbf{Metadata Repository}\\[1pt]\footnotesize workflow + resource descriptors;\\
+   \footnotesize $D_{ji}$, $B_{ba}$, $t_{ia}$, $A_i$, $P_{ia}$};
+\node[store, below right=14mm and 4mm of fog] (prov)
+  {\textbf{Provenance Store}\\[1pt]\footnotesize run manifests: seed, placements,\\
+   \footnotesize metrics, hashes (RO-Crate)};
+\draw[ar] (meta.north) -- node[left=1mm, font=\scriptsize] {descriptors} (edge.south);
+\draw[ar] (fog.south) -- node[right=1mm, font=\scriptsize] {run record} (prov.north);
+\draw[dbl] (meta) -- (prov);
+\draw[ar] (meta.west) -- ++(-11mm,0) coordinate (fb) |- (orc.west);
+\node[left=0.5mm of fb, font=\scriptsize] {state};
+\end{tikzpicture}
+\caption{Positioning of the proposed scheduling model within a Compute-Continuum workflow
+architecture. The Orchestrator resolves a portable workflow descriptor together with current
+resource state; the Scheduler component is where the MILP, randomized relaxation, greedy and
+genetic methods of Sections~\ref{sec:system_model} and~\ref{sec:algorithms} are instantiated.
+Every tier crossing is priced by the same term $c_{ji}^{ba}=D_{ji}/B_{ba}$, so a remote tier is
+selected only when its capability advantage exceeds its transfer cost. The Metadata Repository
+and Provenance Store realise the descriptor separation and run-level provenance of
+Section~\ref{sec:reproducibility}. \emph{The dashed region indicates the tier modelled and
+evaluated in Section~\ref{performance_analysis}}; cloud and HPC tiers are represented in the
+model through the values of $t_{ia}$ and $B_{ba}$ rather than as distinct structural constructs.}
+\label{fig:compute_continuum_architecture}
+\end{figure*}
+
+\subsection{Workflow Model and Research Questions}
+
+Figure~\ref{fig:disaster_response_workflow} shows the motivating application. The workflow is represented as a DAG in which a node is a task and an edge denotes both a precedence relationship and the data transferred between tasks. The central research question is how to assign tasks to heterogeneous federated resources such that the workflow respects deadlines and communication constraints while maximising achieved accuracy. The study therefore addresses four linked questions: how data size and bandwidth change task placement; how a global optimisation model compares with scalable scheduling alternatives; how workflow scale and resource scale affect accuracy; and how the methods respond to workflow-node failures.
+
+Figure~\ref{fig:compute_continuum_architecture} shows the latency-sensitive portion of the execution environment. The scheduler receives task and resource metadata, including task execution requirements, data-dependency sizes, link bandwidths, and deadline requirements. This metadata-first representation also supports the reproducibility and interoperability practices described later in the paper. It creates a clear boundary between a portable workflow description and the dynamic resource state used for a specific execution.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/fig-002.png}
+\caption{DAG-based disaster-response workflow used as the motivating eScience application. The workflow includes data acquisition, feature extraction, anomaly detection, simulation, decision support, and emergency-response tasks with data dependencies across the federated fog tier.}
+\label{fig:disaster_response_workflow}
+\end{figure}
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+\begin{itemize}
+    \item It positions data- and bandwidth-aware DAG scheduling as a Compute-Continuum workflow problem in which federated fog provides the latency-sensitive execution tier and cloud/HPC resources provide higher-capacity complementary tiers.
+    \item It formulates task placement and approximate execution as a MILP that jointly captures task precedence, heterogeneous execution time, data-transfer size, inter-node bandwidth, permitted placements, and a workflow deadline.
+    \item It retains and evaluates a randomized relaxation, a bandwidth/data-aware greedy scheduler, and a genetic-algorithm scheduler as scalable alternatives to exact optimisation.
+    \item It provides a four-dimension performance comparison covering deadline flexibility, federated resource scale, DAG scale, and workflow-node failure resilience.
+    \item It specifies a FAIR-oriented reproducibility methodology based on portable workflow metadata, versioned configurations, input catalogues, output records, and provenance capture, without claiming release of artifacts that are not yet publicly available.
+\end{itemize}
+
+\subsection{Relationship to the Conference Version and Novelty of This Submission}
+\label{subsec:novelty}
+
+The combinatorial optimisation machinery in this paper is prior work. The mixed-integer
+formulation, its correctness proofs and linearisation, the randomized relaxation, and the greedy
+and genetic schedulers were introduced in our IEEE Cloud Summit paper~\cite{gupta2025efficient}
+and are reproduced here unchanged. What is new in this submission is the level at which the model
+is posed: task placement is reframed as an orchestration decision over a federated, multi-tier
+continuum, and the model's parameters are shown to constitute a portable, FAIR-compatible workflow
+description rather than solver input alone. Table~\ref{tab:novelty} states this division explicitly
+so that the boundary between inherited and new material is not left to inference.
+
+\begin{table}[t]
+\centering
+\caption{Delineation of material inherited from the conference version and material introduced in
+this submission.}
+\label{tab:novelty}
+\small
+\begin{tabular}{p{0.44\linewidth}p{0.48\linewidth}}
+\toprule
+\textbf{Inherited from the conference version} & \textbf{New in this submission} \\
+\midrule
+MILP formulation, correctness proofs (Lemmas~1--6, feasibility theorem), and linearisation &
+Compute-Continuum framing: placement posed as orchestration across federated edge, fog, cloud and
+HPC tiers rather than isolated fog scheduling (Section~\ref{sec:orchestration}) \\
+\addlinespace
+LP relaxation with randomized rounding &
+Scheduler-selection policy binding each method to an operational condition and a provenance record
+(Table~\ref{tab:orchestration_policy}) \\
+\addlinespace
+Bandwidth- and data-aware greedy heuristic &
+Adaptive execution and resilience loop preserving the non-preemptive assumption under resource
+failure and bandwidth degradation \\
+\addlinespace
+Genetic-algorithm metaheuristic &
+Streaming and in-transit interpretation: per-window re-estimation of $D_{ji}$ and $B_{ba}$, with
+transformation tasks made explicit on the data path \\
+\addlinespace
+Communication model $c_{ji}^{ba}=D_{ji}/B_{ba}$ and the accuracy--deadline trade-off via execution
+fraction $l_{ia}$ &
+Separation of a portable workflow descriptor from a deployment-specific resource descriptor, and
+the FAIR-principle mapping of $D_{ji}$, $B_{ba}$, $t_{ia}$, $A_i$, $P_{ia}$
+(Section~\ref{sec:reproducibility}, Table~\ref{tab:fair_mapping}) \\
+\addlinespace
+Simulation results across slack factor, resource scale, DAG scale and node failure &
+Related-work positioning against Compute-Continuum orchestrators, scientific workflow engines and
+reproducibility frameworks (Section~\ref{sec:related_work}); energy, cost and security expressed as
+resource-descriptor metadata rather than informal assumptions \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The contribution addresses several themes of this Special Issue directly: orchestration and
+resource-aware scheduling (Section~\ref{sec:orchestration}), resilience and adaptive execution
+(Sections~\ref{sec:orchestration} and~\ref{performance_analysis}), data streaming and in-transit
+processing (Section~\ref{sec:orchestration}), and workflow description and reproducibility
+(Section~\ref{sec:reproducibility}).
+
+The remainder of the paper reviews the related work, defines the system model and optimisation formulation, describes the reproducibility methodology, presents the retained scheduling algorithms, evaluates the reported simulation results, and provides the original formulation proofs in an appendix.

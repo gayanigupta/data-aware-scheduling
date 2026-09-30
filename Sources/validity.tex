@@ -1,0 +1,41 @@
+\section{Limitations and Threats to Validity}
+\label{sec:validity}
+
+The evaluation should be interpreted in light of the following limitations. First, the reported results are simulation-based. The simulator makes it possible to control workflow size, deadline slack, resource count, data-dependency behaviour, and failure rate, but it cannot reproduce every source of variation in a deployed edge--fog--cloud--HPC environment. Queueing effects, storage contention, wireless interference, runtime startup overhead, and site-specific security policy can alter the effective execution and communication times observed in practice. The workflow and resource descriptors proposed in Section~\ref{sec:reproducibility} are intended to make such conditions explicit in a future deployment study.
+
+Second, the four performance figures report comparative average-accuracy trends for the supplied scenarios. They support the stated comparison of MILP, Greedy, Relaxation, and Metaheuristic scheduling, but they do not provide confidence intervals, individual run traces, or statistical significance tests. A replication artifact should therefore publish the raw run-level results, random seeds, configuration profiles, and plotting scripts. This would enable an evaluator to reproduce the aggregates, quantify variation across workload instances, and test whether observed differences remain stable under alternative task graphs and resource models.
+
+Third, the model uses a simplified accuracy abstraction in which the execution fraction of a task represents its computational fidelity. This abstraction is useful for analysing approximate scheduling, but the relationship between partial computation and scientific accuracy is application-specific. In a real scientific workflow, different tasks may have nonlinear accuracy curves, error propagation may depend on the topology of the DAG, and particular control tasks may be non-approximable. A domain deployment should therefore replace the generic accuracy function with experimentally calibrated task-level models and should record those models as part of the workflow descriptor.
+
+Fourth, the Compute-Continuum extension is a scheduling and workflow-semantics contribution, not an evaluation of a specific orchestration platform. The paper explains how an orchestrator can map resource and provenance metadata to the retained methods, but it does not claim measured interoperability across named workflow languages, container runtimes, HPC schedulers, or cloud services. Future work should implement adapters for selected workflow systems, test data-format interoperability, and assess the overhead of provenance capture at runtime.
+
+Finally, the paper does not make  claims about energy, monetary cost, security, or privacy performance. These attributes are identified as policy hooks because a production deployment must consider them, but they were not measured in the supplied simulations. Extending the resource model with energy intensity, price, egress cost, data classification, and trust-boundary attributes is a promising direction. A rigorous evaluation should then report how these constraints trade off with the scheduling accuracy and deadline behaviour demonstrated in this study.
+
+
+\subsection{Replication Protocol for Future Deployment Studies}
+
+A future deployment study should evaluate the scheduler using a pre-registered experiment matrix. For each workflow class, the matrix should specify the DAG version, task-level fidelity model, input-data provenance, resource tiers, bandwidth profiles, failure-injection policy, deadline set, and selected scheduling methods. Each scenario should be repeated with recorded random seeds when it uses randomized rounding or evolutionary search. The study should retain both raw per-run outcomes and the aggregation procedure used to construct a figure. This protocol separates a scheduling improvement from a change in input data, resource state, or experimental configuration.
+
+The minimum validity controls are summarised in Table~\ref{tab:validity_controls}. They turn the limitations described above into an actionable checklist for an edge--fog--cloud--HPC deployment. The controls should be stored alongside the provenance record rather than supplied only in narrative documentation.
+
+\begin{table*}[t]
+\centering
+\caption{Validity controls for a future real-world Compute-Continuum replication study.}
+\label{tab:validity_controls}
+\small
+\begin{tabular}{p{0.23\textwidth}p{0.33\textwidth}p{0.34\textwidth}}
+\toprule
+\textbf{Threat} & \textbf{Replication control} & \textbf{Evidence to retain} \\
+\midrule
+Workload variation & Use versioned DAGs and multiple task-graph instances at each scale. & DAG descriptors, input hashes, task-fidelity curves, and scenario identifiers. \\
+\addlinespace
+Resource and network variation & Measure or emulate resource load, bandwidth, latency, and failure events. & Time-stamped resource snapshots, link traces, and failure-injection logs. \\
+\addlinespace
+Randomised scheduler variation & Repeat runs with recorded seeds and fixed configuration profiles. & Seed list, scheduler parameters, per-run metrics, and aggregation script. \\
+\addlinespace
+Deployment-policy variation & Record eligibility, data-governance, energy, cost, and security constraints. & Policy version, trust-boundary definitions, and excluded-resource rationale. \\
+\addlinespace
+Result-reporting variation & Generate plots directly from released tabular outputs. & Raw result table, plotting code, figure checksum, and rendered report. \\
+\bottomrule
+\end{tabular}
+\end{table*}
