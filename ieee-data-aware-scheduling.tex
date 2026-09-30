@@ -26,13 +26,14 @@
 
 \title{Data-Aware Scheduling of Approximate DAG Workflows in Federated Fog Systems}
 \author{
-\IEEEauthorblockN{Gayani Gupta\IEEEauthorrefmark{1}, Amisha Gupta\IEEEauthorrefmark{1},
-Mohsen Amini Salehi\IEEEauthorrefmark{1}, Antonio Fern\'andez Anta\IEEEauthorrefmark{2},
-Sanjukta Bhowmick\IEEEauthorrefmark{3}, Jose Aguilar\IEEEauthorrefmark{4}}
-\IEEEauthorblockA{\IEEEauthorrefmark{1}School of Computing and Informatics, University of Louisiana at Lafayette, USA \\ \emph{--- fill in emails ---}}
-\IEEEauthorblockA{\IEEEauthorrefmark{2}IMDEA Networks Institute, Madrid, Spain}
-\IEEEauthorblockA{\IEEEauthorrefmark{3}Dept.\ of Computer Science and Engineering, University of North Texas, USA}
-\IEEEauthorblockA{\IEEEauthorrefmark{4}\emph{--- fill in affiliation ---}}
+\IEEEauthorblockN{Gayani Gupta\IEEEauthorrefmark{1}, Amisha Gupta\IEEEauthorrefmark{2},
+Mohsen Amini Salehi\IEEEauthorrefmark{1}, Antonio Fern\'andez Anta\IEEEauthorrefmark{3},
+Sanjukta Bhowmick\IEEEauthorrefmark{1}, Jose Aguilar\IEEEauthorrefmark{4}}
+\IEEEauthorblockA{\IEEEauthorrefmark{1}Dept.\ of Computer Science and Engineering, University of North Texas, USA \\
+\texttt{\{gayani.gupta, mohsen.aminisalehi, sanjukta.bhowmick\}@unt.edu}}
+\IEEEauthorblockA{\IEEEauthorrefmark{2}University of California, Berkeley, USA}
+\IEEEauthorblockA{\IEEEauthorrefmark{3}IMDEA Networks Institute, Madrid, Spain \\ \texttt{antonio.fernandez@imdea.org}}
+\IEEEauthorblockA{\IEEEauthorrefmark{4}Universidad de Los Andes, M\'erida, Venezuela \\ \texttt{aguilar@ula.ve}}
 }
 
 \date{}
@@ -116,6 +117,13 @@ If task $T_j$ runs on node $f_b$ and its successor $T_i$ runs on node $f_a$, the
 \label{eq:comm}
 \end{equation}
 Equation~\eqref{eq:comm} is the heart of the model: placement is priced not only by how fast a node computes, but by how long the required data takes to reach it.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/disaster-response-dag.png}
+\caption{Example disaster-response workflow. Edge labels are data sizes $D_{ji}$; dashed arrows show an assignment $e_{ia}$ of tasks to federated fog nodes. Running a task off the node that produced its input pays the transfer delay of Eq.~\eqref{eq:comm}.}
+\label{fig:dag}
+\end{figure}
 
 \subsection{Assumptions}
 \begin{itemize}
