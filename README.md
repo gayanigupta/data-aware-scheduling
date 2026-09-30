@@ -14,7 +14,8 @@ Set **`ieee-data-aware-scheduling.tex`** as the main document in Overleaf
 (plain `article` class per the official template).
 
 Before submitting, confirm the author list, affiliations, and emails in the
-`\author` block (three `--- fill in ---` placeholders remain).
+`\author` block, and replace the repository URL placeholder in the
+Reproducibility paragraph once the GitHub repo exists.
 
 ## Project Structure
 
@@ -25,7 +26,8 @@ Before submitting, confirm the author list, affiliations, and emails in the
 | `cas-refs.bib` | Bibliography shared by both documents. |
 | `IEEEtran.cls` | Official IEEE class file (V1.8b, CTAN) for local builds. |
 | `Figures/` | All figures used by the paper (`perf_*` results + the two draw.io diagrams and their PNG exports). |
-| `code/fogsim.py` | The simulator: instance generation, MILP / LP-rounding / greedy / GA schedulers, sweep and plot CLI. |
+| `code/fogsim.py` | CLI entry point (`gen` / `sweep` / `plot`). |
+| `code/fogsim/` | Simulator package: `instance.py` (DAG/federation generation), `milp.py` (MILP + LP relaxation via HiGHS), `rounding.py`, `greedy.py`, `ga.py` (the three scalable schedulers), `experiments.py` (sweeps and figures). |
 | `code/make_figures.py` | Regenerates the two architecture/DAG diagrams. |
 | `data/instances/` | Generated workflow instances (JSON). |
 | `data/results/` | Sweep CSVs and rendered result figures. |
