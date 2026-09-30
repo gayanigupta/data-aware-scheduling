@@ -300,7 +300,7 @@ All experiments use a custom discrete-event simulator. Workloads are synthetic d
 
 Metrics recorded per run: the achieved accuracy score $\bar{A}=\frac{1}{n}\sum_i A_i\,\ell_i$, where $\ell_i=\sum_a l_{ia}$ is the fraction of task $T_i$ executed---the same quantity the MILP maximizes. Because each $A_i$ is a per-task accuracy \emph{weight} rather than a probability, the score is not bounded by~1 and should be read relative to the max-accuracy bound of the same scenario; makespan, deadline adherence, and communication overhead are also recorded. All values are averaged over repeated random DAGs.
 
-\emph{Reproducibility.} The simulator used for the evaluation---instance generation, the four schedulers, and the experiment sweeps---is provided with this submission in \texttt{code/fogsim.py}; generated workflow instances are in \texttt{data/instances/} and per-run results in \texttt{data/results/}. The implementation depends only on NumPy, SciPy (HiGHS for the MILP/LP solves), and pandas.
+\emph{Reproducibility.} The simulator used for the evaluation---instance generation, the four schedulers, and the experiment sweeps---is provided with this submission in \texttt{code/fogsim.py}; generated workflow instances are in \texttt{data/instances/} and per-run results in \texttt{data/results/}. The implementation depends only on NumPy, SciPy (HiGHS for the MILP/LP solves), and pandas. Code and data are publicly available at \url{https://github.com/GITHUB_USER/REPO_NAME}. % TODO: replace with the real repository URL before submission
 
 \subsection{Deadline Slack}
 
