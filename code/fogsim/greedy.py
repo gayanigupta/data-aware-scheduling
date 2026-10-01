@@ -26,11 +26,22 @@ def run_greedy(inst, beta=0.5, delta=0.005, data_aware=True):
 
     priority = beta * inst.A + (1 - beta) * cp
 
+    # successors and in-degrees drive the ready set; at each step we take
+    # the ready task with the highest priority pi (Algorithm 1)
+    succ = [[] for _ in range(n)]
+    for (j, i) in inst.edges:
+        succ[j].append(i)
+    indeg0 = [len(inst.preds[i]) for i in range(n)]
+
     ell = 1.0
     while ell > 0:
         assign = np.full(n, -1)
         y = np.full(n, np.inf)
-        for i in inst.order:                       # dependency order == ready
+        indeg = indeg0.copy()
+        ready = [i for i in range(n) if indeg[i] == 0]
+        while ready:
+            i = max(ready, key=lambda k: priority[k])
+            ready.remove(i)
             best, ba = np.inf, -1
             for a in range(m):
                 if not inst.P[i, a]:
@@ -45,6 +56,10 @@ def run_greedy(inst, beta=0.5, delta=0.005, data_aware=True):
                 return None                        # no eligible node
             assign[i] = ba
             y[i] = best
+            for v in succ[i]:
+                indeg[v] -= 1
+                if indeg[v] == 0:
+                    ready.append(v)
         if y.max() <= inst.t_max:
             return assign, np.full(n, ell)
         ell -= delta
