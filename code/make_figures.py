@@ -1,7 +1,7 @@
 """Generate the two conceptual figures for the paper in a clean
 draw.io-like style: Arial text, rounded boxes, lots of whitespace.
 
-Outputs into ../Figures/ relative to this script.
+Outputs into ../paper/Figures/ relative to this script.
 Run:  python3 code/make_figures.py
 """
 
@@ -13,7 +13,7 @@ from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FIG = os.path.join(HERE, "..", "Figures")
+FIG = os.path.join(HERE, "..", "paper", "Figures")
 
 BLUE = "#1f78b4"
 LT_BLUE = "#dae8fc"
