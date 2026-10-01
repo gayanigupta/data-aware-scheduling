@@ -6,32 +6,32 @@ evaluation.
 
 ## Main Document
 
-Set **`ieee-data-aware-scheduling.tex`** as the main document in Overleaf
-(standard `IEEEtran` conference class, bibliography `cas-refs.bib`).
-`IEEEtran.cls` is included for offline compilation.
+Everything needed to compile the paper lives in **`paper/`** — open that
+folder in Overleaf (or import the repo) and set **`paper/main.tex`** as the
+main document (standard `IEEEtran` conference class; `IEEEtran.cls` and the
+bibliography `cas-refs.bib` are included so it also compiles offline).
 
-`dbdbd-abstract.tex` is the separate 1-page DBDBD 2026 poster abstract
-(plain `article` class per the official template).
+`paper/dbdbd-abstract.tex` is the separate 1-page DBDBD 2026 poster
+abstract (plain `article` class per the official template).
 
 Before submitting, confirm the author list, affiliations, and emails in the
-`\author` block, and replace the repository URL placeholder in the
-Reproducibility paragraph once the GitHub repo exists.
+`\author` block of `paper/main.tex`.
 
 ## Project Structure
 
 | Location | Purpose |
 |---|---|
-| `ieee-data-aware-scheduling.tex` | Main IEEE conference paper. |
-| `dbdbd-abstract.tex` | 1-page DBDBD 2026 abstract submission. |
-| `cas-refs.bib` | Bibliography shared by both documents. |
-| `IEEEtran.cls` | Official IEEE class file (V1.8b, CTAN) for local builds. |
-| `Figures/` | All figures used by the paper (`perf_*` results + the two draw.io diagrams and their PNG exports). |
+| `paper/main.tex` | Main IEEE conference paper (Overleaf entry point). |
+| `paper/dbdbd-abstract.tex` | 1-page DBDBD 2026 abstract submission. |
+| `paper/cas-refs.bib` | Bibliography shared by both documents. |
+| `paper/IEEEtran.cls` | Official IEEE class file (V1.8b, CTAN) for local builds. |
+| `paper/Figures/` | All figures used by the paper (`perf_*` results + the two draw.io-style diagrams). |
 | `code/fogsim.py` | CLI entry point (`gen` / `sweep` / `plot`). |
 | `code/fogsim/` | Simulator package: `instance.py` (DAG/federation generation), `milp.py` (MILP + LP relaxation via HiGHS), `rounding.py`, `greedy.py`, `ga.py` (the three scalable schedulers), `experiments.py` (sweeps and figures). |
 | `code/make_figures.py` | Regenerates the two architecture/DAG diagrams. |
 | `data/instances/` | Generated workflow instances (JSON). |
 | `data/results/` | Sweep CSVs and rendered result figures. |
-| `Archive/`, `Sources/` | Reference material from earlier drafts; not compiled. |
+| `Sources/` | Reference material from earlier drafts; not compiled. |
 
 ## Reproducing the Experiments
 
@@ -51,7 +51,7 @@ python3 code/fogsim.py sweep bandwidth --tasks 50 --nodes 5 --reps 3
 # render figures from the CSVs -> data/results/figures/
 python3 code/fogsim.py plot
 
-# regenerate the conceptual diagrams -> Figures/
+# regenerate the conceptual diagrams -> paper/Figures/
 python3 code/make_figures.py
 ```
 
