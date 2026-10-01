@@ -300,6 +300,17 @@ All experiments use a custom discrete-event simulator. Workloads are synthetic d
     \item \textbf{Methods compared:} the MILP of Section~\ref{sec:milp}, randomized rounding, the greedy of Section~\ref{sec:greedy}, and the GA of Section~\ref{sec:ga}. Two reference configurations bracket the range: \emph{fixed scheduling} ($\alpha=1.0$, strict deadlines) and a \emph{max-accuracy bound} ($t_{\max}\!\to\!\infty$) that upper-bounds achievable accuracy. For the bandwidth sweep we also run a \emph{bandwidth-blind} variant of the greedy. It is the same algorithm but chooses nodes as if transfers were free, so the experiment isolates what the data-aware terms buy.
 \end{itemize}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/dataset_medium_graphs.png}
+\caption{One generated test dataset. Left: the medium workflow DAG (100
+tasks; the first 60 drawn for readability). Right: its 5-node fog
+federation, drawn as a complete graph with link width proportional to
+$B_{ba}$. Every sweep instance is generated the same way with a fixed
+seed, so the reported results are reproducible.}
+\label{fig:dataset}
+\end{figure}
+
 Metrics recorded per run: the achieved accuracy score $\bar{A}=\frac{1}{n}\sum_i A_i\,\ell_i$, where $\ell_i=\sum_a l_{ia}$ is the fraction of task $T_i$ executed. This is what the MILP maximizes. Because each $A_i$ is a per-task accuracy \emph{weight} rather than a probability, the score is not bounded by~1 and is read relative to the max-accuracy bound of the same instance, drawn as a dashed line in every figure. Makespan and deadline adherence are also recorded; all values are averaged over repeated random DAGs.
 
 \begin{table}[t]
