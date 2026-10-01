@@ -8,7 +8,10 @@ schedule meets the deadline.
 import numpy as np
 
 
-def run_greedy(inst, beta=0.5, delta=0.005):
+def run_greedy(inst, beta=0.5, delta=0.005, data_aware=True):
+    # data_aware=False gives the compute-centric baseline: the scheduler
+    # assumes transfers are free when picking nodes, but evaluation still
+    # charges the real communication delay (Eq. comm)
     n, m = inst.n, inst.m
     mean_bw = float(np.mean(inst.B[np.isfinite(inst.B)]))
 
@@ -32,7 +35,8 @@ def run_greedy(inst, beta=0.5, delta=0.005):
             for a in range(m):
                 if not inst.P[i, a]:
                     continue
-                start = max((y[j] + inst.comm(j, i, int(assign[j]), a)
+                start = max((y[j] + (inst.comm(j, i, int(assign[j]), a)
+                                     if data_aware else 0.0)
                              for j in inst.preds[i]), default=0.0)
                 yi = start + inst.t[i, a] * ell
                 if yi < best:

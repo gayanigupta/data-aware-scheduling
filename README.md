@@ -42,10 +42,11 @@ Requires Python 3 with NumPy, SciPy, and pandas.
 python3 code/fogsim.py gen --tasks 50 --nodes 5 --seed 0
 
 # run one experiment sweep -> data/results/<kind>.csv
-python3 code/fogsim.py sweep slack   --tasks 30 --nodes 4 --reps 5
-python3 code/fogsim.py sweep nodes   --tasks 30 --reps 5
-python3 code/fogsim.py sweep size    --nodes 4 --reps 2
-python3 code/fogsim.py sweep failure --tasks 30 --nodes 4 --reps 5
+python3 code/fogsim.py sweep slack     --tasks 30 --nodes 4 --reps 5
+python3 code/fogsim.py sweep nodes     --tasks 30 --reps 5
+python3 code/fogsim.py sweep size      --nodes 4 --reps 2
+python3 code/fogsim.py sweep failure   --tasks 30 --nodes 4 --reps 5
+python3 code/fogsim.py sweep bandwidth --tasks 50 --nodes 5 --reps 3
 
 # render figures from the CSVs -> data/results/figures/
 python3 code/fogsim.py plot
@@ -57,6 +58,16 @@ python3 code/make_figures.py
 The MILP is skipped automatically for instances above 800 assignment
 variables (`n*m`), matching the paper's claim that it is the benchmark for
 moderate sizes.
+
+## Notebook
+
+`notebooks/experiments.ipynb` is an executed notebook that walks through the
+datasets, the per-dataset test runs (`data/results/test_runs.csv`), the
+workflow/resource graphs (including structural DAGs up to 10^6 tasks and
+federations up to 10^6 nodes), all five comparative charts used in the paper,
+an asymptotic runtime analysis, and a plain-language account of where the
+current implementation hits its scaling limits. Open it in Jupyter and run
+all cells to regenerate every artifact.
 
 ## Evidence Boundary
 
