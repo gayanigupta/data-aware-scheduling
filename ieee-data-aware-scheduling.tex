@@ -302,6 +302,44 @@ All experiments use a custom discrete-event simulator. Workloads are synthetic d
 
 Metrics recorded per run: the achieved accuracy score $\bar{A}=\frac{1}{n}\sum_i A_i\,\ell_i$, where $\ell_i=\sum_a l_{ia}$ is the fraction of task $T_i$ executed---the same quantity the MILP maximizes. Because each $A_i$ is a per-task accuracy \emph{weight} rather than a probability, the score is not bounded by~1 and is read relative to the max-accuracy bound of the same instance, drawn as a dashed line in every figure. Makespan and deadline adherence are also recorded; all values are averaged over repeated random DAGs.
 
+\begin{table}[t]
+\centering
+\caption{Per-dataset test runs. Score is the average achieved accuracy
+$\bar{A}$; all listed schedules meet the deadline. ``--'' means the
+method was not run: the MILP is capped at $n\,m\le 800$ assignment
+variables and randomized rounding at $n\le 200$ tasks.}
+\label{tab:runs}
+\small
+\begin{tabular}{lcclrrr}
+\toprule
+Dataset & $n$ & $m$ & Method & Score & Makespan & Time (s) \\
+\midrule
+small  & 10   & 3  & MILP      & 1.637 & 17.98 & 0.004 \\
+       &      &    & Rounding  & 1.637 & 17.98 & 0.16  \\
+       &      &    & Greedy    & 1.637 & 16.84 & 0.000 \\
+       &      &    & GA        & 1.637 & 18.90 & 0.27  \\
+\midrule
+medium & 100  & 5  & MILP      & 1.443 & 60.94 & 1.43  \\
+       &      &    & Rounding  & 1.324 & 62.17 & 25.23 \\
+       &      &    & Greedy    & 1.443 & 43.11 & 0.003 \\
+       &      &    & GA        & 1.274 & 61.26 & 5.19  \\
+\midrule
+large  & 500  & 8  & Greedy    & 1.419 & 50.15 & 0.03  \\
+       &      &    & GA        & 1.173 & 71.26 & 21.41 \\
+\midrule
+xlarge & 1000 & 10 & Greedy    & 1.406 & 83.14 & 0.14  \\
+       &      &    & GA        & 1.126 & 119.85& 72.87 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:runs} reports the per-dataset test runs behind the sweeps.
+Two trends are already visible: the greedy and the MILP achieve the same
+score wherever both run, because under the tested slack all tasks execute
+fully and placement only moves the makespan; and the GA's score drops as
+the workflow grows, because its fixed population budget must cover an
+$n$-dimensional search space.
+
 \emph{Reproducibility.} The simulator used for the evaluation---instance generation, the four schedulers, and the experiment sweeps---is provided with this submission in \texttt{code/fogsim.py}; generated workflow instances are in \texttt{data/instances/} and per-run results in \texttt{data/results/}. The implementation depends only on NumPy, SciPy (HiGHS for the MILP/LP solves), and pandas. An executed Jupyter notebook (\texttt{notebooks/experiments.ipynb}) documents the datasets, per-dataset test runs, the workflow and resource graphs, the asymptotic runtime analysis, and the scaling limitations encountered (solver caps, sparse-constraint requirements, and fixed GA budgets). Code and data are publicly available at \url{https://github.com/gayanigupta/data-aware-scheduling}.
 
 \subsection{Deadline Slack}
