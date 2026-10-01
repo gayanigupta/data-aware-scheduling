@@ -47,14 +47,19 @@ class Instance:
         """Communication delay c_{ji}^{ba} (Eq. comm of the paper)."""
         return 0.0 if b == a else self.D[j, i] / self.B[b, a]
 
-    def forward_pass(self, assign, ell):
-        """Earliest-start completion times y_i for assignment + fractions."""
+    def forward_pass(self, assign, ell, retry=None):
+        """Earliest-start completion times y_i for assignment + fractions.
+
+        retry: optional set of task indices that fail once and are
+        re-executed on the same node, paying their execution time twice.
+        """
+        retry = retry if retry is not None else ()
         y = np.zeros(self.n)
         for i in self.order:
             a = int(assign[i])
             start = max((y[j] + self.comm(j, i, int(assign[j]), a)
                          for j in self.preds[i]), default=0.0)
-            y[i] = start + self.t[i, a] * ell[i]
+            y[i] = start + self.t[i, a] * ell[i] * (2 if i in retry else 1)
         return y
 
     def score(self, ell, failed=None):
@@ -109,9 +114,12 @@ def generate_instance(n_tasks=50, n_nodes=5, density=0.15, alpha=1.5,
 
 
 def save_instance(inst, path):
+    """Serialize sparsely: D is stored as an edge list [[j, i, D_ji]],
+    so files stay small even for large DAGs."""
     with open(path, "w") as fh:
         json.dump({
-            "t": inst.t.tolist(), "A": inst.A.tolist(), "D": inst.D.tolist(),
+            "t": inst.t.tolist(), "A": inst.A.tolist(),
+            "edges": [[j, i, float(inst.D[j, i])] for (j, i) in inst.edges],
             "B": np.where(np.isfinite(inst.B), inst.B, 0).tolist(),
             "P": inst.P.tolist(), "t_max": inst.t_max}, fh)
 
@@ -119,7 +127,15 @@ def save_instance(inst, path):
 def load_instance(path):
     with open(path) as fh:
         d = json.load(fh)
+    t = np.array(d["t"])
     B = np.array(d["B"])
     np.fill_diagonal(B, np.inf)
-    return Instance(np.array(d["t"]), np.array(d["A"]), np.array(d["D"]),
+    n = t.shape[0]
+    D = np.zeros((n, n))
+    if "edges" in d:                            # sparse format
+        for j, i, v in d["edges"]:
+            D[j, i] = v
+    else:                                       # legacy dense format
+        D = np.array(d["D"])
+    return Instance(t, np.array(d["A"]), D,
                     B, np.array(d["P"]), float(d["t_max"]))
