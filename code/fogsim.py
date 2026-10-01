@@ -32,7 +32,8 @@ def main():
     g.add_argument("--out", default=None)
 
     s = sub.add_parser("sweep", help="run an experiment sweep -> CSV")
-    s.add_argument("kind", choices=["slack", "nodes", "size", "failure"])
+    s.add_argument("kind", choices=["slack", "nodes", "size", "failure",
+                                    "bandwidth"])
     s.add_argument("--tasks", type=int, default=50)
     s.add_argument("--nodes", type=int, default=5)
     s.add_argument("--reps", type=int, default=5)

@@ -54,11 +54,15 @@ data sizes, per-link bandwidths, node eligibility, and a workflow deadline.
 We derive scheduling algorithms from the formulation---an exact MILP solver,
 a randomized rounding of its linear relaxation, a data-aware greedy heuristic,
 and a genetic algorithm---and evaluate them on synthetic DAGs of varying size,
-deadline slack, federation size, and node-failure rate. The relaxation tracks
-the MILP within a few percent of accuracy at a fraction of its cost, and the
-data-aware greedy method outperforms placement-agnostic baselines. The work
-extends our earlier conference study~\cite{gupta2025efficient} with the full
-formulation, its linearization and proofs, and a failure-resilience analysis.
+deadline slack, federation size, link bandwidth, and task-failure rate. The
+experiments show when each method earns its keep: under tight deadlines the
+optimization-based methods lead, with rounding staying within a few percent of
+the MILP, while the greedy method is near-optimal at the largest sizes at a
+fraction of the solve time; a bandwidth-blind baseline quantifies what
+data-aware placement is worth as links degrade. The work extends our earlier
+conference study~\cite{gupta2025efficient} with the full formulation, its
+linearization and proofs, and an analysis of scalability limits and task
+failures.
 
 \bibliographystyle{plain}
 \bibliography{cas-refs}
