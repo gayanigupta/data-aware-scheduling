@@ -36,8 +36,11 @@ def evaluate(inst, method, failed=None, seed=0, trials=40):
         return dict(score=np.nan, makespan=np.nan, feasible=0,
                     runtime_s=elapsed)
     assign, ell = out
-    y = inst.forward_pass(assign, ell)
-    return dict(score=inst.score(ell, failed=failed),
+    # retry-once failure model: a failed task occupies its node for twice
+    # its execution time but keeps its accuracy when the retry finishes;
+    # schedulers then differentiate through deadline feasibility
+    y = inst.forward_pass(assign, ell, retry=failed)
+    return dict(score=inst.score(ell),
                 makespan=float(y.max()),
                 feasible=int(y.max() <= inst.t_max * 1.001),
                 runtime_s=elapsed)
@@ -129,13 +132,14 @@ def plot():
         if not os.path.exists(csv):
             continue
         df = pd.read_csv(csv)
-        # bandwidth is special: score alone is misleading because the blind
-        # baseline schedules everything at full accuracy but misses the
-        # deadline -- so its panel gets a feasibility plot alongside
-        fig, axs = plt.subplots(1, 2 if kind == "bandwidth" else 1,
-                                figsize=(6.6 if kind == "bandwidth" else 3.5,
+        # bandwidth and failure are special: score alone is misleading
+        # (the blind baseline / retried tasks report full accuracy while
+        # missing the deadline) -- so these get a feasibility panel too
+        two_panel = kind in ("bandwidth", "failure")
+        fig, axs = plt.subplots(1, 2 if two_panel else 1,
+                                figsize=(6.6 if two_panel else 3.5,
                                          2.6), dpi=300)
-        ax = axs[0] if kind == "bandwidth" else axs
+        ax = axs[0] if two_panel else axs
         df_s = df.dropna(subset=["score"])
         if "bound" in df_s.columns:
             bnd = df_s.groupby("param")["bound"].mean()
@@ -148,7 +152,7 @@ def plot():
         ax.set_ylabel("average accuracy score", fontsize=9)
         ax.tick_params(labelsize=8)
         ax.legend(fontsize=7, framealpha=0.9)
-        if kind == "bandwidth":
+        if two_panel:
             ax2 = axs[1]
             for meth, g in df.groupby("method"):
                 feas = g.groupby("param")["feasible"].mean()

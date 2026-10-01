@@ -25,6 +25,11 @@ def run_greedy(inst, beta=0.5, delta=0.005, data_aware=True):
         cp[i] = base + nxt
 
     priority = beta * inst.A + (1 - beta) * cp
+    # tie-break: accuracy density = A_i / mean execution time over eligible
+    # nodes, so equal-priority tasks prefer the cheap high-value ones
+    denom = np.array([np.mean(inst.t[i][inst.P[i] == 1])
+                      for i in range(n)])
+    density = inst.A / denom
 
     # successors and in-degrees drive the ready set; at each step we take
     # the ready task with the highest priority pi (Algorithm 1)
@@ -40,7 +45,7 @@ def run_greedy(inst, beta=0.5, delta=0.005, data_aware=True):
         indeg = indeg0.copy()
         ready = [i for i in range(n) if indeg[i] == 0]
         while ready:
-            i = max(ready, key=lambda k: priority[k])
+            i = max(ready, key=lambda k: (priority[k], density[k]))
             ready.remove(i)
             best, ba = np.inf, -1
             for a in range(m):
