@@ -77,7 +77,7 @@ def sweep(kind, tasks=50, nodes=5, reps=5, seed=0):
             failed = None
             if kind == "failure":
                 failed = np.random.default_rng(s).random(inst.n) < x
-            bound = inst.score(np.ones(inst.n), failed=failed)
+            bound = inst.score(np.ones(inst.n))  # retries preserve accuracy
             # randomized rounding re-solves the LP once per trial, so scale
             # the trial count down on large instances (34 s/solve at
             # n*m = 4000) instead of fixing 40 trials for every size
