@@ -51,9 +51,9 @@ whether its input arrives in time. We formulate this as a mixed-integer
 program that jointly decides task placement across federated fog nodes and
 the degree of approximate execution each task performs, subject to per-edge
 data sizes, per-link bandwidths, node eligibility, and a workflow deadline.
-We derive scheduling algorithms from the formulation---an exact MILP solver,
+We derive scheduling algorithms from the formulation: an exact MILP solver,
 a randomized rounding of its linear relaxation, a data-aware greedy heuristic,
-and a genetic algorithm---and evaluate them on synthetic DAGs of varying size,
+and a genetic algorithm. We evaluate them on synthetic DAGs of varying size,
 deadline slack, federation size, link bandwidth, and task-failure rate. The
 experiments show when each method earns its keep: under tight deadlines the
 optimization-based methods lead, with rounding staying within a few percent of
