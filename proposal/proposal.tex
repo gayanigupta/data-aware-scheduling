@@ -1,0 +1,298 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{times}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\title{\textbf{Research Proposal}\\[4pt]
+\large Dynamic Partial Repartitioning of DAG Workflows After
+Resource Failures in Federated Fog Environments}
+\author{Gayani Gupta\\
+Department of Computer Science and Engineering\\
+University of North Texas}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Workflows that respond to disasters -- flood forecasting, wildfire
+tracking, evacuation planning -- run as directed acyclic graphs
+(DAGs) of dependent tasks on federated fog resources close to the
+event. Our earlier work studied how to place such workflows well:
+our IEEE Cloud Summit 2025 paper formulated the allocation problem
+and compared four schedulers~\cite{gupta2025efficient}, and our
+follow-on study made the model data-aware, added a measurable
+accuracy bound, and stress-tested the schedulers under deadline
+slack, federation growth, workflow growth, task failures, and
+link-bandwidth degradation~\cite{gupta2026dataaware,gupta2026code}.
+All of that work still assumes the schedule is decided once, before
+execution. In a real deployment, a fog resource can fail while the
+workflow is running, stranding every unfinished task assigned to
+it. Recomputing the whole schedule is too slow and disturbs work
+that is proceeding correctly. This proposal presents a method that
+repairs only the part that broke: it identifies the smallest
+affected region of the task DAG, repartitions and reassigns only
+that region onto healthy resources, and updates communication
+paths incrementally rather than recomputing them.
+\end{abstract}
+
+\section{Where we are now}
+
+This research sits on top of two finished bodies of work.
+
+\textbf{Paper 1 (published).} In~\cite{gupta2025efficient} we
+introduced the federated-fog task-allocation problem for DAG
+workflows. The model couples task placement with the cost of moving
+intermediate data: when a task and its predecessor run on different
+nodes, the edge's data volume $D_{ji}$ must cross a link of
+bandwidth $B_{ba}$, costing $D_{ji}/B_{ba}$ time. We built a
+mixed-integer linear program (MILP) with correctness proofs, plus
+three scalable schedulers -- an LP relaxation with randomized
+rounding, a data-aware greedy heuristic, and a genetic
+metaheuristic -- and compared them across deadline slack,
+federation size, workflow size, and task failure rate. The study
+showed that no single method wins everywhere, so we distilled the
+comparisons into an operational scheduler-selection policy.
+
+\textbf{Paper 2 (current work).} In~\cite{gupta2026dataaware} we
+hardened the same model and made the evaluation honest. We added a
+max-accuracy bound so every method is read against a verifiable
+yardstick; a retry-once failure model, which separates accuracy
+from feasibility; a link-degradation sweep with a bandwidth-blind
+baseline, which showed that a scheduler can report bound-level
+scores while producing late schedules; and scalability
+experiments that map exactly where each solver stops (the MILP at
+roughly 800 assignment variables, the LP near $10^5$ constraints at
+1000 tasks, the genetic algorithm under a fixed budget). The main
+empirical lesson is simple: the scheduler matters most exactly
+where the deadline binds, and the plain data-aware greedy is the
+only method that stays both fast and bound-level at 1000 tasks.
+The full artifact -- simulator, data, executed notebook, figures,
+and slides -- is public at
+\url{https://github.com/gayanigupta/data-aware-scheduling}~\cite{gupta2026code}.
+
+Both works share one assumption: \emph{the schedule is fixed
+before execution starts}. Task-level failures were handled only by
+retrying the failed task on the same node. What happens when an
+entire fog resource dies mid-workflow was left open -- and it is
+the problem this proposal takes up.
+
+\section{The problem}
+
+During execution, the orchestrator detects that a fog resource has
+failed -- power loss, link cut, hardware fault. Every unfinished
+task assigned to that resource can no longer continue. The obvious
+fix, repartitioning and rescheduling the entire workflow, is
+unattractive for three reasons: it takes too long when the
+remaining deadline is short, it moves tasks that are running
+correctly on healthy resources, and it re-transfers data and
+re-executes work that was already paid for.
+
+The better answer is surgical. Find the unfinished tasks stranded
+by the failure, determine the smallest region of the task DAG that
+must change, repartition only that region onto suitable surviving
+resources, leave every unaffected assignment in place, update the
+communication paths that actually changed, and resume the workflow
+from the last successful point.
+
+\textbf{Main research question.} How can we quickly repartition
+and reschedule only the affected part of a DAG workflow after a
+fog resource fails, while reducing recovery time, communication
+cost, task movement, and total workflow completion time?
+
+\section{Model}
+
+We keep the two-graph model that already exists in our simulator.
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Task DAG.} Each node is a task $T_i$ with execution
+times $t_{ia}$ per resource and an accuracy value; each edge
+$(T_j,T_i)$ is a dependency carrying $D_{ji}$ units of data.
+\item \textbf{Infrastructure graph.} Each node is a fog resource
+with processing capacity, available memory, current workload, and
+availability; each edge is a network link with communication
+delay, bandwidth, and transfer cost.
+\item \textbf{Partition.} A mapping of task groups to resources
+chosen on execution time, capacity, communication cost, and the
+workflow deadline -- produced by any of our existing schedulers,
+preferably the data-aware greedy for speed.
+\end{itemize}
+
+A resource failure is then precisely defined: it is a node
+deletion in the infrastructure graph that must be repaired inside
+the task DAG.
+
+\section{Proposed method}
+
+The recovery procedure has seven stages.
+
+\begin{enumerate}[leftmargin=*,label=\textbf{\arabic*.}]
+\item \textbf{Initial partition.} Compute the up-front placement
+with an existing scheduler (greedy for speed; MILP where small
+enough for a benchmark).
+\item \textbf{Detect and isolate.} On failure, list the unfinished
+tasks stranded on the failed resource. Completed tasks are never
+restarted.
+\item \textbf{Bound the affected subgraph.} Walk the parents and
+children of the stranded tasks. Some dependents may have to move
+with them -- for data locality or to keep the deadline -- so the
+affected region is grown by dependency closure only where needed.
+This boundary rule is itself a research contribution.
+\item \textbf{Select replacement resources.} Among surviving
+resources with enough capacity and memory, prefer those with
+short paths to the nodes hosting the affected tasks' parents and
+children.
+\item \textbf{Repartition the region.} Re-group and re-place the
+affected subgraph, weighing execution time, communication delay,
+data size, deadline pressure, task-movement cost, and load
+balance.
+\item \textbf{Assign and update paths.} Install the new
+assignments and update only the communication paths touched by
+the failure and the moves -- reusing incremental shortest-path
+maintenance ideas~\cite{riazi2018sssp,khanda2021sssp} rather than
+recomputing all pairs.
+\item \textbf{Resume.} Continue the workflow from the last
+successful state.
+\end{enumerate}
+
+\section{What is new}
+
+The individual pieces exist in the literature but are not
+connected. Dynamic shortest-path tree updates
+\cite{riazi2018sssp,khanda2021sssp} maintain routes under graph
+changes but have not been applied to workflow recovery. Fog
+rescheduling under uncertain events~\cite{yang2024multiagent} and
+online fog task distribution as nodes join and
+leave~\cite{lee2019fognetwork} treat the infrastructure as
+dynamic but repartition broadly, without tracking which part of
+the task DAG a failure actually touches. Selective rescheduling
+for grid workflows~\cite{sakellariou2004rescheduling} re-plans at
+carefully chosen points but predates the two-graph fog model, and
+classic DAG schedulers such as HEFT~\cite{topcuoglu2002heft}
+assume static full execution.
+
+The proposed novelty is therefore the coupling: a dependency-aware
+method that maps a failure in the infrastructure graph to the
+\emph{smallest} affected region of the task DAG, repartitions and
+reassigns only that region, preserves every unaffected
+assignment, and updates communication paths incrementally. That is
+more specific -- and more defensible -- than generic ``partial
+rescheduling.''
+
+To support the claim, the work must deliver: a formal boundary
+rule for the affected subgraph; a stay-or-move decision for
+dependent tasks; the repartitioning algorithm; the
+replacement-resource selection rule; the incremental path-update
+procedure; and evidence that task movement and recovery time are
+actually minimized.
+
+\section{Evaluation plan}
+
+The Part II simulator already provides the platform: the same
+instance generator, the same cost model, and the same failure
+injection -- extended from task-level to resource-level events.
+
+\textbf{Baselines.} (a) Complete repartitioning and rescheduling;
+(b) a greedy recovery that reassigns stranded tasks one by one;
+(c) the static schedule with no repair; (d) the MILP on small
+instances, as the quality reference.
+
+\textbf{Metrics.} Failure-recovery time; total workflow
+completion time; communication cost; number of tasks moved;
+volume of data transferred; energy; deadline success rate; and
+the quality of the repaired schedule against the MILP.
+
+\textbf{Stress dimensions.} We will vary the failure position
+(critical-path resource vs.\ peripheral), the number of
+simultaneous failures, workflow size, federation size, and
+remaining slack at the time of failure -- because recovery that
+works with abundant slack is easy; the interesting regime is when
+the deadline is nearly spent.
+
+\section{Timeline}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Months 1--3.} Extend the simulator to resource-level
+failures; implement the boundary rule and affected-subgraph
+extraction; reproduce the complete-repartition baseline.
+\item \textbf{Months 4--6.} Repartitioning algorithm and
+replacement-resource selection; incremental path updates.
+\item \textbf{Months 7--9.} Full baseline comparison; MILP
+benchmark on small cases; ablation on the boundary rule.
+\item \textbf{Months 10--12.} Write-up, artifact release into the
+existing public repository~\cite{gupta2026code}, submission.
+\end{itemize}
+
+\section{Why this is the right next step}
+
+The three works form one line. Paper 1 built the model and showed
+four ways to solve the static problem. Paper 2 made the model
+honest and mapped where each solver stops. This proposal changes
+two granularities at once: the failure granularity, from a task
+retry to a lost resource; and the scheduling granularity, from
+placing a whole DAG to repairing its smallest affected region.
+The platform, cost model, schedulers, and baselines are already
+built and public -- the new work plugs into them directly.
+
+\begin{thebibliography}{9}\small
+\bibitem{gupta2025efficient}
+G.~Gupta, A.~Gupta, M.~Amini Salehi, A.~Fern\'andez Anta,
+S.~Bhowmik, J.~Aguilar, and M.~Kourouma,
+``Towards efficient allocation of tasks in DAG-based workflows
+across federated fog systems,'' \emph{2025 IEEE Cloud Summit},
+pp.~124--129, 2025.
+
+\bibitem{gupta2026dataaware}
+G.~Gupta, A.~Gupta, M.~Amini Salehi, A.~Fern\'andez Anta,
+S.~Bhowmick, and J.~Aguilar,
+``Data-aware scheduling of approximate DAG workflows in federated
+fog systems,'' manuscript, 2026.
+
+\bibitem{gupta2026code}
+G.~Gupta, ``Data-aware scheduling of approximate DAG workflows in
+federated fog systems: simulator and experiments,''
+\url{https://github.com/gayanigupta/data-aware-scheduling}, 2026.
+
+\bibitem{riazi2018sssp}
+S.~Riazi, S.~Srinivasan, S.~K.~Das, S.~Bhowmick, and B.~Norris,
+``Single-source shortest path tree for big dynamic graphs,''
+\emph{2018 IEEE Int.\ Conf.\ on Big Data}, pp.~4054--4062, 2018.
+
+\bibitem{khanda2021sssp}
+A.~Khanda, S.~Srinivasan, S.~Bhowmick, B.~Norris, and S.~K.~Das,
+``A parallel algorithm template for updating single-source
+shortest paths in large-scale dynamic networks,'' \emph{IEEE
+Trans.\ Parallel Distrib.\ Syst.}, vol.~33, no.~4, pp.~929--940,
+2021.
+
+\bibitem{yang2024multiagent}
+Y.~Yang, F.~Ren, and M.~Zhang,
+``A decentralized multiagent-based task scheduling framework for
+handling uncertain events in fog computing,'' arXiv:2401.02219,
+2024.
+
+\bibitem{lee2019fognetwork}
+G.~Lee, W.~Saad, and M.~Bennis,
+``An online optimization framework for distributed fog network
+formation with minimal latency,'' arXiv:1710.05239, 2019.
+
+\bibitem{sakellariou2004rescheduling}
+R.~Sakellariou and H.~Zhao,
+``A low-cost rescheduling policy for efficient mapping of
+workflows on grid systems,'' \emph{Scientific Programming},
+vol.~12, no.~4, pp.~253--262, 2004.
+
+\bibitem{topcuoglu2002heft}
+H.~Topcuoglu, S.~Hariri, and M.-Y.~Wu,
+``Performance-effective and low-complexity task scheduling for
+heterogeneous computing,'' \emph{IEEE Trans.\ Parallel Distrib.\
+Syst.}, vol.~13, no.~3, pp.~260--274, 2002.
+\end{thebibliography}
+
+\end{document}
