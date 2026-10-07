@@ -25,8 +25,8 @@ YELLOW_EDGE = "#d6b656"
 RED = "#c0392b"
 GREY = "#666666"
 
-FS = 7.0         # box text
-FS_SM = 6.5      # edge / side labels
+FS = 9.0         # box text
+FS_SM = 8.0      # edge / side labels
 
 
 def box(ax, x, y, w, h, text, fc=LT_BLUE, ec=BLUE, fs=FS, dashed=False,
@@ -61,12 +61,12 @@ def figure_architecture():
     ax.set_xlim(0, 16); ax.set_ylim(0, 11); ax.axis("off")
 
     # unreachable cloud (crossed out, dashed)
-    box(ax, 6.3, 9.9, 3.4, 0.85, "Cloud  (unreachable)",
+    box(ax, 5.7, 9.85, 4.6, 0.95, "Cloud  (unreachable)",
         fc="#f5f5f5", ec="#aaaaaa", fs=FS, dashed=True)
     cx = (8.0, 10.32)
-    ax.plot([cx[0] - 0.14, cx[0] + 0.14], [cx[1] - 0.12, cx[1] + 0.12],
+    ax.plot([cx[0] - 0.18, cx[0] + 0.18], [cx[1] - 0.15, cx[1] + 0.15],
             color=RED, lw=2.0)
-    ax.plot([cx[0] + 0.14, cx[0] - 0.14], [cx[1] - 0.12, cx[1] + 0.12],
+    ax.plot([cx[0] + 0.18, cx[0] - 0.18], [cx[1] - 0.15, cx[1] + 0.15],
             color=RED, lw=2.0)
 
     # federation boundary
@@ -80,7 +80,7 @@ def figure_architecture():
             fontweight="bold")
 
     # scheduler
-    sch = box(ax, 5.7, 7.15, 4.6, 0.95,
+    sch = box(ax, 5.3, 7.05, 5.4, 1.25,
               "Data-aware scheduler\nplaces tasks across the federation",
               fc=YELLOW, ec=YELLOW_EDGE, fs=FS, bold=True)
 
@@ -100,16 +100,16 @@ def figure_architecture():
             color="#4a6fa5", fontweight="bold")
 
     fgs = {}
-    fgs[0] = box(ax, 1.4, 4.55, 2.4, 0.9, "Fog 1\n(base station)", fs=FS)
-    fgs[1] = box(ax, 4.6, 4.55, 2.4, 0.9, "Fog 2\n(shelter gateway)", fs=FS)
-    fgs[2] = box(ax, 9.0, 4.55, 2.4, 0.9, "Fog 3\n(hospital edge)", fs=FS)
-    fgs[3] = box(ax, 12.2, 4.55, 2.4, 0.9, "Fog 4\n(mobile unit)", fs=FS)
+    fgs[0] = box(ax, 1.2, 4.45, 2.9, 1.15, "Fog 1\n(base station)", fs=FS)
+    fgs[1] = box(ax, 4.3, 4.45, 2.9, 1.15, "Fog 2\n(shelter gateway)", fs=FS)
+    fgs[2] = box(ax, 8.8, 4.45, 2.9, 1.15, "Fog 3\n(hospital edge)", fs=FS)
+    fgs[3] = box(ax, 12.0, 4.45, 2.9, 1.15, "Fog 4\n(mobile unit)", fs=FS)
 
     # intra-site links (solid grey) and one cross-site federation link (dashed)
     for a, b in [(0, 1), (2, 3)]:
-        arrow(ax, (fgs[a][0] + 1.2, fgs[a][1]), (fgs[b][0] - 1.2, fgs[b][1]),
+        arrow(ax, (fgs[a][0] + 1.45, fgs[a][1]), (fgs[b][0] - 1.45, fgs[b][1]),
               color=GREY, lw=0.9)
-    arrow(ax, (fgs[1][0] + 1.2, fgs[1][1]), (fgs[2][0] - 1.2, fgs[2][1]),
+    arrow(ax, (fgs[1][0] + 1.45, fgs[1][1]), (fgs[2][0] - 1.45, fgs[2][1]),
           dashed=True, color=GREEN_EDGE, lw=1.4)
     ax.text(8.0, 5.35, "inter-site link", fontsize=FS_SM, color=GREEN_EDGE,
             fontstyle="italic", ha="center")
@@ -122,14 +122,14 @@ def figure_architecture():
             fontstyle="italic", ha="center")
 
     # field sensors feeding site A
-    s1 = box(ax, 0.9, 1.15, 4.0, 0.95,
+    s1 = box(ax, 0.9, 1.05, 5.4, 1.2,
              "field sensors\nriver gauges, drones, cameras",
              fc=GREEN, ec=GREEN_EDGE, fs=FS)
     arrow(ax, (s1[0] + 0.5, s1[1] + 0.5), (fgs[0][0] - 0.4, fgs[0][1] - 0.48),
           color=GREEN_EDGE, label="raw data", label_dx=-0.9)
 
     # results flow to the operations centre
-    oc = box(ax, 10.6, 1.15, 5.0, 0.95,
+    oc = box(ax, 10.2, 1.05, 5.2, 1.0,
              "emergency operations centre",
              fc=GREEN, ec=GREEN_EDGE, fs=FS)
     arrow(ax, (fgs[3][0], fgs[3][1] - 0.48), (oc[0] + 0.6, oc[1] + 0.5),
@@ -166,12 +166,12 @@ def figure_dag():
             fontsize=FS_SM, color=GREY, fontstyle="italic")
 
     T = {}
-    T[1] = box(ax, 2.15, 7.65, 3.0, 0.8, "T1  ingest sensor data", fs=FS)
-    T[2] = box(ax, 0.85, 5.95, 3.0, 0.8, "T2  clean & filter", fs=FS)
-    T[3] = box(ax, 3.55, 5.95, 3.0, 0.8, "T3  fuse imagery", fs=FS)
-    T[4] = box(ax, 0.85, 4.25, 3.0, 0.8, "T4  forecast flood", fs=FS)
-    T[5] = box(ax, 3.55, 4.25, 3.0, 0.8, "T5  assess damage", fs=FS)
-    T[6] = box(ax, 2.15, 2.50, 3.0, 0.8, "T6  plan response", fs=FS,
+    T[1] = box(ax, 2.15, 7.65, 2.8, 0.8, "T1  ingest", fs=FS)
+    T[2] = box(ax, 0.75, 5.95, 2.8, 0.8, "T2  clean", fs=FS)
+    T[3] = box(ax, 3.75, 5.95, 2.8, 0.8, "T3  fuse", fs=FS)
+    T[4] = box(ax, 0.75, 4.25, 2.8, 0.8, "T4  forecast", fs=FS)
+    T[5] = box(ax, 3.75, 4.25, 2.8, 0.8, "T5  assess", fs=FS)
+    T[6] = box(ax, 2.15, 2.50, 2.8, 0.8, "T6  plan", fs=FS,
                fc=YELLOW, ec=YELLOW_EDGE, bold=True)
 
     edges = [(1, 2, "20"), (1, 3, "45"), (2, 4, "15"), (3, 4, "40"),
@@ -201,10 +201,10 @@ def figure_dag():
             fontsize=FS_SM, color=GREY, fontstyle="italic")
 
     F = {}
-    F[1] = box(ax, 9.65, 7.0, 2.1, 0.85, "$f_1$\ngateway", fs=FS)
-    F[2] = box(ax, 12.9, 7.0, 2.1, 0.85, "$f_2$\nshelter", fs=FS)
-    F[3] = box(ax, 9.65, 4.3, 2.1, 0.85, "$f_3$\nhospital", fs=FS)
-    F[4] = box(ax, 12.9, 4.3, 2.1, 0.85, "$f_4$\nmobile unit", fs=FS)
+    F[1] = box(ax, 9.55, 7.0, 2.2, 0.95, "$f_1$\ngateway", fs=FS)
+    F[2] = box(ax, 12.85, 7.0, 2.2, 0.95, "$f_2$\nshelter", fs=FS)
+    F[3] = box(ax, 9.55, 4.3, 2.2, 0.95, "$f_3$\nhospital", fs=FS)
+    F[4] = box(ax, 12.85, 4.3, 2.2, 0.95, "$f_4$\nmobile", fs=FS)
 
     links = [(1, 2, "90", 0.0), (1, 3, "10", 0.0), (2, 4, "60", 0.0),
              (3, 4, "45", 0.0), (2, 3, "30", -0.14)]
@@ -219,20 +219,20 @@ def figure_dag():
     # ---------- mapping arrows: task -> node ----------
     mapping = [(1, 1), (2, 1), (3, 1), (4, 3), (5, 2), (6, 4)]
     for t, f in mapping:
-        arrow(ax, (T[t][0] + 1.5, T[t][1] - 0.10),
-              (F[f][0] - 1.1, F[f][1] + 0.10),
+        arrow(ax, (T[t][0] + 1.4, T[t][1] - 0.10),
+              (F[f][0] - 1.15, F[f][1] + 0.10),
               dashed=True, color=BLUE, lw=0.9, rad=0.10)
     ax.text(8.0, 8.35, "placement $e_{ia}$", ha="center", fontsize=FS_SM,
             color=BLUE, fontstyle="italic")
 
     # ---------- the payoff callout ----------
-    call = FancyBboxPatch((3.4, 0.12), 9.2, 0.82,
+    call = FancyBboxPatch((2.9, 0.12), 10.2, 0.82,
                           boxstyle="round,pad=0.02,rounding_size=0.12",
                           linewidth=1.3, edgecolor=RED, facecolor="#fdf0ee")
     ax.add_patch(call)
     ax.text(8.0, 0.53,
-            "T3 sits on $f_1$, T4 on $f_3$: the $D_{34}{=}40$ input crosses "
-            "$B_{13}{=}10$, so delay $= 40/10 = 4$",
+            "T3 on $f_1$, T4 on $f_3$: input $D_{34}{=}40$ crosses "
+            "$B_{13}{=}10$, delay $=4$",
             ha="center", va="center", fontsize=FS, color=RED,
             fontweight="bold")
 
