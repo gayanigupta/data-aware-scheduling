@@ -95,12 +95,12 @@ This section makes the two levers from the introduction precise: the cost of mov
 
 We consider a federation of fog nodes $F=\{f_1,\ldots,f_m\}$ deployed in a disaster-prone area such as a cluster of offshore oil platforms (Fig.~\ref{fig:architecture}). Each pair of nodes is connected by a link of known bandwidth, and the federation operates even when the cloud is unreachable. A workflow arrives as a DAG $G=(T,E)$, where each node $T_i\in T$ is a computational task and each edge $(T_j,T_i)\in E$ is both a precedence constraint and a data transfer of size $D_{ji}$.
 
-\begin{figure}[h!]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\linewidth]{Figures/federated-fog-architecture.png}
-\caption{Federated fog deployment for disaster response. Sensors feed a workflow of dependent tasks; the scheduler assigns each task to one fog node, priced by both compute time and inter-node data-transfer cost.}
+\includegraphics[width=0.9\textwidth]{Figures/federated-fog-architecture.png}
+\caption{Federated fog deployment for disaster response. Sensors feed a workflow of dependent tasks into a local federation of independently owned fog sites; the data-aware scheduler assigns each task to one node, priced by both compute time and inter-site data-transfer cost, while the cloud link stays down.}
 \label{fig:architecture}
-\end{figure}
+\end{figure*}
 
 If task $T_j$ runs on node $f_b$ and its successor $T_i$ runs on node $f_a$, the input of $T_i$ has to cross the link $(f_b,f_a)$ with bandwidth $B_{ba}$. That transfer takes
 \begin{equation}
@@ -112,12 +112,12 @@ If task $T_j$ runs on node $f_b$ and its successor $T_i$ runs on node $f_a$, the
 \end{equation}
 This is the central cost in the model: placing a task is not only about how fast a node computes, but also about how long its input data takes to arrive.
 
-\begin{figure}[h!]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\linewidth]{Figures/disaster-response-dag.png}
-\caption{Example disaster-response workflow. Edge labels are data sizes $D_{ji}$; dashed arrows show an assignment $e_{ia}$ of tasks to federated fog nodes. Running a task off the node that produced its input pays the transfer delay of Eq.~\eqref{eq:comm}.}
+\includegraphics[width=0.9\textwidth]{Figures/disaster-response-dag.png}
+\caption{The scheduling problem at a glance. Left: a workflow DAG whose edges carry data $D_{ji}$. Right: the fog infrastructure graph whose links carry bandwidth $B_{ba}$. Dashed arrows are the placement $e_{ia}$. The highlighted case is the cost this paper prices: T3 sits on $f_1$ and T4 on $f_3$, so T4 cannot start until $D_{34}=40$ units cross a $B_{13}=10$ link, i.e.\ the transfer delay of Eq.~\eqref{eq:comm}.}
 \label{fig:dag}
-\end{figure}
+\end{figure*}
 
 \subsection{Assumptions}
 \begin{itemize}
@@ -191,12 +191,12 @@ Scheduling problems of this kind are NP-hard already on unrelated parallel machi
 \section{Scalable Scheduling Algorithms}
 \label{sec:algorithms}
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\linewidth]{Figures/scheduling-pipeline.png}
+\includegraphics[width=0.9\textwidth]{Figures/scheduling-pipeline.png}
 \caption{Method pipeline. The same inputs feed all four schedulers, which share the data-aware cost model of Section~\ref{sec:model}; each produces a placement $e_{ia}$ and execution fractions $l_{ia}$, evaluated on accuracy score, makespan, and deadline feasibility.}
 \label{fig:pipeline}
-\end{figure}
+\end{figure*}
 
 All three methods take the same inputs as the MILP: the DAG, the times $t_{ia}$, the data sizes $D_{ji}$, the bandwidths $B_{ba}$, the eligibility flags $P_{ia}$, and the deadline $t_{\max}$. Because they all evaluate the communication term \eqref{eq:comm}, they are all bandwidth-aware. Fig.~\ref{fig:pipeline} shows how they fit together.
 
