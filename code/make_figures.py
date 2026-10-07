@@ -147,57 +147,169 @@ def figure_architecture():
 
 
 def figure_dag():
-    fig, ax = plt.subplots(figsize=(6.4, 4.6), dpi=300)
-    ax.set_xlim(0, 16); ax.set_ylim(0, 12); ax.axis("off")
+    """Two-panel mapping figure: workflow DAG (edges carry data D) on the
+    left, fog infrastructure graph (links with bandwidth B) on the right.
+    Shows why placement matters: the highlighted edge crosses sites, so
+    its input pays D/B before the task can start."""
+    fig, ax = plt.subplots(figsize=(6.4, 4.8), dpi=300)
+    ax.set_xlim(0, 16); ax.set_ylim(0, 10.4); ax.axis("off")
 
-    # workflow DAG, top to bottom: two data sources join, work splits into
-    # a forecast branch and a planning branch, then merges.
-    # plain-language labels -- the formal D_ji / e_ia notation stays in the
-    # paper text and caption
+    # ---------- left panel: workflow DAG ----------
+    panel = FancyBboxPatch((0.35, 1.15), 6.6, 8.6,
+                           boxstyle="round,pad=0.02,rounding_size=0.15",
+                           linewidth=1.0, edgecolor="#8fb8de",
+                           facecolor="#f4f9fd")
+    ax.add_patch(panel)
+    ax.text(3.65, 9.30, "workflow DAG", ha="center", fontsize=FS,
+            color="#4a6fa5", fontweight="bold")
+    ax.text(3.65, 8.80, "edges carry data $D_{ji}$", ha="center",
+            fontsize=FS_SM, color=GREY, fontstyle="italic")
+
     T = {}
-    T[1] = box(ax, 4.9, 10.9, 3.4, 0.85, "T1  collect\nsensor data", fs=FS)
-    T[2] = box(ax, 10.0, 10.9, 3.4, 0.85, "T2  get aerial &\nsatellite photos", fs=FS)
-    T[3] = box(ax, 4.9, 8.55, 3.4, 0.85, "T3  combine &\nclean data", fs=FS)
-    T[4] = box(ax, 10.0, 8.55, 3.4, 0.85, "T4  assess\ndamage", fs=FS)
-    T[5] = box(ax, 4.9, 6.20, 3.4, 0.85, "T5  forecast\nimpact", fs=FS)
-    T[6] = box(ax, 10.0, 6.20, 3.4, 0.85, "T6  plan evacuation\n& supplies", fs=FS)
-    T[7] = box(ax, 7.45, 3.85, 3.4, 0.85, "T7  coordinate\nresponse", fs=FS)
-    T[8] = box(ax, 7.45, 1.55, 3.4, 0.85, "T8  send emergency\nalerts", fs=FS,
+    T[1] = box(ax, 2.15, 7.65, 3.0, 0.8, "T1  ingest sensor data", fs=FS)
+    T[2] = box(ax, 0.85, 5.95, 3.0, 0.8, "T2  clean & filter", fs=FS)
+    T[3] = box(ax, 3.55, 5.95, 3.0, 0.8, "T3  fuse imagery", fs=FS)
+    T[4] = box(ax, 0.85, 4.25, 3.0, 0.8, "T4  forecast flood", fs=FS)
+    T[5] = box(ax, 3.55, 4.25, 3.0, 0.8, "T5  assess damage", fs=FS)
+    T[6] = box(ax, 2.15, 2.50, 3.0, 0.8, "T6  plan response", fs=FS,
                fc=YELLOW, ec=YELLOW_EDGE, bold=True)
 
-    arrow(ax, (T[1][0] - 0.2, T[1][1] - 0.43), (T[3][0] - 0.2, T[3][1] + 0.43))
-    arrow(ax, (T[2][0] - 0.6, T[2][1] - 0.43), (T[3][0] + 0.8, T[3][1] + 0.43))
-    arrow(ax, (T[2][0], T[2][1] - 0.43), (T[4][0], T[4][1] + 0.43))
-    arrow(ax, (T[3][0], T[3][1] - 0.43), (T[5][0], T[5][1] + 0.43))
-    arrow(ax, (T[3][0] + 0.9, T[3][1] - 0.43), (T[6][0] - 0.6, T[6][1] + 0.43))
-    arrow(ax, (T[4][0], T[4][1] - 0.43), (T[6][0] + 0.2, T[6][1] + 0.43))
-    # cross edges between the two branches
-    arrow(ax, (T[4][0] - 1.2, T[4][1] - 0.43), (T[5][0] + 1.0, T[5][1] + 0.43))
-    arrow(ax, (T[5][0] + 1.7, T[5][1] + 0.15), (T[6][0] - 1.7, T[6][1] + 0.15))
-    arrow(ax, (T[5][0] + 0.7, T[5][1] - 0.43), (T[7][0] - 0.7, T[7][1] + 0.43))
-    arrow(ax, (T[6][0] - 0.7, T[6][1] - 0.43), (T[7][0] + 0.7, T[7][1] + 0.43))
-    arrow(ax, (T[7][0], T[7][1] - 0.43), (T[8][0], T[8][1] + 0.43))
-    ax.text(14.0, 9.9, "arrows carry data\nbetween tasks",
-            fontsize=FS_SM, color=GREY, fontstyle="italic", ha="right")
+    edges = [(1, 2, "20"), (1, 3, "45"), (2, 4, "15"), (3, 4, "40"),
+             (3, 5, "25"), (4, 6, "10"), (5, 6, "30")]
+    label_offsets = {(1, 2): (-0.95, 0.0), (1, 3): (0.95, 0.0),
+                     (2, 4): (-0.95, 0.0), (3, 4): (0.55, -0.38),
+                     (3, 5): (0.95, 0.0), (4, 6): (-0.95, 0.0),
+                     (5, 6): (0.95, 0.0)}
+    for a, b, lbl in edges:
+        heavy = (a, b) == (3, 4)
+        dx, dy = label_offsets[(a, b)]
+        arrow(ax, (T[a][0], T[a][1] - 0.40), (T[b][0], T[b][1] + 0.40),
+              color=RED if heavy else DARK,
+              lw=1.9 if heavy else 1.1, rad=-0.06 if abs(a - b) == 2 else 0.0,
+              label=f"$D_{{{a}{b}}}={lbl}$", fs=FS_SM,
+              label_dx=dx, label_dy=dy)
 
-    # fog nodes (left column)
-    fgs = {}
-    for i, y in enumerate([9.7, 7.5, 5.3, 3.1]):
-        fgs[i] = box(ax, 0.7, y, 1.6, 0.75, f"Fog {i+1}", fs=FS)
-    for a, b in zip([0, 1, 2], [1, 2, 3]):
-        arrow(ax, (fgs[a][0], fgs[a][1] - 0.38), (fgs[b][0], fgs[b][1] + 0.38),
-              dashed=True, color=GREY, lw=0.9)
-    ax.text(1.5, 11.3, "fog nodes\n(local network)", fontsize=FS_SM,
-            ha="center", color=GREY)
+    # ---------- right panel: infrastructure graph ----------
+    panel2 = FancyBboxPatch((9.05, 1.15), 6.6, 8.6,
+                            boxstyle="round,pad=0.02,rounding_size=0.15",
+                            linewidth=1.0, edgecolor=GREEN_EDGE,
+                            facecolor="#f5faf2")
+    ax.add_patch(panel2)
+    ax.text(12.35, 9.30, "fog infrastructure graph", ha="center",
+            fontsize=FS, color=GREEN_EDGE, fontweight="bold")
+    ax.text(12.35, 8.80, "links carry bandwidth $B_{ba}$", ha="center",
+            fontsize=FS_SM, color=GREY, fontstyle="italic")
 
-    # example assignments (dashed blue, task -> node)
-    for src, dst in [(T[1], fgs[0]), (T[3], fgs[1]), (T[7], fgs[2])]:
-        arrow(ax, (src[0] - 1.7, src[1]), (dst[0] + 0.8, dst[1]),
-              dashed=True, color=BLUE, lw=1.0)
-    ax.text(1.5, 0.7, "dashed blue =\nwhere tasks run", fontsize=FS_SM,
-            color=BLUE, ha="center", fontstyle="italic")
+    F = {}
+    F[1] = box(ax, 9.65, 7.0, 2.1, 0.85, "$f_1$\ngateway", fs=FS)
+    F[2] = box(ax, 12.9, 7.0, 2.1, 0.85, "$f_2$\nshelter", fs=FS)
+    F[3] = box(ax, 9.65, 4.3, 2.1, 0.85, "$f_3$\nhospital", fs=FS)
+    F[4] = box(ax, 12.9, 4.3, 2.1, 0.85, "$f_4$\nmobile unit", fs=FS)
+
+    links = [(1, 2, "90", 0.0), (1, 3, "10", 0.0), (2, 4, "60", 0.0),
+             (3, 4, "45", 0.0), (2, 3, "30", -0.14)]
+    for a, b, lbl, rad in links:
+        heavy = (a, b) == (1, 3)
+        p1 = (F[a][0], F[a][1] - 0.42 if b in (3, 4) else F[a][1])
+        p2 = (F[b][0], F[b][1] + 0.42 if b in (3, 4) else F[b][1])
+        arrow(ax, p1, p2, color=RED if heavy else GREY,
+              lw=2.1 if heavy else 1.0, rad=rad,
+              label=f"$B_{{{a}{b}}}={lbl}$", fs=FS_SM, label_dy=0.10)
+
+    # ---------- mapping arrows: task -> node ----------
+    mapping = [(1, 1), (2, 1), (3, 1), (4, 3), (5, 2), (6, 4)]
+    for t, f in mapping:
+        arrow(ax, (T[t][0] + 1.5, T[t][1] - 0.10),
+              (F[f][0] - 1.1, F[f][1] + 0.10),
+              dashed=True, color=BLUE, lw=0.9, rad=0.10)
+    ax.text(8.0, 8.35, "placement $e_{ia}$", ha="center", fontsize=FS_SM,
+            color=BLUE, fontstyle="italic")
+
+    # ---------- the payoff callout ----------
+    call = FancyBboxPatch((3.4, 0.12), 9.2, 0.82,
+                          boxstyle="round,pad=0.02,rounding_size=0.12",
+                          linewidth=1.3, edgecolor=RED, facecolor="#fdf0ee")
+    ax.add_patch(call)
+    ax.text(8.0, 0.53,
+            "T3 sits on $f_1$, T4 on $f_3$: the $D_{34}{=}40$ input crosses "
+            "$B_{13}{=}10$, so delay $= 40/10 = 4$",
+            ha="center", va="center", fontsize=FS, color=RED,
+            fontweight="bold")
 
     fig.savefig(os.path.join(FIG, "disaster-response-dag.png"),
+                bbox_inches="tight", facecolor="white", pad_inches=0.04)
+    plt.close(fig)
+
+
+def figure_pipeline():
+    """Method-pipeline flow diagram: inputs on the left, the four
+    schedulers sharing one cost model in the middle, and the produced
+    schedule + metrics on the right. Sells the paper's story at a glance."""
+    fig, ax = plt.subplots(figsize=(6.4, 3.9), dpi=300)
+    ax.set_xlim(0, 16); ax.set_ylim(0, 10); ax.axis("off")
+
+    # ---------- inputs ----------
+    inp = FancyBboxPatch((0.35, 1.7), 3.7, 7.0,
+                         boxstyle="round,pad=0.02,rounding_size=0.15",
+                         linewidth=1.0, edgecolor="#8fb8de",
+                         facecolor="#f4f9fd")
+    ax.add_patch(inp)
+    ax.text(2.2, 8.15, "inputs", ha="center", fontsize=FS,
+            color="#4a6fa5", fontweight="bold")
+
+    i1 = box(ax, 0.7, 6.35, 3.0, 1.0,
+             "workflow DAG\n$D_{ji}$ on every edge", fs=FS)
+    i2 = box(ax, 0.7, 4.55, 3.0, 1.0,
+             "fog network\n$B_{ba}$ on every link", fs=FS)
+    i3 = box(ax, 0.7, 2.75, 3.0, 1.0,
+             "$t_{ia}, A_i, P_{ia}$\ndeadline $t_{max}$", fs=FS)
+
+    # ---------- shared cost model + schedulers ----------
+    mid = FancyBboxPatch((5.0, 1.7), 6.0, 7.0,
+                         boxstyle="round,pad=0.02,rounding_size=0.15",
+                         linewidth=1.2, edgecolor=YELLOW_EDGE,
+                         facecolor="#fffdf5")
+    ax.add_patch(mid)
+    ax.text(8.0, 8.15, "one data-aware cost model", ha="center",
+            fontsize=FS, color="#8a6d1c", fontweight="bold")
+    ax.text(8.0, 7.62, "crossed edge costs $c_{ji}=D_{ji}/B_{ba}$",
+            ha="center", fontsize=FS_SM, color=GREY, fontstyle="italic")
+
+    box(ax, 5.45, 6.05, 5.1, 0.85, "MILP  (exact reference)", fs=FS,
+        bold=True)
+    box(ax, 5.45, 4.95, 5.1, 0.85, "LP + randomized rounding", fs=FS)
+    box(ax, 5.45, 3.85, 5.1, 0.85, "bandwidth-aware greedy", fs=FS)
+    box(ax, 5.45, 2.75, 5.1, 0.85, "genetic algorithm", fs=FS)
+    ax.text(8.0, 2.15, "same objective: max accuracy, meet $t_{max}$",
+            ha="center", fontsize=FS_SM, color=GREY, fontstyle="italic")
+
+    # ---------- outputs ----------
+    out = FancyBboxPatch((11.95, 1.7), 3.7, 7.0,
+                         boxstyle="round,pad=0.02,rounding_size=0.15",
+                         linewidth=1.0, edgecolor=GREEN_EDGE,
+                         facecolor="#f5faf2")
+    ax.add_patch(out)
+    ax.text(13.8, 8.15, "schedule", ha="center", fontsize=FS,
+            color=GREEN_EDGE, fontweight="bold")
+
+    o1 = box(ax, 12.3, 6.35, 3.0, 1.0,
+             "placement $e_{ia}$\nwhich node runs it", fs=FS,
+             fc=GREEN, ec=GREEN_EDGE)
+    o2 = box(ax, 12.3, 4.55, 3.0, 1.0,
+             "fraction $l_{ia}$\nhow much of it runs", fs=FS,
+             fc=GREEN, ec=GREEN_EDGE)
+    o3 = box(ax, 12.3, 2.75, 3.0, 1.0,
+             "score, makespan,\ndeadline feasibility", fs=FS,
+             fc=GREEN, ec=GREEN_EDGE)
+
+    # flow arrows
+    for src in (i1, i2, i3):
+        arrow(ax, (src[0] + 1.5, src[1]), (5.0, src[1]), color=BLUE, lw=1.2)
+    for dst in (o1, o2, o3):
+        arrow(ax, (11.0, dst[1]), (dst[0] - 1.5, dst[1]), color=GREEN_EDGE,
+              lw=1.2)
+
+    fig.savefig(os.path.join(FIG, "scheduling-pipeline.png"),
                 bbox_inches="tight", facecolor="white", pad_inches=0.04)
     plt.close(fig)
 
@@ -205,4 +317,6 @@ def figure_dag():
 if __name__ == "__main__":
     figure_architecture()
     figure_dag()
-    print("wrote federated-fog-architecture.png and disaster-response-dag.png")
+    figure_pipeline()
+    print("wrote federated-fog-architecture.png, disaster-response-dag.png, "
+          "scheduling-pipeline.png")

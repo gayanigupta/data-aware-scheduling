@@ -1,0 +1,505 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+% Essential Packages
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage[colorlinks, citecolor=blue]{hyperref}
+\usepackage{balance}
+\usepackage{xcolor}
+\usepackage{cleveref}
+\usepackage{placeins}
+
+% Theorem-like environments
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{observation}{Observation}
+\newtheorem{definition}{Definition}
+
+\title{Data-Aware Scheduling of Approximate DAG Workflows in Federated Fog Systems}
+\author{\IEEEauthorblockN{Anonymous Author(s)}
+\IEEEauthorblockA{Affiliation anonymized for double-blind review}}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Flood forecasting, wildfire tracking, and evacuation planning all run as workflows of dependent tasks. During an extreme event the cloud link often fails, so the work must be done on small fog computers near the disaster area. A single fog site rarely has enough capacity to finish in time, but nearby sites can still reach each other over fast links, so a federation of them is the natural place to run the workflow. Scheduling on a federation is hard for two reasons. First, a task's input data can take as long to arrive as the task takes to run. Second, many tasks can be run approximately: they give a less accurate result in less time, which is often the right trade under a deadline.
+
+We write this scheduling problem as a mixed-integer linear program (MILP). The model decides which fog node runs each task and how much of it runs, so that the workflow's average accuracy is maximized and its deadline is met. The data size on each edge, the bandwidth of each link, and the execution fraction of each task are all decision terms; to our knowledge no earlier model treats them jointly. Since the MILP is only practical at moderate sizes, we also build three faster schedulers on the same cost model: linear-program (LP) relaxation with randomized rounding, a bandwidth-aware greedy rule, and a genetic algorithm. We compare all four in simulation, varying deadline slack, federation size, workflow size, link bandwidth, and failure rate. Under tight deadlines the MILP wins by a clear margin; with generous slack the MILP and the greedy both reach the accuracy bound while the two stochastic methods stay a few percent below it; and at the largest sizes the simple greedy is nearly as good while running far faster. A final sweep scales every link down to isolate what the data terms buy: a bandwidth-blind scheduler reports bound-level accuracy on paper yet misses the deadline as soon as links degrade, while the data-aware schedulers trade accuracy for feasibility and keep delivering.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Data-aware scheduling, federated fog systems, directed acyclic graphs, approximate computing, mixed-integer linear programming, genetic algorithms.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Industrial and emergency applications increasingly run on fog computers: small compute sites close to the sensors, deployed where the data is produced. This is especially important in remote or extreme environments like offshore platforms, deep-sea facilities, or disaster zones, where the link to a cloud data center is slow, intermittent, or simply absent \cite{rehman2018,cai2019}. When the cloud cannot be reached, a local fog site must handle time-critical work on its own, and a single site often does not have enough capacity to finish a workflow before its deadline.
+
+A practical way to add capacity is to federate nearby fog sites. Oil rigs a few kilometres apart, for example, can keep fast, stable links to each other even when the wide-area network is down. A federated fog then works like a small local cloud: tasks can be placed on any node, and nodes share data over the inter-fog links \cite{fgcs2024,hong2019survey}.
+
+Federation, however, makes scheduling harder, not easier. Real-time industrial applications are usually written as directed acyclic graphs (DAGs), where an edge means that one task must receive another task's output before it can start. Those edges carry real data, like sensor streams, simulation checkpoints, or model features. Moving that data between nodes takes time that depends on the link bandwidth. Most existing fog schedulers reason only about compute: they ask where a task runs fastest, but not how long it takes to get the task's input there. In a disaster-response workflow this omission is costly, because a ``fast'' remote placement can lose more time to data transfer than it saves in execution.
+
+There is a second lever that data-unaware schedulers also ignore: tasks can be run approximately. Many analytics tasks produce a less accurate result in less time: sampling a simulation fewer times, truncating a feature pipeline, or stopping an iterative method early. When a deadline is tight, running a task at 80\% accuracy may be the difference between a warning that arrives in time and one that arrives too late.
+
+This paper puts both levers into one scheduling model. The contributions are:
+
+\begin{itemize}
+    \item A data- and bandwidth-aware formulation of approximate DAG scheduling in federated fog systems as a mixed-integer linear program (Section~\ref{sec:model}). The objective is the average accuracy of the workflow; the constraints are precedence, communication delay, placement eligibility, and a single workflow deadline. To our knowledge, per-edge data size, per-link bandwidth, and per-task execution fraction have not previously appeared as joint decision terms in this setting.
+    \item Three scalable schedulers that share the same cost model as the MILP: LP relaxation with randomized rounding, a bandwidth/data-aware greedy algorithm, and a genetic algorithm (Section~\ref{sec:algorithms}).
+    \item A simulation study that varies deadline slack, fog-network size, workflow size, and task failure rate, and reports where each method wins (Section~\ref{sec:evaluation}).
+    \item A correctness argument and a linearization of the model suitable for standard MILP solvers (Appendix~\ref{app:proofs}).
+\end{itemize}
+
+A related conference study introduced an earlier version of the scheduling model~\cite{gupta2025efficient}. The present work extends it by stating the complete data- and bandwidth-aware formulation with its proofs and linearization, by adding the failure-rate experiments, and by positioning the model against the DAG-scheduling literature (Section~\ref{sec:related}).
+
+Section~\ref{sec:related} reviews related work, Section~\ref{sec:model} defines the model and the problem, Section~\ref{sec:algorithms} describes the scalable schedulers, and Section~\ref{sec:evaluation} reports the experiments.
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{DAG Scheduling on Heterogeneous Resources}
+
+Scheduling a DAG of tasks on heterogeneous processors is a well studied problem. The standard reference heuristic is HEFT (Heterogeneous Earliest Finish Time), introduced by Topcuoglu, Hariri, and Wu \cite{topcuoglu2002heft}. HEFT first computes for each task an upward rank, roughly the remaining work plus communication on the longest path to the end of the graph, and then places each task in rank order on the processor where it finishes earliest. Our model uses the same convention: the transfer cost lives on the DAG edge. The main difference is what a task is allowed to be. HEFT assumes a task runs completely or not at all, and the schedulers built on it keep that assumption. So do the DAG schedulers used in mobile edge computing \cite{li2023dagmec} and the learned schedulers that use a graph neural network with reinforcement learning \cite{sharma2025grapheonrl}. In our model, a task can run partially. The execution fraction $l_{ia}$ is a decision variable, so if the workflow cannot finish on time at full quality, it can still finish with less accuracy.
+
+Workflow engines work at a different level. Tools like Pegasus \cite{deelman2015pegasus,tanaka2022pegasusedge}, Snakemake \cite{koster2012snakemake}, Nextflow \cite{ditommaso2017nextflow}, StreamFlow \cite{colonnelli2021streamflow}, and DagOnStar \cite{sanchezgallegos2021dagonstar,perrotta2025streaming} take a workflow, resolve its dependencies, and move the data between machines. They decide \emph{how} a placement is carried out, but the placement decision itself is usually left to simple matchmaking or to a site scheduler. Our work fills that gap: it is the optimization layer that decides where each task should run, with the data transfer cost part of the decision. Other work has studied how to partition a task graph for data-intensive workflows \cite{ahmad2014workflow}, but it does not model per-link bandwidth or partial execution.
+
+\subsection{Fog Scheduling and Federation}
+
+There are several good surveys of resource allocation in fog and edge systems \cite{xu2021task,vevergara2023survey,hong2019survey,mouradian2018fog}. A number of papers propose federating nearby fog sites so they can share work, in industrial settings \cite{fgcs2024}, stream processing \cite{baccarelli2019ecomobifog}, and emergency response \cite{chiou2022emergency,gao2023lowlatency,kabanov2022}. Inside a federation, researchers have optimized how to partition and place application components for throughput \cite{faticanti2020partitioning} and load balancing \cite{faticanti2020load}, designed offloading policies to meet quality-of-service targets \cite{russo2024qos}, and studied energy use \cite{perin2022sustainable}. Learning-based schedulers adapt placements as the workload changes \cite{mao2017survey,min2019learning,wang2019deep}.
+
+These approaches share one limitation that matters for our problem: they are compute-centric. They model where a task runs and how fast it runs, but the data that has to move between dependent tasks enters the model weakly or not at all. In a federated fog, the links between nodes are the scarce resource, so the transfer cost cannot be ignored. Our formulation includes the data volume on every edge and the bandwidth on every link directly in the optimization, together with the option to run tasks partially.
+
+\subsection{Robustness and Approximate Execution}
+
+Trading result quality for resources is not a new idea in scheduling. Probabilistic task pruning drops low-value tasks so the schedule stays feasible under load \cite{gentry2019taskpruning}. Stochastic optimization has been used to make resource allocations robust to uncertain runtimes \cite{Salehi2016}. We use a softer version of the same idea: instead of dropping a task, the scheduler can run part of it, and the goal is to keep the total delivered accuracy as high as possible. This difference matters in disaster response, where dropping the alerting task is not an option, but running a faster, slightly less accurate version of it may be.
+
+\section{System Model and Problem Statement}
+\label{sec:model}
+
+This section makes the two levers from the introduction precise: the cost of moving a task's input across the federation, and the option to run a task only partially. Everything in the model follows from pricing those two choices.
+
+\subsection{Setting}
+
+We consider a federation of fog nodes $F=\{f_1,\ldots,f_m\}$ deployed in a disaster-prone area such as a cluster of offshore oil platforms (Fig.~\ref{fig:architecture}). Each pair of nodes is connected by a link of known bandwidth, and the federation operates even when the cloud is unreachable. A workflow arrives as a DAG $G=(T,E)$, where each node $T_i\in T$ is a computational task and each edge $(T_j,T_i)\in E$ is both a precedence constraint and a data transfer of size $D_{ji}$.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/federated-fog-architecture.png}
+\caption{Federated fog deployment for disaster response. Sensors feed a workflow of dependent tasks; the scheduler assigns each task to one fog node, priced by both compute time and inter-node data-transfer cost.}
+\label{fig:architecture}
+\end{figure}
+
+If task $T_j$ runs on node $f_b$ and its successor $T_i$ runs on node $f_a$, the input of $T_i$ has to cross the link $(f_b,f_a)$ with bandwidth $B_{ba}$. That transfer takes
+\begin{equation}
+ c_{ji}^{ba}=\begin{cases}
+ 0, & f_b=f_a,\\[2pt]
+ \dfrac{D_{ji}}{B_{ba}}, & f_b\neq f_a.
+ \end{cases}
+\label{eq:comm}
+\end{equation}
+This is the central cost in the model: placing a task is not only about how fast a node computes, but also about how long its input data takes to arrive.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/disaster-response-dag.png}
+\caption{Example disaster-response workflow. Edge labels are data sizes $D_{ji}$; dashed arrows show an assignment $e_{ia}$ of tasks to federated fog nodes. Running a task off the node that produced its input pays the transfer delay of Eq.~\eqref{eq:comm}.}
+\label{fig:dag}
+\end{figure}
+
+\subsection{Assumptions}
+\begin{itemize}
+    \item Tasks are non-preemptive: once started on a node, a task finishes there.
+    \item Each task runs on at most one node.
+    \item A task can receive input from all of its predecessors simultaneously when the links allow it.
+    \item Concurrent tasks on the same node do not slow each other down.
+    \item A task can be executed approximately: executing fraction $l$ of a task takes fraction $l$ of its full execution time and yields fraction $l$ of its accuracy.
+\end{itemize}
+
+\subsection{The Scheduling Problem}
+
+Table~\ref{tab:notation} lists the notation. Each task $T_i$ has a full-accuracy value $A_i$, an execution time $t_{ia}$ on each node $f_a$, and a placement-eligibility indicator $P_{ia}$. The workflow must finish by a deadline $t_{\max}$.
+
+\begin{table}[t]
+\centering
+\caption{Parameters and decision variables.}
+\label{tab:notation}
+\small
+\begin{tabular}{ll}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+$T_i$ & task $i$ of the workflow DAG \\
+$f_a$ & fog node $a$ \\
+$t_{ia}$ & full execution time of $T_i$ on $f_a$ \\
+$A_i$ & accuracy delivered if $T_i$ runs completely \\
+$D_{ji}$ & data transferred from $T_j$ to $T_i$ \\
+$B_{ba}$ & bandwidth of link $(f_b,f_a)$ \\
+$c_{ji}^{ba}$ & communication delay, Eq.~\eqref{eq:comm} \\
+$P_{ia}$ & $1$ if $T_i$ may run on $f_a$, else $0$ \\
+$\mathrm{in}_i$ & predecessors of $T_i$ in the DAG \\
+$t_{\max}$ & workflow deadline \\
+\midrule
+$e_{ia}$ & $1$ if $T_i$ is assigned to $f_a$ \\
+$l_{ia}$ & fraction of $T_i$ executed on $f_a$ \\
+$M_{ia}$ & earliest time $T_i$ can start on $f_a$ \\
+$y_i$ & completion time of $T_i$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The problem is then to choose, for every task, which node runs it and how much of it runs, so that the average delivered accuracy is as high as possible and every task finishes by $t_{\max}$.
+
+\subsection{MILP Formulation}
+\label{sec:milp}
+
+The objective is to maximize the average accuracy over the workflow:
+\begin{equation}
+ \max \quad \frac{1}{n}\sum_{T_i\in T}\; A_i\sum_{f_a\in F} l_{ia}.
+\label{eq:obj}
+\end{equation}
+subject to
+\begin{align}
+ \sum_{f_a\in F} e_{ia} &=1, && \forall T_i\in T, \label{eq:one}\\
+ e_{ia} &\le P_{ia}, && \forall T_i,\ f_a, \label{eq:elig}\\
+ 0\le l_{ia} &\le e_{ia}, && \forall T_i,\ f_a, \label{eq:frac}\\
+ M_{ia} &\ge y_j+\sum_{f_b\in F} e_{jb}\,c_{ji}^{ba}, && \forall T_i,\ f_a,\ T_j\in\mathrm{in}_i, \label{eq:start}\\
+ M_{ia} &=0, && \forall T_i:\mathrm{in}_i=\varnothing,\ f_a, \label{eq:startsrc}\\
+ y_i &=\sum_{f_a\in F} e_{ia}\bigl(M_{ia}+t_{ia}l_{ia}\bigr), && \forall T_i, \label{eq:compl}\\
+ y_i &\le t_{\max}, && \forall T_i, \label{eq:deadline}\\
+ e_{ia} &\in\{0,1\}. && \label{eq:bin}
+\end{align}
+
+Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only be (partially) run where it is placed, and at most one $l_{ia}$ per task is non-zero. Constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link, which is where $D_{ji}$ and $B_{ba}$ enter the optimization through Eq.~\eqref{eq:comm}. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} make this a mixed-integer nonlinear constraint as written; Appendix~\ref{app:proofs} gives the standard linearization (auxiliary variables $z_{ia}=e_{ia}M_{ia}$) together with the correctness argument.
+
+\subsection{Complexity}
+
+Scheduling problems of this kind are NP-hard already on unrelated parallel machines \cite{lenstra1990approximation}, and precedence, communication, and approximation only make them harder. We therefore treat the MILP as the benchmark: it gives the best achievable accuracy on instances small enough to solve exactly, and it defines the constraints every scalable method must respect. For larger workflows we use three cheaper methods, described next: randomized rounding \cite{raghavan1987randomized}, a greedy scheduler, and a genetic algorithm.
+
+\section{Scalable Scheduling Algorithms}
+\label{sec:algorithms}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/scheduling-pipeline.png}
+\caption{Method pipeline. The same inputs feed all four schedulers, which share the data-aware cost model of Section~\ref{sec:model}; each produces a placement $e_{ia}$ and execution fractions $l_{ia}$, evaluated on accuracy score, makespan, and deadline feasibility.}
+\label{fig:pipeline}
+\end{figure}
+
+All three methods take the same inputs as the MILP: the DAG, the times $t_{ia}$, the data sizes $D_{ji}$, the bandwidths $B_{ba}$, the eligibility flags $P_{ia}$, and the deadline $t_{\max}$. Because they all evaluate the communication term \eqref{eq:comm}, they are all bandwidth-aware. Fig.~\ref{fig:pipeline} shows how they fit together.
+
+\subsection{LP Relaxation with Randomized Rounding}
+
+The first method relaxes the binary variables of Section~\ref{sec:milp} to $e_{ia}\in[0,1]$ and solves the resulting LP. Let $r_{ia}$ be the value the LP gives to $e_{ia}$; we can read it roughly as the probability that node $f_a$ is a good place for $T_i$. We then assign each task to a node by sampling from this distribution, renormalized over the eligible nodes $\{a:P_{ia}=1\}$. Once the assignment is fixed, a second LP solve sets the execution fractions $l_{ia}$ and the timing values.
+
+The rounding inherits bandwidth awareness from the LP itself: a placement that needs a large $D_{ji}$ over a slow link gets a small $r_{ia}$ in the relaxation and is therefore rarely sampled. Assignments that turn out infeasible are discarded and re-sampled. The method sits between the MILP and the heuristics: it has no optimality guarantee, but its sampling distribution comes from an actual optimization rather than a rule of thumb.
+
+\subsection{Bandwidth- and Data-Aware Greedy Scheduler}
+\label{sec:greedy}
+
+The greedy scheduler processes the DAG in dependency order and assigns each ready task to the node that finishes it earliest. Among the ready tasks it picks the one with the highest priority, which mixes accuracy with urgency:
+\begin{equation}
+\pi_i \;=\; \beta\cdot A_i \;+\; (1-\beta)\cdot \mathrm{CP}_i,
+\label{eq:priority}
+\end{equation}
+where $\mathrm{CP}_i$ is the critical-path length from $T_i$ to a sink under the current $t_{ia}$ and $c_{ji}^{ba}$, and $\beta\in[0,1]$ trades accuracy importance against schedule urgency (default $\beta=0.5$; ties break by accuracy density, i.e.\ $A_i$ divided by the task's mean eligible execution time).
+
+The scheduler keeps a single global execution fraction $\ell\in(0,1]$, applied to every task, and decreases it by a step $\delta$ whenever the produced schedule misses the deadline:
+
+\begin{algorithm}[t]
+\caption{Bandwidth/Data-Aware Greedy DAG Scheduler}
+\label{alg:greedy}
+\begin{algorithmic}[1]
+\STATE $\ell\leftarrow 1$; compute priorities $\pi_i$ by \eqref{eq:priority}
+\REPEAT
+  \STATE $y_i\leftarrow\infty$ for all $T_i$; ready set $\mathcal{R}\leftarrow$ source tasks
+  \WHILE{$\mathcal{R}\neq\varnothing$}
+    \STATE pick $T_i\in\mathcal{R}$ with maximum $\pi_i$
+    \STATE $y^{\star}\leftarrow\infty$; $a^{\star}\leftarrow\bot$
+    \FOR{each $f_a\in F$ with $P_{ia}=1$}
+        \STATE $M_{ia}\leftarrow \max_{T_j\in \mathrm{in}_i}\bigl(y_j+\sum_{f_b\in F} e_{jb}\, c_{ji}^{ba}\bigr)$
+        \STATE $y_i^{(a)}\leftarrow M_{ia}+t_{ia}\,\ell$
+        \IF{$y_i^{(a)}<y^{\star}$}
+            \STATE $y^{\star}\leftarrow y_i^{(a)}$; $a^{\star}\leftarrow a$
+        \ENDIF
+    \ENDFOR
+    \STATE $e_{ia^{\star}}\leftarrow 1$; $y_i\leftarrow y^{\star}$; release newly-ready successors into $\mathcal{R}$
+  \ENDWHILE
+  \STATE $Y_{\max}\leftarrow \max_i y_i$
+  \IF{$Y_{\max}>t_{\max}$}
+      \STATE $\ell\leftarrow\ell-\delta$ \COMMENT{e.g.\ $\delta=0.005$}
+  \ENDIF
+\UNTIL{$Y_{\max}\le t_{\max}$}
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph*{Complexity} Each task scans all $m$ nodes and, for each candidate, takes a maximum over its in-neighbours, so one pass costs $O(nm+m|E|)$; the number of outer passes is bounded by $1/\delta$.
+
+The greedy is a practical method rather than just a baseline: it accounts for the deadline through $\ell$, for bandwidth through $c_{ji}^{ba}$, and for node speed through $t_{ia}$. What it cannot do is look ahead: a cheap early decision can force an expensive one later. The genetic algorithm addresses exactly that.
+
+\subsection{Genetic-Algorithm Scheduler}
+\label{sec:ga}
+
+A chromosome encodes a full placement plus a per-task execution fraction: an assignment vector $\mathbf{f}$ with $f(i)\in\{a:P_{ia}=1\}$, and a fraction vector $\boldsymbol{\ell}\in[0,1]^n$ that maps to $l_{i,f(i)}$. Fitness is evaluated by a forward pass over the DAG,
+\begin{equation}
+M_{i,f(i)}=\max_{T_j\in \mathrm{in}_i}\Bigl(y_j+\tfrac{D_{ji}}{B_{f(j),f(i)}}\Bigr),\qquad
+y_i=M_{i,f(i)}+t_{i,f(i)}\ell_i,
+\end{equation}
+and the fitness to maximize is
+\begin{equation}
+\Phi=\frac{1}{n}\sum_i A_i\,\ell_i
+-\lambda_1\,\mathbb{I}[Y_{\max}>t_{\max}]
+-\lambda_2\,\frac{(Y_{\max}-t_{\max})_+}{t_{\max}},
+\label{eq:fitness}
+\end{equation}
+where $Y_{\max}=\max_i y_i$, $\mathbb{I}[\cdot]$ is the indicator function, and $\lambda_1\gg\lambda_2$ penalize deadline violation. Infeasible individuals ($P_{i,f(i)}=0$) receive $\Phi=-\infty$.
+
+\begin{algorithm}[t]
+\caption{Genetic Algorithm for Bandwidth/Data-Aware Fog Scheduling}
+\label{alg:ga}
+\begin{algorithmic}[1]
+\STATE initialize population with feasible $(\mathbf{f},\boldsymbol{\ell})$; seed co-location of predecessors joined by large $D_{ji}$
+\REPEAT
+    \STATE evaluate $\Phi$ of each individual via \eqref{eq:fitness}
+    \STATE select parents (tournament or roulette)
+    \STATE one-point crossover on $\mathbf{f}$ and $\boldsymbol{\ell}$ independently
+    \STATE mutate: reassign $f(i)$ within $\{a:P_{ia}=1\}$; jitter $\ell_i\leftarrow\mathrm{clip}_{[0,1]}(\ell_i+\mathcal{N}(0,\sigma^2))$
+    \STATE repair: bias toward co-locating $T_i$ with a predecessor $T_j$ when $D_{ji}$ is large and the link is slow
+    \STATE elitism: keep top-$k$ individuals
+\UNTIL{maximum generations reached or no improvement}
+\end{algorithmic}
+\end{algorithm}
+
+Because the GA evaluates complete assignments instead of committing tasks one at a time, it can find structures the greedy misses; for example, it can group a data-heavy subgraph on one well-connected node. In practice a few dozen generations with a modest population are enough.
+
+\section{Performance Evaluation}
+\label{sec:evaluation}
+
+\subsection{Experimental Setup}
+
+All experiments use a custom discrete-event simulator. Workloads are synthetic disaster-response DAGs serialized in JSON, each task carrying an execution-time vector $t_{ia}$, edge data sizes $D_{ji}$, a full-accuracy value $A_i$, and eligibility $P_{ia}$. The fog federation is generated with heterogeneous node speeds and link bandwidths, and communication delays follow Eq.~\eqref{eq:comm}. Parameters are chosen so that data transfers are contested rather than negligible or prohibitive: task times $t_{ia}\in[1,5]$ (normalized units), edge data sizes $D_{ji}\in[5,50]$, and link bandwidths $B_{ba}\in[10,100]$, so that $D_{ji}/B_{ba}$ is comparable to task execution time; node speeds vary within $[0.5,2]\times$ and roughly 15\% of task--node pairs are ineligible, modeling missing sensor feeds or software dependencies.
+
+\begin{itemize}
+    \item \textbf{Test datasets:} four schedulable instance sets spanning the sizes used throughout: 10 tasks/3 nodes, 100 tasks/5 nodes, 500 tasks/8 nodes, and 1000 tasks/10 nodes. Each is generated with the parameter ranges above and a fixed random seed per configuration, so every reported number is reproducible. Larger workflow \emph{structures} (DAG edge lists up to $10^6$ tasks) and federations up to $10^6$ nodes are generated and analyzed in the companion notebook; they exercise graph generation and statistics, not the dense schedulable-instance path, whose $n\times n$ edge-data matrix does not fit at that scale.
+    \item \textbf{Workflow sizes:} small (10 tasks), medium (100 tasks), large (1000 tasks), with density ranging from sparse to highly interdependent.
+    \item \textbf{Federation size:} $N\in\{2,4,6,8,10\}$ fog nodes.
+    \item \textbf{Deadline slack:} the deadline is set as $t_{\max}=\alpha\cdot T_{\mathrm{cp}}$, where $T_{\mathrm{cp}}$ is the critical-path length of the workflow at full execution and $\alpha\in\{1.0,1.2,1.3,1.5,2.0\}$ is the slack factor.
+    \item \textbf{Task failures:} a per-task failure rate from 0\% to 50\% under a retry-once model: a failed task is re-executed once on the same node, so it costs twice its execution time but keeps its accuracy if the retry still meets the deadline.
+    \item \textbf{Link bandwidth:} all inter-node bandwidths scaled by a factor in $\{1.0, 0.5, 0.2, 0.1, 0.05\}$ with the deadline unchanged, modeling link degradation during an event.
+    \item \textbf{Methods compared:} the MILP of Section~\ref{sec:milp}, randomized rounding, the greedy of Section~\ref{sec:greedy}, and the GA of Section~\ref{sec:ga}. Two reference configurations bracket the range: \emph{fixed scheduling} ($\alpha=1.0$, strict deadlines) and a \emph{max-accuracy bound} ($t_{\max}\!\to\!\infty$) that upper-bounds achievable accuracy. For the bandwidth sweep we also run a \emph{bandwidth-blind} variant of the greedy. It is the same algorithm but chooses nodes as if transfers were free, so the experiment isolates what the data-aware terms buy.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/dataset_medium_graphs.png}
+\caption{One generated test dataset. Left: the medium workflow DAG (100
+tasks; the first 60 drawn for readability). Right: its 5-node fog
+federation, drawn as a complete graph with link width proportional to
+$B_{ba}$. Every sweep instance is generated the same way with a fixed
+seed, so the reported results are reproducible.}
+\label{fig:dataset}
+\end{figure}
+
+The sweeps are organized around three questions. First, when does the choice of scheduler actually matter---under tight deadlines, and as the federation grows? Second, what does data-aware placement buy when conditions worsen---when links degrade and when tasks fail? Third, where does each method stop scaling as the workflow grows?
+
+Metrics recorded per run: the achieved accuracy score $\bar{A}=\frac{1}{n}\sum_i A_i\,\ell_i$, where $\ell_i=\sum_a l_{ia}$ is the fraction of task $T_i$ executed. This is what the MILP maximizes. Because each $A_i$ is a per-task accuracy \emph{weight} rather than a probability, the score is not bounded by~1 and is read relative to the max-accuracy bound of the same instance, drawn as a dashed line in every figure. Makespan and deadline adherence are also recorded; all values are averaged over repeated random DAGs.
+
+\begin{table}[t]
+\centering
+\caption{Per-dataset test runs. Score is the average achieved accuracy
+$\bar{A}$; all listed schedules meet the deadline. ``--'' means the
+method was not run: the MILP is capped at $n\,m\le 800$ assignment
+variables and randomized rounding at $n\le 200$ tasks.}
+\label{tab:runs}
+\small
+\begin{tabular}{lcclrrr}
+\toprule
+Dataset & $n$ & $m$ & Method & Score & Makespan & Time (s) \\
+\midrule
+small  & 10   & 3  & MILP      & 1.637 & 17.98 & 0.013 \\
+       &      &    & Rounding  & 1.637 & 17.98 & 0.16  \\
+       &      &    & Greedy    & 1.637 & 16.84 & 0.000 \\
+       &      &    & GA        & 1.637 & 18.90 & 0.27  \\
+\midrule
+medium & 100  & 5  & MILP      & 1.443 & 60.94 & 1.37  \\
+       &      &    & Rounding  & 1.324 & 62.17 & 24.83 \\
+       &      &    & Greedy    & 1.443 & 43.11 & 0.003 \\
+       &      &    & GA        & 1.274 & 61.26 & 5.19  \\
+\midrule
+large  & 500  & 8  & Greedy    & 1.419 & 50.15 & 0.04  \\
+       &      &    & GA        & 1.173 & 71.26 & 21.43 \\
+\midrule
+xlarge & 1000 & 10 & Greedy    & 1.406 & 83.14 & 0.14  \\
+       &      &    & GA        & 1.126 & 119.85& 73.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:runs} reports the per-dataset test runs behind the sweeps.
+Two trends are already visible: the greedy and the MILP achieve the same
+score wherever both run, because under the tested slack all tasks execute
+fully and placement only moves the makespan; and the GA's score drops as
+the workflow grows, because its fixed population budget must cover an
+$n$-dimensional search space.
+
+\emph{Reproducibility.} The simulator used for the evaluation (instance generation, the four schedulers, and the experiment sweeps) is provided with this submission in code/fogsim.py; generated workflow instances are in data/instances/ and per-run results in data/results/. The implementation depends only on NumPy, SciPy (HiGHS for the MILP/LP solves), and pandas. An executed Jupyter notebook (notebooks/experiments.ipynb) documents the datasets, per-dataset test runs, the workflow and resource graphs, the asymptotic runtime analysis, and the scaling limitations encountered (solver caps, sparse-constraint requirements, and fixed GA budgets). Code and data are publicly available in an artifact repository (link anonymized for double-blind review)~\cite{artifact2026}.
+
+\subsection{Deadline Slack}
+
+Fig.~\ref{fig:slack} shows the reported accuracy score against the slack factor $\alpha$. The methods separate at the tight deadline: at $\alpha=1.0$ the MILP stays within about 3\% of the bound (1.38 vs.\ 1.43), rounding follows at 1.25, the greedy at 1.23, and the GA lowest at 1.20, about 16\% below the bound. Once the deadline relaxes, the picture changes. From $\alpha=1.2$ onward the greedy reaches the bound exactly, and the MILP does so from $\alpha=1.5$: with a loose deadline even the local rule can run every task in full. The two stochastic methods never fully close the gap in our runs: rounding stays about 8\% below the bound at $\alpha=1.2$ and roughly 2.5\% below at $\alpha=1.5$--2.0, while the GA trails by 3--10\% across the range. The lesson is twofold: the scheduling choice matters most when the workflow barely fits its deadline, and a fixed sampling budget does not recover the bound even when one exists.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/perf_slack_accuracy.png}
+\caption{Reported average-accuracy score vs.\ deadline slack factor $\alpha$ ($t_{\max}=\alpha\cdot T_{\mathrm{cp}}$).}
+\label{fig:slack}
+\end{figure}
+
+\subsection{Federation Size}
+
+Fig.~\ref{fig:nodes} shows the reported accuracy score as the federation grows from $N=2$ to $N=10$ nodes. These instances use the default slack $\alpha=1.5$, so accuracy is already close to the ceiling and extra nodes do not raise it; what they add is room to schedule. The MILP and the greedy match the bound exactly at every size. The two stochastic methods drift downward as the federation widens: the GA goes from about 1.5\% below the bound at $N=2$ to about 8\% below at $N=10$, and randomized rounding matches the bound only at $N=2$ before falling about 8\% short at $N=10$. Both have a fixed search or sampling budget, and that budget covers a shrinking fraction of the placement space as $N$ grows. The lesson is that extra federation capacity does not raise accuracy once the deadline is met; its value is in the feasible placements it opens when the deadline is tight.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/perf_nodes_accuracy.png}
+\caption{Reported average-accuracy score vs.\ number of federated fog nodes $N$.}
+\label{fig:nodes}
+\end{figure}
+
+\subsection{Workflow Size}
+
+Fig.~\ref{fig:tasksize} shows accuracy for DAGs of 10, 100, and 1000 tasks. At 10 tasks all four methods sit on the bound (1.41); at 100 the MILP and the greedy match the bound (1.40), rounding follows at 1.35, and the GA is first to drift at 1.26. At 1000 tasks the MILP is no longer reported, since it exceeds our 800-assignment-variable cap. Of the remaining methods, the greedy stays on the bound (1.40), randomized rounding follows at 1.37 (each LP re-solve costs about 93\,s here, so its trial count is reduced to four per run), and the GA falls to 1.10. The reason is that the GA's population and generation budget stays fixed while the search space grows with $n$, so its accuracy declines with size. The greedy, in contrast, makes one dependency-ordered pass, so it scales almost linearly and loses nothing in this regime, where the slack is loose enough to run most tasks fully.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/perf_task_size_accuracy.png}
+\caption{Reported average-accuracy score vs.\ DAG size. The greedy tracks the max-accuracy bound at every size; randomized rounding stays within a few percent, while the GA degrades at 1000 tasks under its fixed search budget. The MILP is not reported beyond its assignment-variable cap.}
+\label{fig:tasksize}
+\end{figure}
+
+\subsection{Task Failures}
+
+We model failures with a retry-once rule: when task $T_i$ fails on its node it runs once more in place, paying $t_{ia}$ a second time, and it keeps its accuracy if the retry still finishes by the deadline. Fig.~\ref{fig:failure} shows score and deadline feasibility as the per-task failure rate rises from 0\% to 50\%. Scores do not move with the failure rate, since retries preserve accuracy; the methods separate on feasibility instead. The greedy is the only method whose schedule stays feasible at every rate: its placements leave enough slack to absorb the retries. The MILP and the GA meet the deadline in about 60\% of runs once failures occur, and randomized rounding in about 20\%. The curves are nearly flat because at $n{=}100$ tasks even a 10\% per-task rate makes at least one failure almost certain, so feasibility is decided by whether the schedule can absorb typical failure sets rather than by the rate itself.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/perf_failure_accuracy.png}
+\caption{Accuracy score (left) and deadline feasibility rate (right) vs.\ task failure rate under the retry-once model. Retries preserve accuracy but consume extra time, so the methods separate on feasibility: schedules with more slack absorb failures longer.}
+\label{fig:failure}
+\end{figure}
+
+\subsection{Link Bandwidth Degradation}
+
+The final sweep stresses the communication cost that motivates the model. Every inter-node bandwidth $B_{ba}$ is multiplied by a factor from 1.0 down to 0.05 while the deadline stays fixed, which is what a federation faces when links deteriorate during an event. To show what data-aware placement is worth, we add a bandwidth-blind baseline: the same greedy algorithm as Section~\ref{sec:greedy}, but choosing placements as if all transfers were free, and then evaluated against the real communication delays.
+
+Fig.~\ref{fig:bandwidth} shows the two metrics that matter. On score alone the blind baseline looks perfect: it runs every task fully and reports the bound at every degradation level. The right panel shows why that is misleading: the blind schedules start missing the deadline already at half bandwidth (80\% feasible at 0.5, 20\% at 0.2) and are infeasible in every run at 0.1 and below. The data-aware schedulers behave differently. The MILP stays feasible at every level and loses only about 10\% of score at 0.05, shrinking execution fractions to fit the deadline. The greedy also stays feasible down to 0.1, but pays for it with accuracy (score 0.80 at 0.1, and mostly infeasible at 0.05). The GA is mostly feasible down to 0.1 (80\% at 0.2, 40\% at 0.1) and fails at 0.05. Randomized rounding holds at 0.5 but its sampled assignments largely stop surviving the feasibility LP below that (60\% feasible at 0.2, none at 0.1 and lower); this is a limit of our implementation, not a proof that no feasible rounding exists.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.95\linewidth]{Figures/perf_bandwidth_accuracy.png}
+\caption{Accuracy score (left) and deadline feasibility rate (right) as all link bandwidths are scaled down. The bandwidth-blind baseline reports bound-level scores but its schedules miss the deadline whenever links drop below roughly half capacity; the data-aware methods trade accuracy for feasibility instead.}
+\label{fig:bandwidth}
+\end{figure}
+
+\subsection{Discussion}
+
+Read against the three questions, the experiments point to three conclusions. First, the choice of scheduler matters most when the deadline binds: at $\alpha=1.0$ the methods separate, with the MILP ahead and the heuristics trailing, while by $\alpha=1.5$ the MILP and the greedy coincide with the bound and only the two stochastic methods stay a few percent below it. Second, accuracy under a binding deadline is not free in wall time: at 1000 tasks the greedy finishes in 0.15\,s, while randomized rounding spends about 93\,s per LP re-solve (roughly 372\,s per run even with only four trials) and the GA 159\,s for a markedly worse score. Third, under the retry-once failure model the schedulers separate on feasibility rather than accuracy, because retries preserve score but consume time, so placements that leave slack tolerate more failures.
+
+\textbf{Bottlenecks and shortcomings.} The evaluation surfaced limits that delimit where the formulation applies. (i)~\emph{MILP scalability}: the model has $n \cdot N_{\mathrm{fog}}$ binary assignment variables, and we cap runs at 800. It therefore cannot certify optimality on large workflows. (ii)~\emph{LP model size}: the relaxation introduces one start-time constraint per (task, predecessor, node) triple, about $10^5$ rows at $n{=}1000$. Constraints must be assembled sparsely and each solve costs tens of seconds, a cost rounding pays per trial. (iii)~\emph{Fixed GA budget}: the population and generation count do not grow with $n$, which is why the GA's score degrades visibly in Fig.~\ref{fig:tasksize}; size-adaptive budgets or seeded search should close most of that gap. (iv)~\emph{Failure semantics}: the retry-once model differentiates schedulers through feasibility, but richer treatments such as cross-node replication or checkpointing are left out of the model. (v)~\emph{Dense instances}: schedulable instances store per-edge data densely, so very large DAGs, which the companion notebook generates structurally up to $10^6$ tasks, cannot yet be carried as schedulable instances; sparse instance storage and decomposed formulations would extend the same cost model to genuinely large deployments.
+
+\section{Conclusion and Future Work}
+
+This paper formulated data- and bandwidth-aware scheduling of approximate DAG workflows in federated fog systems as a mixed-integer linear program, and gave three scalable schedulers built on the same cost model. In simulation, when deadlines are tight the MILP earns a clear accuracy advantage that justifies its solve time; when slack is generous the MILP and the greedy coincide at the bound while the stochastic methods stay a few percent below it; and at large workflow sizes the lightweight greedy holds its own while the GA's fixed search budget becomes its weakness. Under the retry-once failure model the schedulers separate on deadline feasibility rather than accuracy.
+
+Future work has four directions, each addressing a shortcoming documented above. \textbf{Sparse and decomposed formulations:} sparse instance storage and decomposition or partitioning of the LP would extend the model beyond the current dense limit toward the $10^6$-task graphs we can already generate structurally. \textbf{Adaptive heuristic budgets:} scaling the GA's population and generations with $n$, or seeding it with the greedy solution, should recover the accuracy lost at large sizes. \textbf{Richer failure semantics:} replication across nodes, checkpointing, or re-scheduling inside the model would go beyond the retry-once model used here. \textbf{Online adaptation and field deployment:} re-scheduling as workloads, links, and node availability change during an event, and validating assumptions on a real federated fog testbed.
+
+\appendix
+\section{Correctness and Linearization}
+\label{app:proofs}
+
+This appendix shows that the formulation of Section~\ref{sec:milp} means what it should, and how to write it for a standard MILP solver. A solution is \emph{feasible} if every task is placed on exactly one permitted node, at most one $l_{ia}$ per task is non-zero, and all tasks complete by $t_{\max}$.
+
+\begin{lemma}
+\label{lem:elig}
+If $P_{ia}=0$ then $e_{ia}=0$.
+\end{lemma}
+\begin{proof}
+Immediate from \eqref{eq:elig} and $e_{ia}\in\{0,1\}$.
+\end{proof}
+
+\begin{lemma}
+\label{lem:one}
+Every task is assigned to exactly one node.
+\end{lemma}
+\begin{proof}
+By \eqref{eq:one}, $\sum_a e_{ia}=1$ with $e_{ia}$ binary.
+\end{proof}
+
+\begin{lemma}
+\label{lem:frac}
+For each task, at most one $l_{ia}$ is non-zero, and $l_{ia}>0$ implies $e_{ia}=1$.
+\end{lemma}
+\begin{proof}
+$l_{ia}>0\Rightarrow e_{ia}\ge l_{ia}>0\Rightarrow e_{ia}=1$ by \eqref{eq:frac}, and Lemma~\ref{lem:one} leaves no other node with $e_{ia}=1$.
+\end{proof}
+
+\begin{lemma}
+\label{lem:timing}
+$M_{ia}$ is the earliest time $T_i$ can start on $f_a$, and $y_i$ is the completion time of $T_i$ on the node it is assigned to.
+\end{lemma}
+\begin{proof}
+Induction on the distance of $T_i$ from a source. A source task has $\mathrm{in}_i=\varnothing$, so $M_{ia}=0$ by \eqref{eq:startsrc} and $y_i=\sum_a e_{ia}(M_{ia}+t_{ia}l_{ia})=t_{ia^{\star}}l_{ia^{\star}}$ on its assigned node $f_{a^{\star}}$ by Lemma~\ref{lem:one}. For the step, suppose the claim holds for every task whose distance from a source is less than $k$, and let $T_i$ have distance $k$. Every $T_j\in\mathrm{in}_i$ completes at $y_j$ on its assigned node $f_{b^{\star}}$; the data then needs $c_{ji}^{b^{\star}a}=\sum_b e_{jb}c_{ji}^{ba}$ to reach $f_a$, so $T_i$ cannot start on $f_a$ before $y_j+\sum_b e_{jb}c_{ji}^{ba}$. Taking the maximum over $j\in\mathrm{in}_i$ gives exactly \eqref{eq:start}, and \eqref{eq:compl} gives $y_i$.
+\end{proof}
+
+\begin{lemma}
+\label{lem:deadline}
+All tasks complete by $t_{\max}$.
+\end{lemma}
+\begin{proof}
+By Lemma~\ref{lem:timing} and \eqref{eq:deadline}.
+\end{proof}
+
+\begin{theorem}
+Any optimal solution of \eqref{eq:obj}--\eqref{eq:bin} is feasible and maximizes the total achieved accuracy $\sum_i A_i\sum_a l_{ia}$.
+\end{theorem}
+\begin{proof}
+Lemmas~\ref{lem:elig}--\ref{lem:deadline} establish feasibility. Optimality of the accuracy total is the objective \eqref{eq:obj} itself.
+\end{proof}
+
+For a solver, two constraints need rewriting. First, \eqref{eq:compl} contains the products $e_{ia}M_{ia}$. Introduce $z_{ia}=e_{ia}M_{ia}$ and replace \eqref{eq:compl} with
+\begin{equation}
+ y_i=\sum_{f_a\in F} z_{ia}+\sum_{f_a\in F} t_{ia}l_{ia},
+\label{eq:compllin}
+\end{equation}
+together with the standard big-$M$ constraints
+\begin{align}
+ z_{ia} &\le t_{\max}\, e_{ia},\\
+ z_{ia} &\le M_{ia},\\
+ z_{ia} &\ge M_{ia}-(1-e_{ia})\,t_{\max},
+\end{align}
+which force $z_{ia}=M_{ia}$ when $e_{ia}=1$ and $z_{ia}=0$ otherwise. Second, \eqref{eq:start} is already in solver-friendly form: since $c_{ji}^{ba}$ are constants, each inequality is linear once written out per predecessor. The equalities \eqref{eq:startsrc} for source tasks are imposed directly.
+
+\begin{theorem}
+The linearized formulation has the same feasible placements and the same optimal accuracy as \eqref{eq:obj}--\eqref{eq:bin}.
+\end{theorem}
+\begin{proof}
+For each $i$, exactly one $a$ has $e_{ia}=1$ (Lemma~\ref{lem:one}); on that node the $z$-constraints give $z_{ia}=M_{ia}$, and on all others $z_{ia}=0$, so \eqref{eq:compllin} reproduces \eqref{eq:compl} term by term. All other constraints are unchanged.
+\end{proof}
+
+\bibliographystyle{ieeetr}
+\balance
+\bibliography{cas-refs}
+
+\end{document}
