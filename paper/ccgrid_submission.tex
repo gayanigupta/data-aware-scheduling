@@ -421,6 +421,30 @@ Read against the three questions, the experiments point to three conclusions. Fi
 
 \textbf{Bottlenecks and shortcomings.} The evaluation surfaced limits that delimit where the formulation applies. (i)~\emph{MILP scalability}: the model has $n \cdot N_{\mathrm{fog}}$ binary assignment variables, and we cap runs at 800. It therefore cannot certify optimality on large workflows. (ii)~\emph{LP model size}: the relaxation introduces one start-time constraint per (task, predecessor, node) triple, about $10^5$ rows at $n{=}1000$. Constraints must be assembled sparsely and each solve costs tens of seconds, a cost rounding pays per trial. (iii)~\emph{Fixed GA budget}: the population and generation count do not grow with $n$, which is why the GA's score degrades visibly in Fig.~\ref{fig:tasksize}; size-adaptive budgets or seeded search should close most of that gap. (iv)~\emph{Failure semantics}: the retry-once model differentiates schedulers through feasibility, but richer treatments such as cross-node replication or checkpointing are left out of the model. (v)~\emph{Dense instances}: schedulable instances store per-edge data densely, so very large DAGs, which the companion notebook generates structurally up to $10^6$ tasks, cannot yet be carried as schedulable instances; sparse instance storage and decomposed formulations would extend the same cost model to genuinely large deployments.
 
+The generation machinery itself already works at that scale. Table~\ref{tab:structural} shows the companion artifacts producing a $10^6$-task workflow DAG in about 3\,s and a $10^6$-node federation in about 7\,s, with edge and link counts growing near-linearly in the number of vertices. These are the structures that the sparse and decomposed formulations of future work would schedule.
+
+\begin{table}[t]
+\centering
+\caption{Structural graph generation beyond the schedulable limit.
+The schedulable path caps near $10^3$ tasks because of dense edge-data
+storage; the generators themselves scale to $10^6$ vertices in seconds.}
+\label{tab:structural}
+\small
+\begin{tabular}{rrr rrr}
+\toprule
+\multicolumn{3}{c}{workflow DAG} & \multicolumn{3}{c}{fog network}\\
+\cmidrule(r){1-3}\cmidrule(l){4-6}
+tasks & edges & gen.\ (s) & nodes & links & gen.\ (s)\\
+\midrule
+$10^2$ & 284           & 0.0 & 10    & 25           & 0.0 \\
+$10^3$ & 2{,}978       & 0.0 & $10^3$ & 2{,}428      & 0.0 \\
+$10^4$ & 29{,}971      & 0.0 & $10^4$ & 24{,}213     & 0.0 \\
+$10^5$ & 299{,}966     & 0.3 & $10^5$ & 242{,}552    & 0.5 \\
+$10^6$ & 2{,}999{,}961 & 3.1 & $10^6$ & 2{,}425{,}240& 7.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Conclusion and Future Work}
 
 This paper formulated data- and bandwidth-aware scheduling of approximate DAG workflows in federated fog systems as a mixed-integer linear program, and gave three scalable schedulers built on the same cost model. In simulation, when deadlines are tight the MILP earns a clear accuracy advantage that justifies its solve time; when slack is generous the MILP and the greedy coincide at the bound while the stochastic methods stay a few percent below it; and at large workflow sizes the lightweight greedy holds its own while the GA's fixed search budget becomes its weakness. Under the retry-once failure model the schedulers separate on deadline feasibility rather than accuracy.
@@ -505,8 +529,8 @@ The linearized formulation has the same feasible placements and the same optimal
 For each $i$, exactly one $a$ has $e_{ia}=1$ (Lemma~\ref{lem:one}); on that node the $z$-constraints give $z_{ia}=M_{ia}$, and on all others $z_{ia}=0$, so \eqref{eq:compllin} reproduces \eqref{eq:compl} term by term. All other constraints are unchanged.
 \end{proof}
 
-\bibliographystyle{ieeetr}
+\bibliographystyle{IEEEtran}
 \balance
-\bibliography{cas-refs}
+{\small\bibliography{cas-refs}}
 
 \end{document}
