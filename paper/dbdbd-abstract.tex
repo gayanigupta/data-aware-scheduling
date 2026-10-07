@@ -30,39 +30,43 @@
     \normalsize
 
     $^1$ Dept.\ of Computer Science and Engineering, University of North Texas, USA\\
-    \texttt{\{gayani.gupta, mohsen.aminisalehi, sanjukta.bhowmick\}@unt.edu}
+    \{gayani.gupta, mohsen.aminisalehi, sanjukta.bhowmick\}@unt.edu
 
     $^2$ University of California, Berkeley, USA
 
     $^3$ IMDEA Networks Institute, Madrid, Spain\\
-    \texttt{antonio.fernandez@imdea.org}
+    antonio.fernandez@imdea.org
 
     $^4$ Universidad de Los Andes, M\'erida, Venezuela\\
-    \texttt{aguilar@ula.ve}
+    aguilar@ula.ve
 
     \vspace{0.6cm}
 
 \end{center}
 
 % Text of the abstract (one page maximum, including references)
-Data-intensive workflows such as disaster-response pipelines exchange large
-intermediate results between dependent tasks, so where a task runs determines
-whether its input arrives in time. We formulate this as a mixed-integer
-program that jointly decides task placement across federated fog nodes and
-the degree of approximate execution each task performs, subject to per-edge
-data sizes, per-link bandwidths, node eligibility, and a workflow deadline.
-We derive scheduling algorithms from the formulation: an exact MILP solver,
-a randomized rounding of its linear relaxation, a data-aware greedy heuristic,
-and a genetic algorithm. We evaluate them on synthetic DAGs of varying size,
-deadline slack, federation size, link bandwidth, and task-failure rate. The
-experiments show when each method earns its keep: under tight deadlines the
-optimization-based methods lead, with rounding staying within a few percent of
-the MILP, while the greedy method is near-optimal at the largest sizes at a
-fraction of the solve time; a bandwidth-blind baseline quantifies what
-data-aware placement is worth as links degrade. The work extends our earlier
-conference study~\cite{gupta2025efficient} with the full formulation, its
-linearization and proofs, and an analysis of scalability limits and task
-failures.
+Disaster-response workflows, such as flood forecasting and wildfire
+tracking, move large intermediate results between dependent tasks. In a
+federated fog system, where a task is placed decides whether its input
+arrives before the deadline or not. We model this as a mixed-integer
+program that chooses, for every task, both the fog node it runs on and the
+fraction of the task it computes, given the data size on each edge, the
+bandwidth of each link, node eligibility, and one end-to-end deadline.
+From this model we build four schedulers: the exact MILP, a randomized
+rounding of its linear relaxation, a data-aware greedy heuristic, and a
+genetic algorithm. We compare them on generated DAGs while varying the
+deadline slack, the workflow size, the number of federated nodes, the link
+bandwidth, and the task-failure rate, and we score each method against a
+maximum-accuracy bound. The MILP gives the best accuracy when the deadline
+barely fits. The greedy method reaches the same bound at 1000 tasks in a
+fraction of a second, making it the only approach that is both fast and
+bound-level at scale. A bandwidth-blind baseline shows why accounting for
+data movement matters: it achieves bound-level scores but produces late
+schedules once links degrade, while the data-aware methods remain
+feasible. This work extends our earlier conference
+study~\cite{gupta2025efficient} with the complete formulation, an accuracy
+bound, experiments on failures and link degradation, and an analysis of
+where each solver stops scaling.
 
 \bibliographystyle{plain}
 \bibliography{cas-refs}
