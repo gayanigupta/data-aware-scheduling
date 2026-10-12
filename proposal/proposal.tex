@@ -75,8 +75,27 @@ work, and increases communication and migration costs.
 This proposal presents a different method. When a resource
 fails, we identify only the part of the task DAG that is affected
 by the failure, repartition and reassign only that part to
-available resources, and leave everything else unchanged. The
-remainder of this document defines the problem formally
+available resources, and leave everything else unchanged.
+
+\subsection{The dissertation as three papers}
+
+The research program is structured as three papers on one arc,
+each answering the question the previous one left open:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Paper 1} (completed, published): efficient DAG task
+allocation across federated fog --- the model and four
+schedulers~\cite{gupta2025efficient}.
+\item \textbf{Paper 2} (completed, under submission): data-aware
+scheduling of approximate DAG workflows --- an accuracy bound,
+retry semantics, bandwidth-degradation study, and honest
+scalability limits~\cite{gupta2026dataaware}.
+\item \textbf{Paper 3} (this proposal): dynamic partial
+repartitioning after resource failure --- minimal-region repair
+with incremental path updates.
+\end{itemize}
+
+The remainder of this document defines the problem formally
 (Section~\ref{sec:problem}), reviews related work and states the
 gap (Section~\ref{sec:related}), sets out the research questions
 and objectives (Section~\ref{sec:rqs}), details the methodology
@@ -544,6 +563,9 @@ disturbance than complete repartition at near-reference quality
 
 The platform, the cost model, the schedulers, and the baselines
 already exist, so the new work can build on them directly.
+Paper~3 completes the three-paper dissertation: Paper~1 placed
+the workflow, Paper~2 priced its data and its approximation,
+Paper~3 keeps it alive when the infrastructure fails.
 
 \begin{thebibliography}{9}\small
 \bibitem{gupta2025efficient}

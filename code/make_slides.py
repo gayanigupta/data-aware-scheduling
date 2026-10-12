@@ -427,20 +427,26 @@ bullets(s, [
         "fractions decide runtimes"),
 ], width=12.0)
 
-s = add_slide("One research arc, three stages", NAVY, S1, notes=(
-    "The completed work establishes the platform; the proposal "
-    "builds on it. Paper 1: model and four schedulers. Paper 2: "
-    "data-aware, bounded, stress-tested. Proposal: repair the "
-    "smallest affected part when a whole resource fails."))
+s = add_slide("The dissertation as three papers", NAVY, S1,
+              notes=(
+    "The whole PhD is three papers on one arc. Paper 1 — "
+    "published at Cloud Summit 2025 — built the model and four "
+    "schedulers. Paper 2 — the current submission — hardened it: "
+    "data-aware, bounded, stress-tested. Paper 3 — this proposal "
+    "— repairs the smallest affected region when a whole "
+    "resource fails. Each paper answers the question the "
+    "previous one left open."))
 for i, (k, txt, c) in enumerate([
-    ("DONE", "Paper 1 — DAG task allocation across federated fog; "
-     "model + 4 schedulers  (IEEE Cloud Summit 2025)", TEAL),
-    ("DONE", "Paper 2 — data-aware approximate scheduling: bound, "
-     "retry semantics, bandwidth degradation, scale limits",
+    ("PAPER 1", "Efficient DAG task allocation across federated "
+     "fog — the model + 4 schedulers.  Published: IEEE Cloud "
+     "Summit 2025", TEAL),
+    ("PAPER 2", "Data-aware scheduling of approximate DAG "
+     "workflows — bound, retry semantics, bandwidth "
+     "degradation, scale limits.  Submitted: CCGrid 2027",
      TEAL),
-    ("PROPOSED", "Dynamic partial repartitioning after a "
-     "resource fails mid-workflow — repair only what broke",
-     AMBER)]):
+    ("PAPER 3", "Dynamic partial repartitioning after resource "
+     "failure — minimal-region repair, incremental paths.  "
+     "This proposal — target: IPDPS / CCGrid 2028", AMBER)]):
     y = 1.5 + i * 1.75
     _rect(s, Inches(0.8), Inches(y), Inches(2.4), Inches(1.25), c)
     tb = s.shapes.add_textbox(Inches(0.8), Inches(y), Inches(2.4),
@@ -1239,6 +1245,10 @@ bullets(s, [
     (0, "Expected outcome:  faster recovery with less "
         "disturbance than full repartition, at near-reference "
         "quality"),
+    (0, ""),
+    (0, "Paper 1 placed the workflow; Paper 2 priced its data "
+        "and approximation; Paper 3 keeps it alive when the "
+        "infrastructure fails."),
 ], width=12.0, size=17)
 
 # ---- closing ----
