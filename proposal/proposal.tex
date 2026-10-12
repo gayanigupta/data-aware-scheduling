@@ -25,7 +25,7 @@ Repartitioning}}\\[18pt]
 Gayani Gupta\\
 Department of Computer Science and Engineering\\
 University of North Texas\\
-Advisor: Mohsen Amini Salehi\\[8pt]
+Advisors: Dr.\ Mohsen Amini Salehi and Dr.\ Sanjukta Bhowmick\\[8pt]
 \today
 \end{center}
 
@@ -100,8 +100,8 @@ dies; federating them creates a small local cloud. The price is
 a placement decision for every task, and every placement
 decision ships data across a link.
 
-Two properties make this scheduling problem distinct. First,
-\emph{data movement rivals computation}: every DAG edge carries
+What makes this problem genuinely hard are two properties that
+interact. First, \emph{data movement rivals computation}: every DAG edge carries
 an intermediate data volume $D_{ji}$, and when the producing
 task $j$ and consuming task $i$ run on different resources, that
 data crosses a link of bandwidth $B_{ba}$ at cost
@@ -132,9 +132,10 @@ fog resource mid-workflow, stranding every unfinished task
 assigned to it. Recomputing the complete schedule is too slow,
 moves tasks that were running correctly, discards completed
 work, and adds migration traffic the degraded network cannot
-afford. The right granularity is to repair only what broke.
+afford. The sensible move is to repair only what broke.
 
-This research is organized around three objectives:
+The work therefore falls into three objectives, one per stage of
+the research:
 \begin{enumerate}[label=\alph*),leftmargin=*]
 \item Formulate the joint data-aware scheduling problem for DAG
 workflows on federated fog---placement, per-edge data movement,
@@ -174,12 +175,11 @@ restore communication paths for moved tasks; and the workflow
 resumes without restarting completed or unaffected work.
 \end{enumerate}
 
-The remainder of this document is organized as follows.
-Section~2 reviews related work, structured around the three
-objectives. Section~3 describes the research methodology for
-each objective in turn. Section~4 presents preliminary results
-and lists publications. Section~5 outlines the remaining work
-and milestones. Section~6 concludes.
+The rest of the document follows that order. Section~2 reviews
+related work, structured around the three objectives. Section~3
+describes the methodology for each of them. Section~4 presents
+preliminary results and publications. Section~5 covers what
+remains and the milestones. Section~6 concludes.
 
 \section{Background and Related Works}
 \label{sec:related}
@@ -260,19 +260,19 @@ philosophy to strongly connected components. None of this
 machinery has been applied to workflow repartitioning.
 
 \begin{table}[t]
-\centering\small
+\centering\footnotesize
 \caption{Capability comparison: the gap this proposal fills.}
 \label{tab:gap}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-Capability & HEFT/classic & Fog schedulers &
-Objectives (a)+(b) & Objective (c) \\
+Capability & HEFT/classic & Fog sched. &
+Obj.\ (a)+(b) & Obj.\ (c) \\
 \midrule
 Placement on heterogeneous nodes & yes & yes & yes & yes \\
 Per-edge data + per-link bandwidth & no & partial & yes & yes \\
 Approximate execution fractions & no & no & yes & yes \\
-Recovery after resource failure & restart & reschedule all
-& retry task & \textbf{repair region only} \\
+Failure recovery & restart & reschedule all
+& retry task & \textbf{repair region} \\
 \bottomrule
 \end{tabular}
 \end{table}
