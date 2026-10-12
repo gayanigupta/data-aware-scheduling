@@ -419,12 +419,12 @@ s = add_slide("Two decisions, and they interact", NAVY, S1,
     "the transfers while fractions decide the runtimes."))
 bullets(s, [
     (0, "Data movement rivals computation"),
-    (1, "every edge carries D_ji across a link of bandwidth B, "
-        "so a transfer takes D_ji / B, often as long as the "
-        "task itself"),
+    (1, "every edge carries data that has to cross a link, "
+        "and the transfer can take as long as the task "
+        "itself"),
     (0, "Accuracy is a tradeable resource"),
-    (1, "running a fraction l of a task costs l of the time "
-        "and returns l of the accuracy; a flood model at 80% "
+    (1, "running half of a task costs half the time and "
+        "returns half the accuracy; a flood model at 80% "
         "fidelity still warns in time"),
     (0, "And the two interact: placement decides the "
         "transfers, fractions decide the runtimes"),
@@ -598,22 +598,22 @@ s = add_slide("System model: two graphs", NAVY, S3, notes=(
     "failure deletes a node from one graph and strands work in "
     "the other."))
 bullets(s, [
-    (0, "Task graph G_T = (T, E): each task has an execution "
-        "time, a full-run accuracy, and a set of nodes it is "
-        "allowed to run on"),
-    (1, "every edge carries D_ji bytes of dependency data"),
-    (0, "Infrastructure graph G_R = (R, L): each node has "
-        "capacity, memory and availability; each link has "
-        "bandwidth and delay"),
-    (0, "A partition pi maps tasks onto nodes, one eligible "
+    (0, "The task graph has the work: each task has an "
+        "execution time, a full-run accuracy, and a set of "
+        "nodes it is allowed to run on"),
+    (1, "every edge carries a chunk of dependency data"),
+    (0, "The infrastructure graph has the machines: each "
+        "node has capacity, memory and availability; each "
+        "link has a bandwidth and a delay"),
+    (0, "A placement maps tasks onto nodes, one eligible "
         "node per task"),
-    (0, "A failure deletes a node from G_R and strands work "
-        "in G_T"),
+    (0, "A failure deletes a node from one graph and "
+        "strands work in the other"),
 ], width=6.9, size=16)
 ty = 3.3
-box(s, "Task DAG  G_T", 7.55, ty - 0.7, 2.4, 0.5, NAVY,
+box(s, "Task DAG", 7.55, ty - 0.7, 2.4, 0.5, NAVY,
     size=13, bold=True)
-box(s, "Infra  G_R", 10.3, ty - 0.7, 2.4, 0.5, AMBER,
+box(s, "Infrastructure", 10.3, ty - 0.7, 2.4, 0.5, AMBER,
     size=13, bold=True)
 tn = {"T1": (7.6, ty + 0.2), "T2": (8.7, ty - 0.15),
       "T3": (8.7, ty + 0.75), "T4": (9.8, ty + 0.3)}
