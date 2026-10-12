@@ -136,44 +136,48 @@ afford. The sensible move is to repair only what broke.
 
 The work therefore falls into three objectives, one per stage of
 the research:
-\begin{enumerate}[label=\alph*),leftmargin=*]
-\item Formulate the joint data-aware scheduling problem for DAG
-workflows on federated fog---placement, per-edge data movement,
-per-link bandwidth, and approximate execution under a
-deadline---and build schedulers to solve it. \emph{(Completed;
-published at IEEE Cloud Summit 2025~\cite{gupta2025efficient}.)}
-\item Make the model and its evaluation honest and measurable:
-an accuracy bound as a reference, a retry-once failure model, a
-bandwidth-degradation study, and quantified scalability limits.
-\emph{(Completed; submitted~\cite{gupta2026dataaware,
-gupta2026code}.)}
-\item Design a dynamic partial-repartitioning method that
-repairs only the affected region of a workflow after a
-resource-level failure. \emph{(This proposal.)}
-\end{enumerate}
 
-\noindent\textbf{Summary of proposed solutions:}
-\begin{enumerate}[label=\alph*),leftmargin=*]
-\item \textbf{Joint allocation model + four schedulers.} A
-mixed-integer linear program couples placement, data movement,
-and execution fractions under a deadline, with correctness
-proofs; three scalable methods---LP relaxation with randomized
-rounding, a data-aware greedy, and a genetic algorithm---share
-the same cost model.
-\item \textbf{A measurable, stress-tested platform.} A
-maximum-accuracy bound lets every method be scored against a
-reference; a retry-once failure model separates accuracy from
-deadline feasibility; a bandwidth-degradation sweep with a
-bandwidth-blind baseline shows that a scheduler can report a
-perfect score while producing a late schedule; and each
-solver's breaking point is measured rather than assumed.
-\item \textbf{Minimal-region repair.} On resource failure, a
-boundary rule grows the smallest affected subgraph from the
-stranded tasks; a region solver repartitions only that subgraph
-under a recovery cost model; incremental shortest-path updates
-restore communication paths for moved tasks; and the workflow
-resumes without restarting completed or unaffected work.
-\end{enumerate}
+\begin{description}[leftmargin=!,labelwidth=3.4cm]
+\item[Objective (a).] Formulate the joint data-aware scheduling
+problem for DAG workflows on federated fog---placement, per-edge
+data movement, per-link bandwidth, and approximate execution
+under a deadline---and build schedulers to solve it.
+\emph{(Completed; published at IEEE Cloud Summit
+2025~\cite{gupta2025efficient}.)}
+\item[Objective (b).] Make the model and its evaluation honest
+and measurable: an accuracy bound as a reference, a retry-once
+failure model, a bandwidth-degradation study, and quantified
+scalability limits. \emph{(Completed; manuscript in
+preparation~\cite{gupta2026dataaware,gupta2026code}.)}
+\item[Objective (c).] Design a dynamic partial-repartitioning
+method that repairs only the affected region of a workflow after
+a resource-level failure. \emph{(This proposal.)}
+\end{description}
+
+\noindent\textbf{Summary of proposed solutions.}
+
+\begin{description}[leftmargin=!,labelwidth=3.4cm]
+\item[Solution (a).] \textbf{Joint allocation model + four
+schedulers.} A mixed-integer linear program couples placement,
+data movement, and execution fractions under a deadline, with
+correctness proofs; three scalable methods---LP relaxation with
+randomized rounding, a data-aware greedy, and a genetic
+algorithm---share the same cost model.
+\item[Solution (b).] \textbf{A measurable, stress-tested
+platform.} A maximum-accuracy bound lets every method be scored
+against a reference; a retry-once failure model separates
+accuracy from deadline feasibility; a bandwidth-degradation
+sweep with a bandwidth-blind baseline shows that a scheduler
+can report a perfect score while producing a late schedule; and
+each solver's breaking point is measured rather than assumed.
+\item[Solution (c).] \textbf{Minimal-region repair.} On
+resource failure, a boundary rule grows the smallest affected
+subgraph from the stranded tasks; a region solver repartitions
+only that subgraph under a recovery cost model; incremental
+shortest-path updates restore communication paths for moved
+tasks; and the workflow resumes without restarting completed or
+unaffected work.
+\end{description}
 
 The rest of the document follows that order. Section~2 reviews
 related work, structured around the three objectives. Section~3
@@ -491,34 +495,34 @@ the MILP is the quality reference; relaxation and the GA track
 it most closely; the data-aware greedy is the low-overhead
 option under pressure.
 
-\subsection{Objective (b) --- completed, under submission}
+\subsection{Objective (b) --- completed}
 
 The data-aware study~\cite{gupta2026dataaware} answers five
 questions, each isolated by a sweep over five fresh instances
 per point:
 
-\begin{itemize}[leftmargin=*]
-\item \textbf{Slack} ($\alpha\in[1.0,2.0]$): at $\alpha=1.0$ the
+\begin{description}[leftmargin=!,labelwidth=2.6cm]
+\item[Slack] ($\alpha\in[1.0,2.0]$): at $\alpha=1.0$ the
 MILP leads (1.38 vs.\ bound 1.43); from $\alpha=1.2$ the greedy
 reaches the bound. Method choice matters most exactly where the
 deadline binds (Figure~\ref{fig:slack}).
-\item \textbf{Federation} ($N\in\{2,\dots,10\}$): MILP and
+\item[Federation] ($N\in\{2,\dots,10\}$): MILP and
 greedy match the bound at every size; GA and rounding trail up
 to $\sim$8\%. Capacity buys feasibility, not accuracy.
-\item \textbf{Scale} ($n\in\{10,100,1000\}$): at $n=1000$ the
+\item[Scale] ($n\in\{10,100,1000\}$): at $n=1000$ the
 greedy holds the bound in 0.15\,s; rounding costs $\sim$93\,s
 per LP re-solve; the GA falls to 1.10 in $\sim$159\,s.
-\item \textbf{Failures} (rate $0$--$0.5$, retry-once): scores
+\item[Failures] (rate $0$--$0.5$, retry-once): scores
 stay flat but feasibility separates the methods---greedy 100\%
 vs.\ rounding $\sim$20\% at rate 0.5, because early finishes
 leave room for retries.
-\item \textbf{Bandwidth} ($\times 1.0\to 0.05$): the
+\item[Bandwidth] ($\times 1.0\to 0.05$): the
 bandwidth-blind baseline reports bound-level scores at every
 level while its schedules turn infeasible (80\% at $0.5\times$,
 0\% below $0.2\times$); data-aware methods trade accuracy for
 feasibility and degrade gracefully
 (Figure~\ref{fig:bw}).
-\end{itemize}
+\end{description}
 
 \begin{figure}[t]
 \centering
@@ -555,7 +559,7 @@ systems,'' \emph{2025 IEEE Cloud Summit}, pp.~124--129, 2025.
 \item G.~Gupta, A.~Gupta, M.~Amini Salehi, A.~Fern\'andez Anta,
 S.~Bhowmick, and J.~Aguilar, ``Data-aware scheduling of
 approximate DAG workflows in federated fog systems,''
-manuscript submitted, 2026.
+manuscript in preparation, revisions in progress, 2026.
 \end{enumerate}
 
 \subsection{Contributed abstracts and talks}
@@ -569,13 +573,11 @@ abstract, Dutch--Belgian Database Day (DBDBD) 2026, Delft.
 \section{Remaining Work and Milestones}
 \label{sec:remaining}
 
-\subsection{Objective (b) --- camera-ready follow-through}
+\subsection{Objective (b) --- revisions in progress}
 
-The data-aware study is written, formatted to the target venue
-(IEEE conference template, double-blind), and under submission.
-Remaining work is limited to review-driven revisions and, if
-accepted, the camera-ready pass: restoring authors,
-acknowledgments, and the repository link.
+The data-aware study is written and formatted to the target
+venue (IEEE conference template, double-blind). The manuscript
+is currently being revised before submission.
 
 \subsection{Objective (c) --- the proposed work}
 
@@ -610,20 +612,19 @@ small cases.
 \subsection{Milestones}
 
 \begin{center}\small
-\begin{tabular}{@{}llll@{}}
+\begin{tabular}{@{}p{4.4cm}p{2.8cm}p{3.6cm}p{2.6cm}@{}}
 \toprule
 Papers & Venue & Deadline & Status \\
 \midrule
 Objective (a): allocation & IEEE Cloud Summit 2025 & --- &
 Published \\
-Objective (b): data-aware & CCGrid 2027 & Abstract Nov 24 2026;
-& Under submission \\
-scheduling & & paper Dec 1 2026 & \\
-DBDBD abstract & DBDBD 2026, Delft & Nov 8 2026 & Submitted \\
-Objective (c): partial & IPDPS 2028 / & Abstract $\sim$Oct 2027
-& RQ1--RQ3 in \\
-repartitioning & CCGrid 2028 & paper $\sim$Dec 2027 &
-development \\
+Objective (b): data-aware scheduling & CCGrid 2027 &
+Abstract Nov 24 2026; paper Dec 1 2026 & In revision \\
+DBDBD abstract & DBDBD 2026, Delft & Nov 8 2026 &
+In revision \\
+Objective (c): partial repartitioning & IPDPS 2028 / CCGrid
+2028 & Abstract $\sim$Oct 2027; paper $\sim$Dec 2027 &
+RQ1--RQ3 in development \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -660,7 +661,7 @@ pp.~124--129, 2025.
 G.~Gupta, A.~Gupta, M.~Amini Salehi, A.~Fern\'andez Anta,
 S.~Bhowmick, and J.~Aguilar,
 ``Data-aware scheduling of approximate DAG workflows in federated
-fog systems,'' manuscript submitted, 2026.
+fog systems,'' manuscript in preparation, 2026.
 
 \bibitem{gupta2026code}
 G.~Gupta, ``Data-aware scheduling of approximate DAG workflows in
