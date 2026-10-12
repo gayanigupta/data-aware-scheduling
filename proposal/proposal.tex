@@ -263,7 +263,7 @@ machinery has been applied to workflow repartitioning.
 \centering\footnotesize
 \caption{Capability comparison: the gap this proposal fills.}
 \label{tab:gap}
-\begin{tabular}{@{}lcccc@{}}
+\begin{tabular}{@{}p{4.2cm}cccc@{}}
 \toprule
 Capability & HEFT/classic & Fog sched. &
 Obj.\ (a)+(b) & Obj.\ (c) \\
@@ -278,8 +278,9 @@ Failure recovery & restart & reschedule all
 \end{table}
 
 Table~\ref{tab:gap} summarizes the gap: every capability exists
-in isolation, but no work couples an infrastructure-node failure
-to the smallest affected region of the task DAG.
+in isolation, but no work couples a failure in the
+infrastructure graph to the smallest affected region of the
+task DAG.
 
 \section{Research Methodology}
 \label{sec:method}
