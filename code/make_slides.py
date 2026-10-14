@@ -1,16 +1,20 @@
 """Build the PhD proposal-defense slide deck.
 
-Structure (standard proposal-defense spine):
-  1. Introduction & motivation
-  2. Related work and the research gap
-  3. Problem definition (formal)
-  4. Completed work & preliminary results (Parts I + II)
-  5. Proposed research (Part III: partial repartitioning)
-  6. Evaluation plan & timeline
-  7. Conclusion
+Plain, black-and-white design: a title line at the top, plain
+bulleted text, the paper's figures as visuals, and a slide
+number.  No decorative colors or boxes -- it should look like
+slides a person made in PowerPoint.
 
-Generates slides/data-aware-scheduling.pptx with speaker notes on
-every slide.  Run from the repo root:  python3 code/make_slides.py
+Structure:
+  1. Motivation and setting
+  2. Related work and the gap
+  3. Problem definition
+  4. Paper 1 (published, Cloud Summit 2025)
+  5. Paper 2 (in revision, CCGrid 2027)
+  6. Paper 3: the proposed research
+  7. Evaluation plan, timeline, conclusion
+
+Run from the repo root:  python3 code/make_slides.py
 """
 import os
 
@@ -25,220 +29,135 @@ FIG = os.path.join(ROOT, "paper", "Figures")
 RES = os.path.join(ROOT, "data", "results")
 OUT = os.path.join(ROOT, "slides", "data-aware-scheduling.pptx")
 
-# ------------------------------------------------------------------
-# Colour scheme
-# ------------------------------------------------------------------
-NAVY   = RGBColor(0x0B, 0x2A, 0x4A)
-TEAL   = RGBColor(0x0E, 0x7C, 0x7B)
-AMBER  = RGBColor(0xC7, 0x5B, 0x12)
-GOLD   = RGBColor(0xE0, 0xA4, 0x1E)
-PALE   = RGBColor(0xED, 0xF2, 0xF7)
-DARK   = RGBColor(0x23, 0x2B, 0x33)
-GREY   = RGBColor(0x5A, 0x64, 0x6E)
-WHITE  = RGBColor(0xFF, 0xFF, 0xFF)
+INK  = RGBColor(0x1A, 0x1A, 0x1A)
+GREY = RGBColor(0x59, 0x59, 0x59)
+FAINT = RGBColor(0xE8, 0xE8, 0xE8)
+WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 
 PAGE_W = Inches(13.333)
 PAGE_H = Inches(7.5)
-HDR_H  = Inches(0.95)
 
 prs = Presentation()
 prs.slide_width = PAGE_W
 prs.slide_height = PAGE_H
 BLANK = prs.slide_layouts[6]
-_slide_no = 0
+_no = 0
 
 
-# ------------------------------------------------------------------
-# Helpers
-# ------------------------------------------------------------------
-def _rect(slide, l, t, w, h, color, line=False):
-    sh = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, l, t, w, h)
-    sh.fill.solid()
-    sh.fill.fore_color.rgb = color
-    if line:
-        sh.line.color.rgb = color
-    else:
-        sh.line.fill.background()
-    sh.shadow.inherit = False
-    return sh
-
-
-def _footer(slide, part):
-    global _slide_no
-    _slide_no += 1
-    bar = slide.shapes.add_textbox(Inches(0.5), Inches(7.08),
-                                   Inches(11.5), Inches(0.35))
-    p = bar.text_frame.paragraphs[0]
-    p.text = part
-    p.font.size = Pt(10)
-    p.font.color.rgb = GREY
-    p2 = slide.shapes.add_textbox(Inches(12.3), Inches(7.08),
-                                  Inches(0.8), Inches(0.35))
-    p = p2.text_frame.paragraphs[0]
-    p.text = str(_slide_no)
+def _num(slide):
+    global _no
+    _no += 1
+    tb = slide.shapes.add_textbox(Inches(12.5), Inches(7.1),
+                                  Inches(0.7), Inches(0.3))
+    p = tb.text_frame.paragraphs[0]
+    p.text = str(_no)
     p.font.size = Pt(10)
     p.font.color.rgb = GREY
     p.alignment = PP_ALIGN.RIGHT
 
 
-def add_slide(title=None, accent=NAVY, part="", notes=None):
+def slide(title=None, notes=None):
+    """Plain white slide: bold title top-left, thin rule, number."""
     s = prs.slides.add_slide(BLANK)
     if title:
-        _rect(s, 0, 0, PAGE_W, HDR_H, accent)
-        _rect(s, 0, HDR_H, Inches(0.18), PAGE_H - HDR_H, accent)
-        tb = s.shapes.add_textbox(Inches(0.45), Inches(0.14),
-                                  Inches(12.4), Inches(0.7))
+        tb = s.shapes.add_textbox(Inches(0.5), Inches(0.25),
+                                  Inches(12.4), Inches(0.75))
         tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
         p = tb.text_frame.paragraphs[0]
         p.text = title
-        p.font.size = Pt(27)
+        p.font.size = Pt(30)
         p.font.bold = True
-        p.font.color.rgb = WHITE
+        p.font.color.rgb = INK
+        ln = s.shapes.add_connector(1, Inches(0.55), Inches(1.05),
+                                    Inches(12.8), Inches(1.05))
+        ln.line.color.rgb = INK
+        ln.line.width = Pt(1.0)
     if notes:
         s.notes_slide.notes_text_frame.text = notes
-    if part:
-        _footer(s, part)
+    _num(s)
     return s
 
 
-def divider(part_label, title, subtitle, accent, notes=None):
-    global _slide_no
-    _slide_no += 1
-    s = prs.slides.add_slide(BLANK)
-    _rect(s, 0, 0, PAGE_W, PAGE_H, NAVY)
-    _rect(s, 0, Inches(3.55), PAGE_W, Inches(0.09), accent)
-    tag = s.shapes.add_textbox(Inches(1), Inches(2.0),
-                               Inches(11.3), Inches(0.6))
-    p = tag.text_frame.paragraphs[0]
-    p.text = part_label
-    p.font.size = Pt(20); p.font.bold = True; p.font.color.rgb = accent
-    tb = s.shapes.add_textbox(Inches(1), Inches(2.7),
-                              Inches(11.3), Inches(1.6))
-    tf = tb.text_frame; tf.word_wrap = True
-    p = tf.paragraphs[0]
-    p.text = title
-    p.font.size = Pt(40); p.font.bold = True; p.font.color.rgb = WHITE
-    sb = s.shapes.add_textbox(Inches(1), Inches(4.1),
-                              Inches(11.3), Inches(1.6))
-    tf = sb.text_frame; tf.word_wrap = True
-    p = tf.paragraphs[0]
-    p.text = subtitle
-    p.font.size = Pt(19); p.font.color.rgb = PALE
-    if notes:
-        s.notes_slide.notes_text_frame.text = notes
-    return s
-
-
-def bullets(slide, items, left=0.65, top=1.25, width=7.0, height=5.6,
-            size=18):
-    box = slide.shapes.add_textbox(Inches(left), Inches(top),
-                                   Inches(width), Inches(height))
-    tf = box.text_frame
+def bullets(s, items, left=0.7, top=1.35, width=12.0, height=5.5,
+            size=20):
+    """'items' = list of (level, text). Real bullet glyphs."""
+    tb = s.shapes.add_textbox(Inches(left), Inches(top),
+                              Inches(width), Inches(height))
+    tf = tb.text_frame
     tf.word_wrap = True
     first = True
     for level, text in items:
         p = tf.paragraphs[0] if first else tf.add_paragraph()
         first = False
-        p.text = ("  " * level) + text
-        p.level = level
+        if not text:
+            p.text = ""
+            p.space_after = Pt(4)
+            continue
+        p.text = ("\u2022  " if level == 0 else "      \u2013 ") + text
         p.font.size = Pt(size if level == 0 else size - 2)
-        p.font.color.rgb = DARK if level == 0 else GREY
-        p.space_after = Pt(8)
-    return box
+        p.font.color.rgb = INK if level == 0 else GREY
+        p.space_after = Pt(10)
+    return tb
 
 
-def callout(slide, text, left, top, width, height=1.0, fill=PALE,
-            accent=TEAL, size=15, bold=False, text_color=DARK):
-    _rect(slide, Inches(left), Inches(top), Inches(width),
-          Inches(height), fill)
-    _rect(slide, Inches(left), Inches(top), Inches(0.12),
-          Inches(height), accent)
-    tb = slide.shapes.add_textbox(Inches(left + 0.3), Inches(top + 0.08),
-                                  Inches(width - 0.5),
-                                  Inches(height - 0.16))
-    tf = tb.text_frame; tf.word_wrap = True
-    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-    p = tf.paragraphs[0]
-    p.text = text
-    p.font.size = Pt(size); p.font.bold = bold
-    p.font.color.rgb = text_color
-
-
-def takeaway(slide, text, left=0.7, top=5.95, width=11.9, height=0.95,
-             accent=GOLD):
-    callout(slide, "Take-away:  " + text, left, top, width, height,
-            PALE, accent, 15, bold=False)
-
-
-def box(slide, text, l, t, w, h, fill, text_color=WHITE, size=13,
-        bold=False, shape=MSO_SHAPE.ROUNDED_RECTANGLE):
-    sh = slide.shapes.add_shape(shape, Inches(l), Inches(t),
-                                Inches(w), Inches(h))
-    sh.fill.solid()
-    sh.fill.fore_color.rgb = fill
-    sh.line.color.rgb = NAVY
-    sh.line.width = Pt(1)
-    sh.shadow.inherit = False
-    tf = sh.text_frame
+def para(s, text, left=0.7, top=1.35, width=12.0, size=20,
+         bold=False, color=INK, italic=False):
+    tb = s.shapes.add_textbox(Inches(left), Inches(top),
+                              Inches(width), Inches(1.2))
+    tf = tb.text_frame
     tf.word_wrap = True
-    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
     p = tf.paragraphs[0]
     p.text = text
-    p.font.size = Pt(size); p.font.bold = bold
-    p.font.color.rgb = text_color
-    p.alignment = PP_ALIGN.CENTER
-    return sh
+    p.font.size = Pt(size)
+    p.font.bold = bold
+    p.font.italic = italic
+    p.font.color.rgb = color
+    return tb
 
 
-def arrow(slide, x1, y1, x2, y2, color=GREY, width=2.0, dashed=False):
-    ln = slide.shapes.add_connector(
-        2, Inches(x1), Inches(y1), Inches(x2), Inches(y2))
-    ln.line.color.rgb = color
-    ln.line.width = Pt(width)
-    if dashed:
-        ln.line.dash_style = 2
-    lnEl = ln.line._get_or_add_ln()
-    from pptx.oxml.ns import qn
-    he = lnEl.makeelement(qn('a:headEnd'), {'type': 'none'})
-    te = lnEl.makeelement(qn('a:tailEnd'),
-                          {'type': 'arrow', 'w': 'med', 'len': 'med'})
-    lnEl.append(he); lnEl.append(te)
-    return ln
+def takeaway(s, text, top=6.15):
+    """A plain bold line under a hairline rule."""
+    ln = s.shapes.add_connector(1, Inches(0.7), Inches(top),
+                                Inches(12.6), Inches(top))
+    ln.line.color.rgb = GREY
+    ln.line.width = Pt(0.75)
+    tb = s.shapes.add_textbox(Inches(0.7), Inches(top + 0.1),
+                              Inches(11.9), Inches(1.0))
+    tf = tb.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.text = "Take-away:  " + text
+    p.font.size = Pt(17)
+    p.font.bold = True
+    p.font.color.rgb = INK
 
 
-def cross(slide, x, y, s, color=AMBER):
-    for dx, dy, ex, ey in [(0, 0, s, s), (0, s, s, 0)]:
-        ln = slide.shapes.add_connector(
-            1, Inches(x + dx), Inches(y + dy),
-            Inches(x + ex), Inches(y + ey))
-        ln.line.color.rgb = color
-        ln.line.width = Pt(3)
-
-
-def pic(slide, path, left, top, width=None, height=None, base=FIG):
+def pic(s, path, left, top, width=None, height=None, base=FIG):
     kw = {}
-    if width: kw["width"] = Inches(width)
-    if height: kw["height"] = Inches(height)
-    slide.shapes.add_picture(os.path.join(base, path),
-                             Inches(left), Inches(top), **kw)
+    if width:
+        kw["width"] = Inches(width)
+    if height:
+        kw["height"] = Inches(height)
+    s.shapes.add_picture(os.path.join(base, path),
+                         Inches(left), Inches(top), **kw)
 
 
-def caption(slide, text, left, top, width):
-    box_ = slide.shapes.add_textbox(Inches(left), Inches(top),
-                                    Inches(width), Inches(0.6))
-    p = box_.text_frame.paragraphs[0]
+def caption(s, text, left, top, width):
+    tb = s.shapes.add_textbox(Inches(left), Inches(top),
+                              Inches(width), Inches(0.5))
+    p = tb.text_frame.paragraphs[0]
     p.text = text
-    p.font.size = Pt(12)
+    p.font.size = Pt(13)
     p.font.italic = True
     p.font.color.rgb = GREY
     p.alignment = PP_ALIGN.CENTER
 
 
-def table(slide, rows, l, t, w, h, col_widths=None, size=13,
-          header_fill=NAVY, header_color=WHITE, body_fill=WHITE):
+def table(s, rows, l, t, w, h, col_widths=None, size=14):
+    """Plain table: black header row, white body."""
     nr, nc = len(rows), len(rows[0])
-    gfx = slide.shapes.add_table(nr, nc, Inches(l), Inches(t),
-                                 Inches(w), Inches(h))
+    gfx = s.shapes.add_table(nr, nc, Inches(l), Inches(t),
+                             Inches(w), Inches(h))
     tbl = gfx.table
     if col_widths:
         for i, cw in enumerate(col_widths):
@@ -247,1105 +166,960 @@ def table(slide, rows, l, t, w, h, col_widths=None, size=13,
         for ci, val in enumerate(row):
             cell = tbl.cell(ri, ci)
             cell.fill.solid()
-            cell.fill.fore_color.rgb = header_fill if ri == 0 \
-                else (PALE if ri % 2 == 0 else body_fill)
-            cell.margin_top = Pt(3); cell.margin_bottom = Pt(3)
-            cell.margin_left = Pt(6); cell.margin_right = Pt(6)
-            tf = cell.text_frame
-            tf.word_wrap = True
-            p = tf.paragraphs[0]
+            cell.fill.fore_color.rgb = FAINT if ri == 0 else WHITE
+            cell.margin_top = Pt(4); cell.margin_bottom = Pt(4)
+            cell.margin_left = Pt(8); cell.margin_right = Pt(8)
+            p = cell.text_frame.paragraphs[0]
+            cell.text_frame.word_wrap = True
             p.text = str(val)
             p.font.size = Pt(size)
             p.font.bold = ri == 0
-            p.font.color.rgb = header_color if ri == 0 else DARK
+            p.font.color.rgb = INK
     return tbl
 
 
-def title_card(title_lines, sub_lines, accent, notes=None):
-    global _slide_no
-    _slide_no += 1
+def section(title, sub, notes=None):
+    """Minimal section slide: centered text on white."""
     s = prs.slides.add_slide(BLANK)
-    _rect(s, 0, 0, PAGE_W, Inches(0.35), NAVY)
-    _rect(s, 0, Inches(0.35), PAGE_W, Inches(0.09), accent)
-    _rect(s, 0, Inches(6.9), PAGE_W, Inches(0.6), NAVY)
-    tb = s.shapes.add_textbox(Inches(0.9), Inches(1.5),
-                              Inches(11.5), Inches(2.6))
-    tf = tb.text_frame; tf.word_wrap = True
-    for i, line in enumerate(title_lines):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        p.text = line[0]
-        p.font.size = Pt(line[1]); p.font.bold = True
-        p.font.color.rgb = NAVY
-        p.alignment = PP_ALIGN.CENTER
-    sb = s.shapes.add_textbox(Inches(0.9), Inches(4.3),
-                              Inches(11.5), Inches(2.3))
-    tf = sb.text_frame; tf.word_wrap = True
-    for i, line in enumerate(sub_lines):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        p.text = line[0]
-        p.font.size = Pt(line[1]); p.font.color.rgb = GREY
-        p.alignment = PP_ALIGN.CENTER
+    tb = s.shapes.add_textbox(Inches(1), Inches(2.6),
+                              Inches(11.3), Inches(1.4))
+    tf = tb.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.text = title
+    p.font.size = Pt(38)
+    p.font.bold = True
+    p.font.color.rgb = INK
+    p.alignment = PP_ALIGN.CENTER
+    sb = s.shapes.add_textbox(Inches(1), Inches(4.0),
+                              Inches(11.3), Inches(1.2))
+    tf = sb.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.text = sub
+    p.font.size = Pt(20)
+    p.font.color.rgb = GREY
+    p.alignment = PP_ALIGN.CENTER
     if notes:
         s.notes_slide.notes_text_frame.text = notes
+    _num(s)
     return s
 
 
-S1 = "1  |  Introduction & motivation"
-S2 = "2  |  Related work"
-S3 = "3  |  Problem definition"
-S4 = "4  |  Completed work & preliminary results"
-S5 = "5  |  Proposed research"
-S6 = "6  |  Evaluation plan & timeline"
-S7 = "7  |  Conclusion"
-
 # ==================================================================
-# TITLE + OUTLINE
+# Title
 # ==================================================================
-title_card(
-    [("Dynamic Partial Repartitioning of DAG Workflows", 34),
-     ("After Resource Failures in Federated Fog Environments", 34),
-     ("PhD Research Proposal", 20)],
-    [("Gayani Gupta", 18),
-     ("Department of Computer Science and Engineering, "
-      "University of North Texas", 16),
-     ("Advisors: Dr. Mohsen Amini Salehi and Dr. Sanjukta "
-      "Bhowmick", 15),
-     ("github.com/gayanigupta/data-aware-scheduling", 13)],
-    NAVY,
-    notes=("Good morning everyone. I am going to walk you through "
-           "my PhD proposal. The talk runs in seven parts: the "
-           "motivation, the related work and the gap, a precise "
-           "problem statement, the work we have already finished "
-           "and what it showed, the research I am proposing, how "
-           "I plan to evaluate it and when, and finally what the "
-           "work contributes."))
-
-s = add_slide("Outline", NAVY, "", notes=(
-    "The first three sections set the problem up. Section four "
-    "reports the completed work, which is two papers at this "
-    "point. Sections five and six are the proposal itself, and "
-    "the last section is what the work contributes."))
-for i, txt in enumerate([
-        "1   Introduction and motivation",
-        "2   Related work, and what is still missing",
-        "3   Problem definition",
-        "4   Completed work and preliminary results",
-        "5   Proposed research: dynamic partial repartitioning",
-        "6   Evaluation plan and timeline",
-        "7   Conclusion: expected contributions"]):
-    y = 1.15 + i * 0.78
-    _rect(s, Inches(1.2), Inches(y), Inches(0.14), Inches(0.6),
-          [NAVY, NAVY, NAVY, TEAL, AMBER, AMBER, NAVY][i])
-    tb = s.shapes.add_textbox(Inches(1.6), Inches(y), Inches(10.5),
-                              Inches(0.6))
-    tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
-    p = tb.text_frame.paragraphs[0]
+s = prs.slides.add_slide(BLANK)
+_no += 1
+tb = s.shapes.add_textbox(Inches(0.8), Inches(1.7), Inches(11.7),
+                          Inches(2.6))
+tf = tb.text_frame
+tf.word_wrap = True
+for i, (txt, sz, bold) in enumerate([
+        ("Dynamic Partial Repartitioning of DAG Workflows", 34, True),
+        ("after Resource Failures in Federated Fog "
+         "Environments", 34, True),
+        ("", 14, False),
+        ("PhD Research Proposal", 20, False)]):
+    p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
     p.text = txt
-    p.font.size = Pt(20)
-    p.font.color.rgb = DARK
-    p.font.bold = i in (3, 4)
+    p.font.size = Pt(sz)
+    p.font.bold = bold
+    p.font.color.rgb = INK
+    p.alignment = PP_ALIGN.CENTER
+ln = s.shapes.add_connector(1, Inches(4.2), Inches(4.6),
+                            Inches(9.1), Inches(4.6))
+ln.line.color.rgb = INK
+ln.line.width = Pt(1.0)
+sb = s.shapes.add_textbox(Inches(0.8), Inches(4.9), Inches(11.7),
+                          Inches(2.2))
+tf = sb.text_frame
+tf.word_wrap = True
+for i, txt in enumerate([
+        "Gayani Gupta",
+        "Department of Computer Science and Engineering, "
+        "University of North Texas",
+        "Advisors: Dr. Mohsen Amini Salehi and "
+        "Dr. Sanjukta Bhowmick"]):
+    p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+    p.text = txt
+    p.font.size = Pt(18 if i == 0 else 16)
+    p.font.color.rgb = INK if i == 0 else GREY
+    p.alignment = PP_ALIGN.CENTER
+s.notes_slide.notes_text_frame.text = (
+    "Good morning. This is my PhD proposal. The talk has three "
+    "parts: the problem and why it matters, the two papers that "
+    "are already done, and the third piece of research I am "
+    "proposing.")
 
 # ==================================================================
-# SECTION 1 — INTRODUCTION & MOTIVATION
+# Outline
 # ==================================================================
-divider("1  |  INTRODUCTION & MOTIVATION", "Why this problem matters",
-        "Time-critical workflows, unreliable networks, and the "
-        "case for the federated fog", NAVY, notes=(
-    "Section one. The motivation in one paragraph: time-critical "
-    "workflows have to run exactly when the network is at its "
-    "worst, and nearby fog machines, federated together, are the "
-    "only capacity left."))
-
-s = add_slide("The scenario", NAVY, S1, notes=(
-    "Imagine a river basin starting to flood. The response "
-    "workflow, sense, model, forecast, plan, alert, runs as a "
-    "DAG of dependent tasks. The deadline is not a preference: "
-    "a forecast that arrives after the water has risen is a "
-    "forecast nobody uses. And the same event that creates the "
-    "deadline also degrades or kills the link to the cloud."))
+s = slide("What this talk covers", notes=(
+    "Quick outline. The first half sets up the problem and the "
+    "related work. The second half is the completed work and "
+    "the proposal."))
 bullets(s, [
-    (0, "A disaster is unfolding: a flood, a wildfire, an "
-        "offshore incident"),
-    (0, "The deadline is hard. A forecast that arrives late is "
-        "a forecast nobody uses"),
-    (0, "And the same event that creates the deadline also "
-        "degrades or kills the link to the cloud"),
-], width=12.0)
-steps = [("SENSE", TEAL), ("MODEL", TEAL), ("FORECAST", TEAL),
-         ("PLAN", TEAL), ("ALERT", GOLD)]
-for i, (txt, c) in enumerate(steps):
-    x = 0.9 + i * 2.45
-    box(s, txt, x, 4.15, 1.9, 0.85, c, size=15, bold=True)
-    if i:
-        arrow(s, x - 0.5, 4.57, x, 4.57, NAVY, 2.25)
-box(s, "deadline", 5.3, 5.5, 2.7, 0.6, NAVY, size=13, bold=True)
-arrow(s, 6.65, 5.5, 6.65, 5.0, NAVY, 1.75)
-box(s, "cloud uplink", 10.4, 5.55, 2.3, 0.75, PALE,
-    text_color=GREY, size=13)
-cross(s, 10.4, 5.55, 0.8)
+    (0, "The setting and why it matters"),
+    (0, "What is already known, and the gap"),
+    (0, "The problem, stated precisely"),
+    (0, "Paper 1 \u2013 task allocation across federated fog "
+        "(published, IEEE Cloud Summit 2025)"),
+    (0, "Paper 2 \u2013 data-aware scheduling with approximation "
+        "(in revision, CCGrid 2027)"),
+    (0, "Paper 3 \u2013 what I am proposing: partial "
+        "repartitioning after a resource fails"),
+    (0, "How I will evaluate it, the timeline, and what it "
+        "contributes"),
+], top=1.4)
 
-s = add_slide("Federation is the answer, and it comes with a "
-              "scheduling price", NAVY, S1, notes=(
-    "A single fog site is rarely strong enough for the whole "
-    "workflow. But nearby sites keep fast, stable links to each "
-    "other even when the cloud link dies, so federating them "
-    "creates a small local cloud. The price is a placement "
-    "choice for every task, and every choice moves data across "
-    "a link."))
+# ==================================================================
+# Motivation
+# ==================================================================
+section("The setting", "Why this problem exists",
+        notes="First, the setting. The scenario is a disaster "
+              "response workflow that has to run exactly when "
+              "the network is at its worst.")
+
+s = slide("A disaster-response workflow", notes=(
+    "Picture a river basin starting to flood. The response "
+    "workflow runs as a chain of dependent tasks: sensors "
+    "feed models, models feed forecasts, forecasts drive "
+    "plans and alerts. The deadline is not a preference. A "
+    "forecast that arrives after the water has risen is a "
+    "forecast nobody uses. And the same event that creates "
+    "the deadline is often the thing that takes the cloud "
+    "link down."))
 bullets(s, [
-    (0, "The fog sites near an event are things like cell-tower "
-        "racks, roadside cabinets, platform servers"),
-    (0, "Each one alone is too weak for the whole workflow"),
-    (0, "But they keep fast, stable links to each other even "
-        "when the cloud link fails"),
-    (0, "Federating them creates a small local cloud"),
-    (0, "The price: every task can now run in many places, and "
-        "wherever it runs, its input data has to get there "
+    (0, "A flood, a wildfire, an offshore platform incident \u2014 "
+        "a workflow that has to finish on time"),
+    (0, "The deadline is hard: a late forecast is a missed "
+        "alert, not a result"),
+    (0, "The same event that creates the deadline often takes "
+        "the cloud link down with it"),
+])
+
+s = slide("The federated fog is what is left", notes=(
+    "What remains is the fog: cell-tower racks, roadside "
+    "cabinets, platform servers near the event. No single "
+    "site is strong enough alone, but they keep fast links "
+    "to each other even when the uplink dies. Federating "
+    "them creates a small local cloud. The price is that "
+    "every task now has a choice of where to run, and every "
+    "choice moves data across a link."))
+bullets(s, [
+    (0, "Nearby fog sites keep fast, stable links to each "
+        "other even when the cloud uplink is gone"),
+    (0, "One site is rarely enough for the whole workflow; "
+        "federating them creates a small local cloud"),
+    (0, "But now every task can run in many places, and "
+        "wherever it runs, its input has to travel there "
         "first"),
-], width=6.9)
-pic(s, "federated-fog-architecture.png", 7.7, 1.35, width=5.2)
-caption(s, "Federated fog deployment around a disaster area",
-        7.7, 6.45, 5.2)
+], width=6.6)
+pic(s, "federated-fog-architecture.png", 7.5, 1.3, width=5.4)
+caption(s, "Fog sites federated around a disaster area",
+        7.5, 6.5, 5.4)
 
-s = add_slide("Two decisions, and they interact", NAVY, S1,
-              notes=(
-    "Two things make this problem genuinely hard. The first is "
-    "data movement: every edge of the DAG carries data, and "
-    "moving it across a link can take as long as the task "
-    "itself, so the fastest node can end up being the worst "
-    "choice. The second is approximation: tasks can run "
-    "partially, a fraction of the work for a fraction of the "
-    "accuracy. And the two interact, because placement decides "
-    "the transfers while fractions decide the runtimes."))
+s = slide("Two things make the scheduling hard", notes=(
+    "Two difficulties. First, data movement: every edge in "
+    "the workflow carries data, and a slow link can make a "
+    "transfer cost as much as the task itself \u2014 so the "
+    "fastest machine can turn out to be the worst choice. "
+    "Second, accuracy is tradeable: most of these tasks can "
+    "run partially. A flood model at eighty percent fidelity "
+    "still warns people in time. And the two interact, "
+    "because placement decides the transfers while the "
+    "fractions decide the runtimes."))
 bullets(s, [
     (0, "Data movement rivals computation"),
-    (1, "every edge carries data that has to cross a link, "
+    (1, "every dependency edge carries data across a link, "
         "and the transfer can take as long as the task "
         "itself"),
     (0, "Accuracy is a tradeable resource"),
-    (1, "running half of a task costs half the time and "
-        "returns half the accuracy; a flood model at 80% "
-        "fidelity still warns in time"),
-    (0, "And the two interact: placement decides the "
-        "transfers, fractions decide the runtimes"),
-], width=12.0)
+    (1, "a task can run partially \u2014 half the work, half "
+        "the time, half the accuracy \u2014 and often that "
+        "is enough"),
+    (0, "And the two interact: where a task runs decides "
+        "its transfer costs, while how much of it runs "
+        "decides its runtime"),
+])
 
-s = add_slide("The dissertation as three papers", NAVY, S1,
-              notes=(
-    "The whole PhD is three papers on one arc. The first, "
-    "published at Cloud Summit 2025, built the model and four "
-    "schedulers. The second hardened it: data-aware, bounded, "
-    "stress-tested. The third, which is this proposal, repairs "
-    "the smallest affected region when a whole resource fails. "
-    "Each paper answers the question the previous one left "
-    "open."))
-for i, (k, txt, c) in enumerate([
-    ("PAPER 1", "Efficient DAG task allocation across "
-     "federated fog: the model plus four schedulers.  "
-     "Published at IEEE Cloud Summit 2025", TEAL),
-    ("PAPER 2", "Data-aware scheduling of approximate DAG "
-     "workflows: an accuracy bound, retry semantics, "
-     "bandwidth degradation, scalability limits.  "
-     "In revision for CCGrid 2027", TEAL),
-    ("PAPER 3", "Dynamic partial repartitioning after a "
-     "resource fails mid-workflow.  This proposal; the "
-     "target is IPDPS or CCGrid 2028", AMBER)]):
-    y = 1.5 + i * 1.75
-    _rect(s, Inches(0.8), Inches(y), Inches(2.4), Inches(1.25), c)
-    tb = s.shapes.add_textbox(Inches(0.8), Inches(y), Inches(2.4),
-                              Inches(1.25))
-    tf = tb.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-    p = tf.paragraphs[0]; p.text = k
-    p.font.size = Pt(15); p.font.bold = True
-    p.font.color.rgb = WHITE; p.alignment = PP_ALIGN.CENTER
-    tb2 = s.shapes.add_textbox(Inches(3.6), Inches(y), Inches(9.0),
-                               Inches(1.25))
-    tf2 = tb2.text_frame; tf2.word_wrap = True
-    tf2.vertical_anchor = MSO_ANCHOR.MIDDLE
-    p = tf2.paragraphs[0]; p.text = txt
-    p.font.size = Pt(16); p.font.color.rgb = DARK
+s = slide("The PhD as three papers", notes=(
+    "The dissertation is one story told in three papers. The "
+    "first, published at Cloud Summit last year, built the "
+    "model and four schedulers for it. The second hardened "
+    "it: it made the model data-aware, added an accuracy "
+    "bound to score against, and stress-tested the whole "
+    "thing. The third, which is what I am proposing today, "
+    "asks what happens when a resource fails in the middle "
+    "of a run. Each paper answers the question the previous "
+    "one left open."))
+bullets(s, [
+    (0, "Paper 1 \u2013 the model and four schedulers for "
+        "allocating DAG workflows across federated fog"),
+    (1, "published at IEEE Cloud Summit 2025"),
+    (0, "Paper 2 \u2013 makes the model data-aware: an "
+        "accuracy bound, retry semantics, bandwidth "
+        "degradation, scalability limits"),
+    (1, "manuscript in revision for CCGrid 2027"),
+    (0, "Paper 3 \u2013 dynamic partial repartitioning when "
+        "a resource fails mid-workflow"),
+    (1, "this proposal; the target is IPDPS or CCGrid 2028"),
+], top=1.5)
 
 # ==================================================================
-# SECTION 2 — RELATED WORK
+# Related work
 # ==================================================================
-divider("2  |  RELATED WORK", "What is known, and what is missing",
-        "Four research threads converge; none covers the whole "
-        "problem", NAVY, notes=(
-    "Section two. I will go through four threads of related "
-    "work: classic DAG scheduling, fog and edge placement, "
-    "approximate computing, and failure recovery. Then the gap "
-    "in one table."))
+section("What is already known", "Four research threads, and "
+        "the gap none of them covers",
+        notes="Now the related work. Four threads matter here, "
+              "and I will end on the gap.")
 
-s = add_slide("Classic DAG scheduling", NAVY, S2, notes=(
-    "The reference point is HEFT: rank the tasks, place each "
-    "one where it finishes earliest. It is a great algorithm, "
-    "but it assumes tasks always run completely, transfers are "
-    "static edge weights, and the plan is fixed before "
-    "execution starts."))
+s = slide("Classic DAG scheduling", notes=(
+    "The reference point is HEFT: rank the tasks by their "
+    "upward rank and place each one where it will finish "
+    "earliest. It is a very good algorithm, and the family "
+    "around it \u2014 CPOP, PEFT, the cloud workflow work of "
+    "Abrishami and of Yu and Buyya \u2014 refines the same "
+    "idea. But all of them share three assumptions that do "
+    "not hold here: tasks always run completely, transfers "
+    "are just static edge weights, and the plan is fixed "
+    "before execution starts."))
 bullets(s, [
     (0, "HEFT (Topcuoglu et al., 2002) is the reference "
-        "algorithm: rank tasks, place each where it finishes "
-        "earliest"),
-    (0, "CPOP, PEFT and the rest of that family refine the "
-        "same template"),
+        "algorithm: rank the tasks, place each one where it "
+        "finishes earliest"),
+    (0, "CPOP, PEFT, and the cloud workflow schedulers "
+        "(Abrishami; Yu and Buyya) refine the same idea"),
     (0, "But all of them assume tasks run completely, "
         "transfers are static edge weights, and the plan is "
-        "fixed before execution starts"),
-    (0, "Federated-fog variants add eligibility and "
-        "federation constraints; that is where our first "
-        "paper sits"),
-], width=12.0)
+        "fixed before execution"),
+    (0, "Our first paper sits in this line: it adds "
+        "federation and eligibility to the classic model"),
+])
 
-s = add_slide("Fog and edge scheduling", NAVY, S2, notes=(
-    "The fog scheduling literature handles capacity, "
-    "eligibility and heterogeneity across the continuum. What "
-    "it does not do, for the most part, is treat data movement "
-    "as a first-class cost, and it treats tasks as atomic: run "
-    "completely or not at all."))
+s = slide("Fog and edge scheduling", notes=(
+    "The fog scheduling literature handles the things that "
+    "make fog hard: small capacities, heterogeneous "
+    "machines, eligibility. Surveys like Mouradian's "
+    "catalog the placement policies. What the literature "
+    "mostly does not do is price the links \u2014 locality "
+    "is acknowledged, but per-link bandwidth is rarely a "
+    "first-class cost. And tasks are still treated as "
+    "atomic."))
 bullets(s, [
-    (0, "Fog schedulers handle capacity, eligibility and "
-        "heterogeneity across the edge, fog and cloud tiers"),
-    (0, "Surveys like Mouradian et al. (2018) catalog the "
-        "placement policies"),
-    (0, "Locality is priced in, but per-link bandwidth "
-        "rarely is"),
-    (0, "And tasks are atomic: they run completely or not "
-        "at all"),
-    (0, "Failures are handled by restarting, not by "
+    (0, "Fog schedulers handle capacity, eligibility, and "
+        "heterogeneity across edge, fog, and cloud tiers"),
+    (0, "Locality is acknowledged, but per-link bandwidth "
+        "is rarely priced as a first-class cost"),
+    (0, "Tasks are atomic: they run completely or not at "
+        "all"),
+    (0, "And failures are handled by restarting, not by "
         "repairing"),
-], width=12.0)
+])
 
-s = add_slide("Approximate computing", NAVY, S2, notes=(
-    "Approximate computing trades quality for time, which is "
-    "exactly what a tight deadline needs. But that literature "
-    "assumes the data is already sitting where it needs to be; "
-    "the cost of moving it is not part of the trade."))
+s = slide("Approximate computing, and failure recovery", notes=(
+    "Two shorter threads. Approximate computing trades "
+    "quality for time \u2014 exactly what a tight deadline "
+    "needs \u2014 but it assumes the data is already where "
+    "it needs to be. On failures: rescheduling work like "
+    "Sakellariou and Zhao reconsiders a workflow at chosen "
+    "points but remaps the whole thing; checkpointing and "
+    "replication recover the work at a real cost; and there "
+    "is a whole graph literature on updating shortest paths "
+    "incrementally after a graph change. None of it couples "
+    "a node failure to the affected region of the task "
+    "graph."))
 bullets(s, [
-    (0, "Trades result quality for time or energy: loop "
-        "truncation, reduced precision, early termination"),
-    (0, "That makes accuracy a schedulable resource, which "
-        "is exactly what a tight deadline needs"),
-    (0, "But the literature assumes the data is already "
-        "where it needs to be; the transfer cost is not "
-        "part of the trade"),
-    (0, "We put the two together: approximation and data "
-        "movement in one model"),
-], width=12.0)
-
-s = add_slide("Failure recovery and rescheduling", NAVY, S2,
-              notes=(
-    "This is the thread closest to the proposal. Rescheduling "
-    "work reconsiders a workflow at chosen points but remaps "
-    "it globally. Fog studies redistribute tasks when nodes "
-    "join or leave. And on the graph side, dynamic "
-    "shortest-path updates repair routing after a change. "
-    "None of them couples a node failure to the smallest "
-    "affected region of the task DAG."))
-bullets(s, [
-    (0, "Workflow rescheduling (Sakellariou and Zhao, 2004) "
-        "reconsiders the plan at chosen points, but remaps it "
-        "globally"),
-    (0, "Fog studies redistribute tasks when nodes join or "
-        "leave, or when uncertain events hit"),
+    (0, "Approximate computing trades quality for time \u2014 "
+        "useful under deadlines"),
+    (1, "but it assumes the data is already where it needs "
+        "to be; the transfer cost is not part of the "
+        "trade"),
+    (0, "Workflow rescheduling remaps the whole DAG at "
+        "chosen points (Sakellariou and Zhao, 2004)"),
     (0, "Checkpointing and replication recover the work, "
         "at a real recompute or replication cost"),
-    (0, "Dynamic shortest-path updates (Riazi, Khanda, "
-        "Bhowmick and colleagues) repair routing after a "
-        "graph change; nobody has used them for workflow "
-        "repartitioning"),
-], width=12.0)
+    (0, "Dynamic shortest-path updates repair routing "
+        "after a graph change \u2014 nobody has used them "
+        "for workflow repartitioning"),
+])
 
-s = add_slide("The gap, in one table", NAVY, S2, notes=(
-    "Read each column as a capability. The classic schedulers "
-    "place tasks but neither price data per link nor "
-    "approximate nor repair. Fog schedulers add some data "
-    "awareness. Our first two papers add approximation. The "
-    "last column, repairing only the affected region after a "
-    "resource fails, is empty. That is the proposal."))
+s = slide("The gap", notes=(
+    "This table summarizes it. Read each column as a "
+    "capability. Classic schedulers place tasks but price "
+    "nothing about data. Fog schedulers add some data "
+    "awareness. Our completed work adds approximate "
+    "execution. And the last column \u2014 repairing only "
+    "the affected region when a resource fails \u2014 is "
+    "empty. That empty column is the proposal."))
 table(s, [
-    ["Capability", "HEFT / classic", "Fog schedulers",
-     "Papers 1 + 2", "Proposed work"],
-    ["Placement on heterogeneous nodes", "yes", "yes", "yes",
-     "yes"],
-    ["Per-edge data + per-link bandwidth", "no", "partial",
+    ["Capability", "Classic (HEFT)", "Fog schedulers",
+     "Papers 1+2", "This proposal"],
+    ["Heterogeneous placement", "yes", "yes", "yes", "yes"],
+    ["Data transfers priced per link", "no", "partial",
      "yes", "yes"],
-    ["Approximate execution fractions", "no", "no", "yes",
-     "yes"],
-    ["Recovery after resource failure", "restart",
-     "reschedule all", "retry task", "repair region only"],
-], 0.8, 1.35, 11.7, 3.4,
-    col_widths=[4.3, 1.85, 1.85, 1.85, 1.85], size=14)
-callout(s, "The gap: nobody couples an infrastructure-node "
-        "failure to the smallest affected region of the task "
-        "DAG.", 0.8, 5.3, 11.7, 0.95, PALE, AMBER, 16,
-        bold=True)
+    ["Approximate execution", "no", "no", "yes", "yes"],
+    ["Recovery after a failure", "restart", "reschedule all",
+     "retry the task", "repair only the region"],
+], 0.8, 1.5, 11.7, 3.6,
+    col_widths=[4.0, 1.9, 1.9, 1.9, 2.0], size=14)
+para(s, "Nobody couples a resource failure to the smallest "
+        "affected region of the workflow graph.",
+     top=5.6, size=19, bold=True)
 
 # ==================================================================
-# SECTION 3 — PROBLEM DEFINITION
+# Problem definition
 # ==================================================================
-divider("3  |  PROBLEM DEFINITION", "The problem, stated precisely",
-        "Two graphs, one coupling, a hard deadline", NAVY, notes=(
-    "Section three. Before any algorithm, let me define the "
-    "system model and state the problem formally, both the "
-    "static core that the completed work solved and the dynamic "
-    "extension this proposal adds."))
+section("The problem, stated precisely",
+        "Two graphs, one coupling, a hard deadline",
+        notes="Before the algorithms, let me pin the problem "
+              "down \u2014 both the static version the "
+              "completed work solved and the dynamic version "
+              "this proposal adds.")
 
-s = add_slide("System model: two graphs", NAVY, S3, notes=(
-    "Two graphs. The task graph has the work: execution times, "
-    "accuracies, eligibility, and data on every edge. The "
-    "infrastructure graph has the machines and the links "
-    "between them. A partition maps one onto the other; a "
-    "failure deletes a node from one graph and strands work in "
-    "the other."))
+s = slide("The model: two graphs", notes=(
+    "Two graphs. The task graph holds the work: each task "
+    "has an execution time, an accuracy it returns when run "
+    "fully, and a list of machines it is allowed to use. "
+    "Every edge carries dependency data. The infrastructure "
+    "graph holds the machines: capacity, memory, "
+    "availability, and the bandwidths between them. A "
+    "schedule maps one graph onto the other. A failure "
+    "deletes a node from one graph and strands work in the "
+    "other."))
 bullets(s, [
-    (0, "The task graph has the work: each task has an "
-        "execution time, a full-run accuracy, and a set of "
-        "nodes it is allowed to run on"),
+    (0, "The task graph holds the work:"),
+    (1, "each task has an execution time, a full-run "
+        "accuracy, and the machines it is allowed to use"),
     (1, "every edge carries a chunk of dependency data"),
-    (0, "The infrastructure graph has the machines: each "
-        "node has capacity, memory and availability; each "
-        "link has a bandwidth and a delay"),
-    (0, "A placement maps tasks onto nodes, one eligible "
-        "node per task"),
-    (0, "A failure deletes a node from one graph and "
-        "strands work in the other"),
-], width=6.9, size=16)
-ty = 3.3
-box(s, "Task DAG", 7.55, ty - 0.7, 2.4, 0.5, NAVY,
-    size=13, bold=True)
-box(s, "Infrastructure", 10.3, ty - 0.7, 2.4, 0.5, AMBER,
-    size=13, bold=True)
-tn = {"T1": (7.6, ty + 0.2), "T2": (8.7, ty - 0.15),
-      "T3": (8.7, ty + 0.75), "T4": (9.8, ty + 0.3)}
-for name, (x, y) in tn.items():
-    box(s, name, x, y, 0.7, 0.55, PALE, text_color=NAVY,
-        size=11, bold=True)
-arrow(s, 8.3, ty + 0.48, 8.7, ty + 0.15, NAVY, 1.5)
-arrow(s, 8.3, ty + 0.48, 8.7, ty + 1.0, NAVY, 1.5)
-arrow(s, 9.4, ty + 0.13, 9.8, ty + 0.5, NAVY, 1.5)
-arrow(s, 9.4, ty + 1.03, 9.8, ty + 0.75, NAVY, 1.5)
-rn = {"R1": (10.35, ty + 0.2), "R2": (11.4, ty - 0.15),
-      "R3": (11.4, ty + 0.75), "R4": (12.45, ty + 0.3)}
-for name, (x, y) in rn.items():
-    box(s, name, x, y, 0.7, 0.55, PALE, text_color=AMBER,
-        size=11, bold=True)
-arrow(s, 11.05, ty + 0.48, 11.4, ty + 0.15, GREY, 1.25)
-arrow(s, 11.05, ty + 0.48, 11.4, ty + 1.0, GREY, 1.25)
-arrow(s, 12.1, ty + 0.13, 12.45, ty + 0.5, GREY, 1.25)
-arrow(s, 12.1, ty + 1.03, 12.45, ty + 0.75, GREY, 1.25)
-arrow(s, 10.5, ty + 0.48, 10.35, ty + 0.48, TEAL, 1.75,
-      dashed=True)
+    (0, "The infrastructure graph holds the machines:"),
+    (1, "capacity, memory, availability, and the bandwidth "
+        "between every pair"),
+    (0, "A schedule maps tasks onto machines; a failure "
+        "deletes a machine and strands whatever was on it"),
+])
 
-s = add_slide("The static core of the problem", NAVY, S3,
-              notes=(
-    "The completed work solved this problem: given the two "
-    "graphs and a deadline, choose where each task runs and how "
-    "much of it runs, finish before the deadline, and maximize "
-    "the average accuracy. It is NP-hard, so the exact solver "
-    "is the benchmark, not the product."))
-callout(s, "GIVEN   the two graphs (tasks with times, "
-        "accuracies, eligibility; nodes with capacities, links "
-        "with bandwidths) and a deadline t_max",
-        0.8, 1.35, 11.7, 0.9, PALE, NAVY, 15)
-callout(s, "DECIDE   for every task: which eligible node it "
-        "runs on (e_ia) and how much of it runs (l_ia)",
-        0.8, 2.4, 11.7, 0.9, PALE, TEAL, 15)
-callout(s, "SUBJECT TO   one node per task; predecessors "
-        "finish and their data arrives first; everything done "
-        "by the deadline", 0.8, 3.45, 11.7, 0.9, PALE, GREY, 15)
-callout(s, "MAXIMIZE   the average accuracy  A_bar = (1/n) "
-        "sum_i A_i l_i", 0.8, 4.5, 11.7, 0.9, PALE, GOLD, 15,
-        bold=True)
+s = slide("The static problem (Papers 1 and 2)", notes=(
+    "The completed work solved this version. Given the two "
+    "graphs and a deadline: decide where each task runs and "
+    "how much of it runs, so that every task waits for its "
+    "data and everything finishes on time \u2014 and "
+    "maximize the average accuracy. It is NP-hard, so the "
+    "exact solver is the benchmark, not the product."))
 bullets(s, [
-    (0, "It is NP-hard even on unrelated parallel machines, "
-        "so the exact solver is the benchmark, not the "
+    (0, "Given: the task graph, the infrastructure graph, "
+        "and a deadline"),
+    (0, "Decide: for every task, which eligible machine it "
+        "runs on, and how much of it runs"),
+    (0, "So that: a task starts only after its "
+        "predecessors finish and their data arrives, and "
+        "everything is done by the deadline"),
+    (0, "Maximize: the average accuracy"),
+    (0, ""),
+    (0, "The problem is NP-hard even on parallel machines, "
+        "so the exact solver is a reference, not the "
         "product"),
-], top=5.7, width=12.0, size=15)
+], top=1.5)
 
-s = add_slide("The dynamic extension (the proposal)", NAVY, S3,
-              notes=(
-    "The proposal adds one event to the same model: at time "
-    "tau a resource fails. The unfinished tasks on it are "
-    "stranded. Now the question is which part of the DAG "
-    "actually needs repair and where the stranded work should "
-    "go, at minimum disturbance. Done work is never redone and "
-    "healthy placements never move."))
-callout(s, "EVENT   at time tau, resource r* fails; the "
-        "unfinished tasks on it are stranded",
-        0.8, 1.35, 11.7, 0.9, PALE, AMBER, 15)
-callout(s, "DECIDE   which part of the DAG has to be "
-        "repartitioned (the affected region A) and where its "
-        "tasks go (pi' on surviving nodes)",
-        0.8, 2.4, 11.7, 0.9, PALE, NAVY, 15)
-callout(s, "SUBJECT TO   completed tasks never restart; "
-        "healthy placements never move; the deadline still "
-        "holds", 0.8, 3.45, 11.7, 0.9, PALE, GREY, 15)
-callout(s, "MINIMIZE   the recovery cost: added makespan + "
-        "tasks moved + data re-shipped, while keeping the "
-        "accuracy", 0.8, 4.5, 11.7, 0.9, PALE, GOLD, 15,
-        bold=True)
+s = slide("The dynamic problem (Paper 3)", notes=(
+    "The proposal adds one event to the same model. Partway "
+    "through execution, a machine fails. Whatever was "
+    "unfinished on it is stranded. The question is no "
+    "longer where to put everything \u2014 it is which part "
+    "of the workflow actually needs repair, and where the "
+    "stranded work should go, disturbing as little as "
+    "possible. Done work is never redone. Healthy "
+    "placements never move."))
 bullets(s, [
-    (0, "Two granularity shifts at once: a task retry "
-        "becomes a resource loss, and whole-DAG placement "
-        "becomes minimal-region repair"),
-], top=5.7, width=12.0, size=15)
+    (0, "Event: partway through the run, a machine fails; "
+        "its unfinished tasks are stranded"),
+    (0, "Decide: which part of the workflow has to be "
+        "repaired, and where its tasks go on the surviving "
+        "machines"),
+    (0, "So that: completed work never restarts, healthy "
+        "placements never move, and the deadline still "
+        "holds"),
+    (0, "Minimize: the recovery cost \u2014 added runtime, "
+        "tasks moved, data re-shipped \u2014 while keeping "
+        "the accuracy"),
+], top=1.5)
 
 # ==================================================================
-# SECTION 4 — COMPLETED WORK & PRELIMINARY RESULTS
+# Paper 1
 # ==================================================================
-divider("4  |  COMPLETED WORK & PRELIMINARY RESULTS",
-        "The platform the proposal builds on",
-        "Paper 1 (published) and Paper 2 (in revision): the "
-        "formulation, the schedulers, and what the data shows",
-        TEAL, notes=(
-    "Section four. The completed work as preliminary results: "
-    "the published Cloud Summit study, then the current "
-    "data-aware paper. I will show the formulation, the "
-    "correctness argument, the four schedulers, the "
-    "experimental setup, and then the five experiments, each "
-    "with its take-away."))
+section("Paper 1", "Task allocation across federated fog \u2014 "
+        "published at IEEE Cloud Summit 2025",
+        notes="Now the completed work. Paper one established "
+              "the model and four ways to solve it.")
 
-s = add_slide("Paper 1: the published foundation", TEAL, S4,
-              notes=(
-    "IEEE Cloud Summit 2025. It established the model, "
-    "placement coupled with data movement, an MILP with "
-    "correctness proofs, and three scalable schedulers built "
-    "around it."))
+s = slide("What Paper 1 did", notes=(
+    "Paper one made three contributions. It formulated the "
+    "problem as a mixed-integer program with correctness "
+    "proofs. It built three scalable schedulers around the "
+    "same cost model \u2014 a rounding scheme, a greedy, "
+    "and a genetic algorithm \u2014 so the differences "
+    "between them are algorithmic rather than accounting "
+    "differences. And it showed the formulation holds "
+    "together on real instances."))
 bullets(s, [
-    (0, "Published at IEEE Cloud Summit 2025: 'Towards "
-        "efficient allocation of tasks in DAG-based workflows "
-        "across federated fog systems'"),
-    (0, "Its contribution was the model plus four ways to "
-        "solve it:"),
-    (1, "an exact MILP with correctness proofs"),
-    (1, "an LP relaxation with randomized rounding"),
-    (1, "a data-aware greedy scheduler"),
-    (1, "a genetic algorithm over assignments and fractions"),
-    (0, "What it left open: no bound to score against, no "
-        "link-degradation study, and no resource-level "
-        "failures"),
-], width=12.0)
-
-s = add_slide("Paper 2: the formulation, written out", TEAL, S4,
-              notes=(
-    "Here is the MILP itself. The communication cost is "
-    "piecewise: D over B when the edge crosses nodes, zero "
-    "when the tasks are co-located. Each task gets one eligible "
-    "node; a task waits for its predecessors to finish and for "
-    "their data to arrive; everything finishes by the "
-    "deadline; the objective is mean accuracy."))
-bullets(s, [
-    (0, "Communication cost:  c_ji = D_ji / B_ba when the "
-        "edge crosses nodes, and 0 when the tasks are "
-        "co-located"),
-    (0, "Objective:  maximize  A_bar = (1/n) sum_i A_i l_i"),
-    (0, "Each task goes to exactly one eligible node"),
-    (0, "A task waits for every predecessor to finish AND "
-        "for its data to arrive"),
-    (0, "Everything finishes by t_max"),
-    (0, "The e*M and e*l products are bilinear, which is "
-        "what the next slide is about"),
-], width=12.0, size=17)
-
-s = add_slide("Correctness: the linearization and the proofs",
-              TEAL, S4, notes=(
-    "Two technical details worth your attention. First, the "
-    "product e times M is linearized with a big-M helper "
-    "variable z. The subtle constraint is z at least zero: "
-    "without it, an unassigned node could push z negative and "
-    "fake an early completion time. Second, five lemmas chain "
-    "from a unique assignment up to deadline feasibility, and "
-    "the theorem follows."))
-bullets(s, [
-    (0, "The product e*M is linearized with a helper "
-        "z = e * M under big-M constraints"),
-    (1, "the subtle one is z >= 0: without it, an "
-        "unassigned node could push z negative and fake an "
-        "early completion time"),
-    (0, "Five lemmas: the assignment is unique, one positive "
-        "fraction per task, the fraction lives only on the "
-        "assigned node, precedence is respected, the "
-        "deadline holds"),
-    (0, "The theorem then says the MILP optimum is the "
+    (0, "Formulated the joint problem \u2014 where each "
+        "task runs and how much of it runs \u2014 as a "
+        "mixed-integer program"),
+    (0, "Proved the formulation correct: a unique "
+        "assignment, respected precedence, a held "
+        "deadline, and an optimum that is the "
         "maximum-accuracy feasible schedule"),
-], width=12.0, size=17)
+    (0, "Built three scalable schedulers on the same cost "
+        "model: LP rounding, a data-aware greedy, and a "
+        "genetic algorithm"),
+    (0, "Published at IEEE Cloud Summit 2025"),
+    (0, ""),
+    (0, "What it left open: no bound to score against, no "
+        "link-degradation study, no machine-level "
+        "failures"),
+])
 
-s = add_slide("Four schedulers, one cost model", TEAL, S4,
-              notes=(
-    "Every method prices transfers the same way, so the "
-    "differences are algorithmic, not accounting. The MILP is "
-    "the reference. LP rounding samples each task's node from "
-    "the fractional solution and then re-solves the fractions. "
-    "The greedy places ready tasks by earliest finish and "
-    "retries with a smaller fraction when the deadline is "
-    "missed. The GA searches assignments and fractions "
-    "together."))
+# ==================================================================
+# Paper 2
+# ==================================================================
+section("Paper 2", "Data-aware scheduling of approximate DAG "
+        "workflows \u2014 in revision for CCGrid 2027",
+        notes="Paper two hardened the model. I will show the "
+              "schedulers, the experimental setup, and then "
+              "the five experiments, each with its "
+              "take-away.")
+
+s = slide("What Paper 2 added", notes=(
+    "Paper two added four things on top of paper one. A "
+    "max-accuracy bound so a score finally means "
+    "something. A bandwidth-blind baseline to show what "
+    "data-awareness is worth. A retry-once failure model. "
+    "And an honest account of where each method breaks."))
+bullets(s, [
+    (0, "A max-accuracy bound, so a reported score finally "
+        "means something"),
+    (0, "A bandwidth-blind baseline \u2014 a scheduler that "
+        "ignores the links \u2014 to measure what "
+        "data-awareness buys"),
+    (0, "A retry-once failure model at task level"),
+    (0, "An honest account of where each method breaks: "
+        "solver caps, search budgets, dense-storage "
+        "limits"),
+])
+
+s = slide("Four schedulers, one cost model", notes=(
+    "Every method prices transfers the same way, so "
+    "differences are algorithmic. The MILP is the "
+    "reference. LP rounding relaxes the integer choices, "
+    "samples a machine per task, and re-solves the "
+    "fractions. The greedy places ready tasks by earliest "
+    "finish and retries with a smaller fraction when the "
+    "deadline is missed. The genetic algorithm searches "
+    "assignments and fractions together."))
 pic(s, "scheduling-pipeline.png", 0.7, 1.3, width=6.6)
 bullets(s, [
-    (0, "The MILP is the benchmark"),
-    (0, "LP rounding relaxes, samples a node per task, "
+    (0, "The exact solver is the benchmark"),
+    (0, "LP rounding relaxes, samples a machine per task, "
         "re-solves the fractions"),
     (0, "The greedy places ready tasks by earliest finish; "
-        "on a deadline miss it lowers the global fraction "
-        "and retries"),
+        "on a deadline miss it lowers the fraction and "
+        "retries"),
     (0, "The GA searches assignments and fractions as one "
         "chromosome"),
-], left=7.6, width=5.2, top=1.4, size=16)
+], left=7.7, width=5.2, top=1.5, size=17)
 
-s = add_slide("Experimental setup", TEAL, S4, notes=(
-    "The setup before the results. A discrete-event simulator "
-    "in NumPy with SciPy HiGHS. The parameters are chosen so "
-    "a transfer can genuinely rival a task, which is the "
-    "regime that matters. Four datasets, five sweeps, five "
-    "fresh instances per point, and the score is measured "
-    "against a max-accuracy bound."))
+s = slide("Experimental setup", notes=(
+    "The setup before the results. A discrete-event "
+    "simulator in NumPy with the HiGHS solver. The "
+    "parameters are chosen so a transfer can genuinely "
+    "rival a task, which is the regime that matters. Four "
+    "datasets, five sweeps, five fresh instances per "
+    "point."))
 table(s, [
     ["Component", "Setting"],
     ["Simulator", "discrete-event, Python/NumPy + SciPy HiGHS"],
-    ["Task exec time t", "uniform [1, 5]"],
-    ["Edge data D", "uniform [5, 50]"],
-    ["Link bandwidth B", "uniform [10, 100]  "
-     "(a transfer can rival a task)"],
-    ["Datasets (tasks/nodes)", "10/3, 100/5, 500/8, 1000/10"],
-    ["Eligibility", "~15% of placements infeasible"],
-    ["Sweeps", "slack 1.0-2.0 | nodes 2-10 | tasks 10-1000 | "
-     "failure 0-0.5 | bandwidth 1.0-0.05"],
-    ["Metric", "mean accuracy vs the max-accuracy bound; "
-     "feasibility; wall time"],
-    ["Replication", "5 fresh instances per point; means reported"],
-], 0.8, 1.2, 11.7, 5.5, col_widths=[3.2, 8.5], size=13)
+    ["Task runtimes", "uniform 1\u20135"],
+    ["Data per edge", "uniform 5\u201350"],
+    ["Link bandwidths", "uniform 10\u2013100 (a transfer can "
+     "rival a task)"],
+    ["Workflow sizes", "10, 100, 500, 1000 tasks on 3\u201310 "
+     "machines"],
+    ["Sweeps", "deadline slack, federation size, workflow "
+     "size, failure rate, bandwidth"],
+    ["Metrics", "score vs. the bound, feasibility, wall time "
+     "(5 fresh instances per point)"],
+], 0.9, 1.4, 11.5, 5.0, col_widths=[3.2, 8.3], size=14)
 
-s = add_slide("Deadline slack: the scheduler matters exactly "
-              "when it hurts", TEAL, S4, notes=(
-    "When the deadline barely fits, the MILP leads and "
-    "everything else trails. Once there is a little slack the "
-    "greedy reaches the bound, and by alpha 1.5 the MILP "
-    "joins it. So the method choice matters exactly where "
-    "the deadline binds; at loose slack almost anything "
-    "works."))
+s = slide("Deadline slack", notes=(
+    "First experiment: tighten the deadline. When it barely "
+    "fits, the exact solver leads and everything else "
+    "trails. Give it a little room and the greedy reaches "
+    "the bound. So the method choice matters exactly where "
+    "the deadline binds."))
 pic(s, "perf_slack_accuracy.png", 0.7, 1.2, width=6.7)
 bullets(s, [
-    (0, "At alpha = 1.0 the MILP leads at 1.38 against a "
-        "bound of 1.43; rounding 1.25, greedy 1.23, GA "
-        "1.20"),
-    (0, "From alpha = 1.2 the greedy reaches the bound; "
-        "the MILP joins it at 1.5"),
-    (0, "Rounding and the GA still trail 2.5 to 8 percent "
-        "at alpha = 2.0; a fixed search budget cannot "
-        "fully recover"),
-], left=7.7, width=5.1, top=1.4, size=15)
-takeaway(s, "the method choice matters most exactly where the "
-         "deadline binds; at loose slack almost anything works")
+    (0, "When the deadline barely fits, the exact solver "
+        "leads (1.38 vs. a bound of 1.43); the others "
+        "trail"),
+    (0, "A little slack and the greedy reaches the bound"),
+    (0, "Rounding and the GA stay 2.5\u20138% below even "
+        "with slack to spare"),
+], left=7.8, width=5.0, top=1.5, size=16)
+takeaway(s, "the method choice matters exactly where the "
+         "deadline binds; with loose slack almost anything "
+         "works")
 
-s = add_slide("Federation size: capacity buys feasibility, "
-              "not accuracy", TEAL, S4, notes=(
-    "Scaling the federation from two to ten nodes: the MILP "
-    "and the greedy sit on the bound at every size. The GA "
-    "and rounding drift further below as the placement space "
-    "grows while their search budget stays fixed. Extra "
-    "nodes buy feasible placements, not better scores."))
+s = slide("Federation size", notes=(
+    "Scale the federation from two to ten machines. The "
+    "exact solver and the greedy sit on the bound "
+    "throughout. The GA and rounding drift further below "
+    "as the placement space grows while their search "
+    "budget stays fixed."))
 pic(s, "perf_nodes_accuracy.png", 0.7, 1.2, width=6.7)
 bullets(s, [
-    (0, "The MILP and the greedy match the bound at every "
-        "federation size"),
-    (0, "The GA drifts from 1.5% below the bound at N = 2 "
-        "to about 8% at N = 10; rounding behaves the same "
-        "way"),
-    (0, "The reason is that the placement space grows with "
-        "N while the search budget stays fixed"),
-], left=7.7, width=5.1, top=1.4, size=15)
-takeaway(s, "federation buys feasibility, not accuracy; extra "
-         "nodes never lift a method above the bound")
+    (0, "The exact solver and the greedy match the bound "
+        "at every size"),
+    (0, "The GA drifts from 1.5% below the bound at two "
+        "machines to about 8% at ten"),
+    (0, "A bigger placement space with a fixed search "
+        "budget just means a worse search"),
+], left=7.8, width=5.0, top=1.5, size=16)
+takeaway(s, "more machines buy feasibility, not accuracy "
+         "\u2014 extra capacity never lifts a method above "
+         "the bound")
 
-s = add_slide("Workflow size: the simple greedy holds up best",
-              TEAL, S4, notes=(
-    "Scaling the DAG: everyone is on the bound at ten tasks; "
-    "at a thousand, only the greedy is still there, in a "
-    "fifth of a second. Rounding survives but pays about "
-    "ninety seconds per re-solve, and the GA falls to 1.10 "
-    "while taking 159 seconds."))
+s = slide("Workflow size", notes=(
+    "Scale the workflow instead. At ten tasks everyone is "
+    "on the bound. At a thousand, only the greedy is still "
+    "there \u2014 in a fifth of a second. Rounding "
+    "survives but pays about ninety seconds per re-solve, "
+    "and the GA falls while taking over two minutes."))
 pic(s, "perf_task_size_accuracy.png", 0.7, 1.2, width=6.7)
 bullets(s, [
-    (0, "At n = 10 all four methods sit on the bound"),
-    (0, "At n = 100 the GA drifts first"),
-    (0, "At n = 1000 the MILP is past its cap; the greedy "
-        "stays on the bound in 0.15 s; rounding needs ~93 s "
-        "per re-solve; the GA falls to 1.10 in ~159 s"),
-], left=7.7, width=5.1, top=1.4, size=15)
-takeaway(s, "at a thousand tasks only the greedy is both fast "
-         "and bound-level; that result surprised us too")
+    (0, "At 10 tasks all four methods sit on the bound"),
+    (0, "At 1000 tasks the exact solver is past its cap; "
+        "the greedy stays on the bound in 0.15 s"),
+    (0, "Rounding needs ~93 s per re-solve; the GA drops "
+        "to 1.10 in ~159 s"),
+], left=7.8, width=5.0, top=1.5, size=16)
+takeaway(s, "at scale only the greedy is both fast and "
+         "bound-level")
 
-s = add_slide("Failures: the scores stay flat; feasibility is "
-              "the story", TEAL, S4, notes=(
-    "The failure model is retry-once: a failed task reruns in "
-    "place and keeps its accuracy if the retry still meets "
-    "the deadline. The scores are flat for everyone; "
-    "feasibility is where they separate. The greedy stays "
-    "feasible at every rate because it finishes early and "
-    "leaves room for the retry."))
+s = slide("Task failures", notes=(
+    "The failure model is retry-once: a failed task reruns "
+    "in place and keeps its accuracy if the retry still "
+    "meets the deadline. Scores stay flat for everyone; "
+    "feasibility is where the methods separate. The greedy "
+    "stays feasible at every rate because it finishes "
+    "early and leaves room for the retry."))
 pic(s, "perf_failure_accuracy.png", 0.7, 1.2, width=6.7)
 bullets(s, [
-    (0, "Retry-once: a failed task reruns in place and "
+    (0, "Retry-once: a failed task reruns in place, and "
         "keeps its accuracy if the retry still meets the "
         "deadline"),
-    (0, "The scores stay flat for everyone; feasibility is "
+    (0, "Scores stay flat for everyone; feasibility is "
         "where they separate"),
-    (0, "At failure rate 0.5: greedy 100%, MILP and GA "
-        "around 60%, rounding around 20%"),
-    (0, "The greedy finishes early, so a retry fits inside "
-        "the deadline"),
-], left=7.7, width=5.1, top=1.4, size=15)
-takeaway(s, "under failures the differentiator is feasibility, "
-         "not accuracy; early-finish headroom absorbs the "
-         "retries")
+    (0, "At the highest failure rate: greedy still 100% "
+        "feasible, the others drop to ~60% and ~20%"),
+], left=7.8, width=5.0, top=1.5, size=16)
+takeaway(s, "under failures the differentiator is "
+         "feasibility \u2014 finishing early is what "
+         "absorbs the retries")
 
-s = add_slide("Link degradation: what data-awareness is "
-              "worth", TEAL, S4, notes=(
-    "This is the experiment the model was built for. Degrade "
-    "every link down to five percent of nominal. The "
-    "bandwidth-blind baseline reports bound-level scores at "
-    "every level while its schedules go infeasible. The "
-    "data-aware methods trade accuracy for feasibility and "
-    "degrade gracefully."))
+s = slide("Link degradation", notes=(
+    "This is the experiment the model was built for. "
+    "Degrade every link down to five percent of nominal. "
+    "The blind baseline reports bound-level scores at "
+    "every level \u2014 on schedules that are infeasible. "
+    "The data-aware methods trade accuracy for "
+    "feasibility and degrade gracefully."))
 pic(s, "perf_bandwidth_accuracy.png", 0.7, 1.2, width=6.7)
 bullets(s, [
-    (0, "The blind baseline shows bound-level scores at "
-        "every level, but it is infeasible: 80% at 0.5x, "
-        "0% below 0.2x"),
-    (0, "The MILP stays feasible at all levels and loses "
-        "about 10% of score at 0.05x"),
-    (0, "The greedy stays feasible to 0.1x by paying in "
-        "accuracy; it collapses at 0.05x"),
-    (0, "The GA holds to 0.1x; rounding only survives "
-        "above 0.5x"),
-], left=7.7, width=5.1, top=1.4, size=15)
+    (0, "The bandwidth-blind baseline shows bound-level "
+        "scores at every level \u2014 while going fully "
+        "infeasible below a fifth of nominal"),
+    (0, "The exact solver stays feasible throughout and "
+        "loses only ~10% of score"),
+    (0, "The greedy stays feasible to a tenth by paying "
+        "in accuracy"),
+], left=7.8, width=5.0, top=1.5, size=16)
 takeaway(s, "a scheduler that ignores the links reports a "
-         "perfect score on a workflow that finishes late; a "
-         "high score that is late is a missed alert, not a "
-         "result")
+         "perfect score on a workflow that finishes late")
 
-s = add_slide("The same story across the four datasets", TEAL,
-              S4, notes=(
-    "The per-dataset table says the same thing. On the small "
-    "instance everyone ties and the greedy is fastest. On "
-    "medium, the greedy's makespan is 43 versus about 61 for "
-    "the rest. On the large instances only the greedy and the "
-    "GA even fit, and the greedy holds the bound while the "
-    "GA pays twenty to seventy seconds of search."))
+s = slide("The same story at every scale", notes=(
+    "The per-dataset table says the same thing. On small "
+    "instances everyone ties. On medium, the greedy's "
+    "makespan is 43 versus about 61 for the rest. At the "
+    "large sizes only the greedy and the GA even fit in "
+    "memory, and the greedy holds the bound while the GA "
+    "pays tens of seconds."))
 table(s, [
     ["Dataset", "Method", "Score", "Makespan", "Runtime"],
-    ["small (10/3)", "all four", "1.64", "16.8-18.9",
-     "0.0001-0.27 s"],
-    ["medium (100/5)", "MILP / greedy", "1.44", "61 / 43",
-     "1.37 s / 0.003 s"],
-    ["medium (100/5)", "rounding / GA", "1.32 / 1.27",
-     "62 / 61", "24.8 s / 5.2 s"],
-    ["large (500/8)", "greedy / GA", "1.42 / 1.17", "50 / 71",
-     "0.04 s / 21.4 s"],
-    ["xlarge (1000/10)", "greedy / GA", "1.41 / 1.13",
-     "83 / 120", "0.14 s / 73.0 s"],
-], 0.9, 1.4, 11.5, 3.6, col_widths=[3.0, 2.6, 1.7, 2.2, 2.0],
-    size=14)
+    ["small (10 tasks)", "all four", "1.64", "17\u201319",
+     "< 0.3 s"],
+    ["medium (100)", "exact / greedy", "1.44", "61 / 43",
+     "1.4 s / 0.003 s"],
+    ["medium (100)", "rounding / GA", "1.32 / 1.27",
+     "62 / 61", "25 s / 5.2 s"],
+    ["large (500)", "greedy / GA", "1.42 / 1.17", "50 / 71",
+     "0.04 s / 21 s"],
+    ["xlarge (1000)", "greedy / GA", "1.41 / 1.13", "83 / 120",
+     "0.14 s / 73 s"],
+], 0.9, 1.4, 11.5, 3.8,
+    col_widths=[3.0, 2.6, 1.7, 2.2, 2.0], size=14)
 takeaway(s, "accuracy is not free in wall time, and neither "
-         "is the makespan; the gap widens with scale")
+         "is the makespan \u2014 the gap widens with scale")
 
-s = add_slide("Structural scale: generation to a million "
-              "vertices", TEAL, S4, notes=(
-    "Separately we stress-tested the generators: "
-    "million-task DAGs in about three seconds with depth "
-    "growing like log n, and million-node resource graphs in "
-    "about seven. These are structural instances; the honest "
-    "boundary is that schedulable dense instances stop where "
-    "the constraint count and memory do."))
+s = slide("Honest limits, and what they leave open", notes=(
+    "What we do not claim. The exact solver caps near 800 "
+    "assignment variables. The LP reaches a hundred "
+    "thousand rows at a thousand tasks. The GA runs on one "
+    "fixed budget. And the failure model is "
+    "retry-once-in-place \u2014 no replication, no "
+    "checkpointing, no migration. That last limit is the "
+    "bridge to the proposal."))
 bullets(s, [
-    (0, "The DAG generator makes 10^6 tasks, about 3 "
-        "million edges, in 3.1 s; depth grows like log n"),
-    (0, "Resource graphs: 10^6 nodes, about 2.4 million "
-        "links, in 7.3 s; average degree around 5"),
-    (0, "These are structural instances; schedulable dense "
-        "instances stop where the constraints do"),
-    (1, "MILP near 800 assignment variables; the LP near "
-        "10^5 rows at n = 1000"),
-], width=6.9, size=16)
-pic(s, "resource_graphs.png", 7.6, 1.35, width=5.4, base=RES)
-caption(s, "Generated federated resource graphs (up to 10^6 "
-           "nodes)", 7.6, 6.55, 5.4)
-
-s = add_slide("Honest limits, and what they leave open", TEAL,
-              S4, notes=(
-    "What we do not claim: the MILP is capped near 800 "
-    "variables, the LP grows to a hundred thousand rows, the "
-    "GA runs on one budget, and the failure model is "
-    "retry-once-in-place. No replication, no checkpointing, "
-    "no migration. That last limit is the bridge to the "
-    "proposal."))
-bullets(s, [
-    (0, "The MILP is capped at about 800 assignment "
-        "variables; that is a deliberate boundary, not an "
-        "oversight"),
-    (0, "The LP reaches ~10^5 rows at n = 1000, and the GA "
-        "runs on one fixed budget"),
+    (0, "The exact solver is capped near 800 assignment "
+        "variables \u2014 a deliberate boundary"),
+    (0, "The relaxation reaches ~100,000 rows at 1,000 "
+        "tasks; the GA runs on one fixed budget"),
     (0, "The failure model is retry-once-in-place: no "
-        "replication, checkpointing, or migration yet"),
-    (0, "Dense schedulable instances stop near 10^4 "
-        "tasks; the 10^6 experiments are structural"),
+        "replication, checkpointing, or migration"),
+    (0, "Schedulable instances stop near 10\u00b9\u2074 "
+        "tasks; the million-task experiments are "
+        "structural"),
     (0, ""),
-    (0, "What is open: a whole resource fails mid-workflow, "
-        "and the schedule was decided up front"),
-], width=12.0, size=16)
+    (0, "What is open: a whole machine fails mid-run, and "
+        "the schedule was decided up front"),
+])
 
 # ==================================================================
-# SECTION 5 — PROPOSED RESEARCH
+# Paper 3 — proposed research
 # ==================================================================
-divider("5  |  PROPOSED RESEARCH",
-        "Dynamic Partial Repartitioning",
-        "Repair the smallest affected region and leave "
-        "everything else alone", AMBER, notes=(
-    "Section five is the proposal itself. The question in one "
-    "line, the three research questions, and then the method "
-    "in depth."))
+section("Paper 3 \u2014 the proposal",
+        "Dynamic partial repartitioning after a resource "
+        "failure",
+        notes="Now the proposal itself. The question, the "
+              "three research questions inside it, and the "
+              "method.")
 
-s = add_slide("The proposal, and the questions it raises",
-              AMBER, S5, notes=(
-    "The proposal in one line, then the three research "
-    "questions that decompose it: where the repair boundary "
-    "lies, how to repartition that region, and how to update "
-    "the paths without recomputing them."))
-callout(s, "How can we quickly repartition and reschedule "
-        "only the affected part of a DAG workflow after a fog "
-        "resource fails, while reducing recovery time, "
-        "communication cost, task movement, and completion "
-        "time?", 0.8, 1.3, 11.7, 1.1, PALE, AMBER, 15,
-        bold=True)
+s = slide("The question", notes=(
+    "The proposal in one sentence. When a fog machine "
+    "fails mid-workflow, I want to repartition and "
+    "reschedule only the affected part \u2014 not the "
+    "whole workflow \u2014 while keeping the recovery "
+    "time, the moved tasks, and the re-shipped data small. "
+    "Three research questions decompose it."))
+para(s, "How can we repartition and reschedule only the "
+        "affected part of a DAG workflow after a fog "
+        "resource fails \u2014 while keeping recovery time, "
+        "task movement, data re-shipped, and completion "
+        "time small?",
+     top=1.4, width=12.0, size=21, bold=True)
 bullets(s, [
-    (0, "RQ1, the boundary: what is the smallest DAG region "
-        "that must be repartitioned?"),
-    (0, "RQ2, the repair: how do we repartition that region "
-        "onto surviving nodes at minimum recovery cost and "
-        "still meet the deadline?"),
-    (0, "RQ3, the paths: how do we update communication "
-        "paths incrementally instead of recomputing them?"),
-], top=2.9, width=12.0, size=17)
+    (0, "RQ1 \u2013 the boundary: what is the smallest part "
+        "of the workflow that must be repartitioned?"),
+    (0, "RQ2 \u2013 the repair: how do we repartition it "
+        "onto surviving machines at minimum cost and still "
+        "meet the deadline?"),
+    (0, "RQ3 \u2013 the paths: how do we update "
+        "communication paths incrementally instead of "
+        "recomputing them?"),
+], top=3.5)
 
-s = add_slide("A resource fails mid-workflow", AMBER, S5,
-              notes=(
-    "Monitoring detects the failed node. The stranded, "
-    "unfinished tasks have to be rescued, and completed work "
-    "is never redone. The subtle decision is the boundary: "
-    "we check the parents and children of the stranded "
-    "tasks, because sometimes a dependent has to move too, "
-    "for data locality or to make the deadline."))
-for base_x, title, dead in [(0.9, "before", None),
-                            (8.0, "after R2 fails", "R2")]:
-    box(s, title, base_x, 1.35, 4.3, 0.5, NAVY, size=13,
-        bold=True)
-    pos = {"R1": (base_x + 0.1, 2.15), "R2": (base_x + 1.75, 1.95),
-           "R3": (base_x + 1.75, 3.35), "R4": (base_x + 3.45, 2.6)}
-    for name, (x, y) in pos.items():
-        c = PALE if name != dead else GREY
-        tc = NAVY if name != dead else WHITE
-        box(s, name, x, y, 0.85, 0.6, c, text_color=tc, size=12,
-            bold=True)
-    arrow(s, base_x + 0.95, 2.45, base_x + 1.75, 2.25, GREY, 1.5)
-    arrow(s, base_x + 0.95, 2.45, base_x + 1.75, 3.65, GREY, 1.5)
-    arrow(s, base_x + 2.6, 2.25, base_x + 3.45, 2.9, GREY, 1.5)
-    arrow(s, base_x + 2.6, 3.65, base_x + 3.45, 3.1, GREY, 1.5)
-    if dead:
-        cross(s, base_x + 1.75, 1.95, 0.85)
-        box(s, "stranded tasks", base_x + 0.5, 4.35, 3.3, 0.55,
-            AMBER, size=12, bold=True)
-        arrow(s, base_x + 2.15, 4.35, base_x + 2.15, 2.6, AMBER,
-              1.75, dashed=True)
+s = slide("What a failure looks like mid-run", notes=(
+    "Monitoring detects the failed machine. Its unfinished "
+    "tasks are stranded and have to be rescued; completed "
+    "work is never redone. The subtle decision is the "
+    "boundary: sometimes a task that ran fine still has to "
+    "move, because its input now sits across a slow path, "
+    "or because staying pushes it past the deadline."))
 bullets(s, [
-    (0, "The invariant: completed tasks never restart, and "
-        "healthy tasks never move"),
-    (0, "The boundary question (RQ1): is rescuing just the "
-        "stranded tasks enough, or do dependents have to "
-        "move too?"),
-], top=5.3, width=12.0, size=16)
-
-s = add_slide("The method, step by step", AMBER, S5, notes=(
-    "Seven steps. The existing schedulers make the initial "
-    "partition. When a failure is detected we isolate the "
-    "stranded tasks, grow the minimal affected subgraph under "
-    "the boundary rule, pick replacements by capacity and "
-    "short paths to the parents and children, repartition "
-    "under the recovery cost model, assign and update only "
-    "the affected paths, and resume from the last good "
-    "point."))
-steps = [
-    ("1", "Initial\npartition", NAVY),
-    ("2", "Detect\nfailure", AMBER),
-    ("3", "Isolate affected\nsubgraph", AMBER),
-    ("4", "Pick replacement\nresources", AMBER),
-    ("5", "Repartition\nthe region", AMBER),
-    ("6", "Assign + update\npaths", TEAL),
-    ("7", "Resume from\nlast good point", TEAL),
-]
-for i, (num, txt, c) in enumerate(steps):
-    x = 0.55 + i * 1.82
-    box(s, num, x, 1.5, 1.55, 0.55, c, size=16, bold=True)
-    box(s, txt, x, 2.15, 1.55, 1.15, PALE, text_color=DARK,
-        size=12)
-    if i:
-        arrow(s, x - 0.25, 2.7, x, 2.7, GREY, 2.0)
-callout(s, "The repartition cost model: added makespan, "
-        "communication delay, data re-shipped, move cost, "
-        "load balance, all under the deadline",
-        0.9, 3.8, 11.5, 0.9, PALE, AMBER, 15)
-callout(s, "And one invariant throughout: completed tasks "
-        "never restart, and unaffected assignments never "
-        "move.", 0.9, 4.9, 11.5, 0.8, PALE, NAVY, 15)
-
-s = add_slide("RQ1: where does the repair boundary lie?",
-              AMBER, S5, notes=(
-    "The technical heart of the proposal. The stranded set "
-    "S is mandatory. But some neighbors have to move too: a "
-    "child whose input now crosses a long path, or a "
-    "dependent that can no longer meet the deadline if it "
-    "stays. The rule expands from S while a neighbor fails "
-    "a stay-test, capped so the region stays small."))
-bullets(s, [
-    (0, "Start with the stranded set S; that part is "
+    (0, "A machine dies with work still queued or running "
+        "on it"),
+    (0, "The stranded tasks must move \u2014 that part is "
         "mandatory"),
-    (0, "Then admit a neighbor while it fails one of two "
-        "stay-tests:"),
-    (1, "a deadline test: staying pushes its finish time "
-        "past the slack remaining at tau"),
-    (1, "a locality test: staying strands its input on a "
-        "path too slow to serve it in time"),
-    (0, "Stop when no neighbor fails a test, or when the "
-        "region hits a size cap; minimality is the claim "
-        "we verify"),
-    (0, "The output is the affected subgraph plus its "
-        "boundary pins: the tasks that stayed put and fix "
-        "the arrival times the repair must respect"),
-], width=12.0, size=16)
+    (0, "But some neighbors may have to move too:"),
+    (1, "a task whose input now crosses a path too slow "
+        "to serve it in time"),
+    (1, "a task that can no longer finish by the deadline "
+        "if it stays"),
+    (0, "The invariant throughout: completed work never "
+        "restarts, and tasks that are fine never move"),
+], top=1.5)
 
-s = add_slide("RQ2: repartitioning the region", AMBER, S5,
-              notes=(
-    "The repair itself is a smaller instance of the same "
-    "optimization family, which is the point: the paper-two "
-    "schedulers become the region solvers. The recovery "
-    "objective adds movement terms to the accuracy "
-    "objective, and the boundary pins enter as fixed "
-    "arrival times the repair has to respect."))
+s = slide("The method, in seven steps", notes=(
+    "Seven steps. The existing schedulers make the "
+    "initial partition \u2014 that is paper one. When a "
+    "failure is detected we isolate the stranded tasks, "
+    "grow the smallest affected region under the boundary "
+    "rule, pick replacements by capacity and distance to "
+    "the parents and children, repartition just that "
+    "region under a recovery cost model, update only the "
+    "affected communication paths, and resume from the "
+    "last good point."))
 bullets(s, [
-    (0, "Repair is a constrained re-optimization on the "
-        "region; the paper-two schedulers become the "
-        "region solvers"),
-    (0, "The objective minimizes added makespan plus moved "
-        "tasks plus re-shipped data, subject to accuracy "
-        "and the deadline"),
-    (0, "The boundary pins enter as constants: the arrival "
-        "times of data from tasks that stayed put"),
-    (0, "Replacement resources come from the surviving "
-        "nodes with enough capacity and short paths to "
-        "where the parents and children live"),
-    (0, "A greedy repair gives millisecond-scale answers; "
-        "the MILP repair is the reference for small "
-        "regions"),
-], width=12.0, size=16)
+    (0, "1.  Make the initial partition (any paper-1 "
+        "scheduler)"),
+    (0, "2.  Detect the failure"),
+    (0, "3.  Isolate the affected region \u2014 stranded "
+        "tasks plus neighbors that fail a stay-test"),
+    (0, "4.  Pick replacement machines by capacity and "
+        "distance to where the parents and children "
+        "live"),
+    (0, "5.  Repartition only that region under the "
+        "recovery cost model"),
+    (0, "6.  Update only the affected communication "
+        "paths"),
+    (0, "7.  Resume from the last good point"),
+], top=1.5)
 
-s = add_slide("RQ3: updating the paths incrementally", AMBER,
-              S5, notes=(
-    "Moved tasks need new paths to their parents and "
-    "children. Recomputing all shortest paths mid-workflow "
-    "is too slow, so we reuse the dynamic SPT updates from "
-    "Riazi, Khanda and Bhowmick: only the paths through the "
-    "deleted node and the moved tasks get updated. That is "
-    "what makes partial repair fast enough to matter."))
+s = slide("RQ1: where does the boundary lie?", notes=(
+    "The technical heart of the proposal. The stranded set "
+    "is mandatory. Beyond that we grow the region while a "
+    "neighbor fails one of two stay-tests: it cannot make "
+    "the deadline if it stays, or its input can no longer "
+    "reach it in time. We stop when nothing fails a test, "
+    "or at a size cap. Minimality of that region is the "
+    "claim we verify \u2014 I expect it to grow with "
+    "failure location and remaining slack."))
 bullets(s, [
-    (0, "Moved tasks need new communication paths to "
-        "their parents and children"),
-    (0, "Recomputing all shortest paths on the "
-        "infrastructure graph mid-workflow is too slow"),
-    (0, "So we reuse dynamic single-source shortest-path "
-        "updates (Riazi, Khanda, Bhowmick and "
-        "colleagues)"),
-    (1, "only the paths through the deleted node and the "
-        "moved tasks get updated"),
-    (0, "Using dynamic SPT to drive workflow recovery is, "
-        "as far as we know, new"),
-], width=12.0, size=16)
+    (0, "Start with the stranded tasks \u2014 mandatory"),
+    (0, "Then admit a neighbor only while it fails a "
+        "stay-test:"),
+    (1, "deadline test \u2013 staying pushes its finish "
+        "time past the remaining slack"),
+    (1, "locality test \u2013 staying strands its input "
+        "on a path too slow to serve it in time"),
+    (0, "Stop when no neighbor fails, or at a size cap"),
+    (0, "The tasks that stayed put become fixed anchors "
+        "the repair must respect"),
+], top=1.5)
 
-s = add_slide("What is new, positioned against the "
-              "literature", AMBER, S5, notes=(
-    "The pieces exist separately: dynamic path updates, fog "
-    "rescheduling, join-leave redistribution, partial "
-    "reconsideration. Nobody couples them. The novelty is "
-    "the two-graph mapping: a failure in the "
-    "infrastructure becomes the smallest affected region "
-    "in the task DAG."))
+s = slide("RQ2: repairing the region", notes=(
+    "The repair is a smaller instance of the same "
+    "optimization family \u2014 which is the point: the "
+    "paper-two schedulers become the region solvers. The "
+    "recovery objective adds movement terms to the "
+    "accuracy objective: added makespan, tasks moved, "
+    "bytes re-shipped. The boundary anchors enter as "
+    "fixed arrival times the repair must respect. A "
+    "greedy repair answers in milliseconds; the exact "
+    "solver is the reference on small regions."))
 bullets(s, [
-    (0, "Dynamic shortest-path updates exist, but have "
-        "never driven workflow repartitioning"),
-    (0, "Fog rescheduling and join-leave redistribution "
-        "exist, but without the two-graph coupling"),
-    (0, "Partial workflow reconsideration exists, but "
-        "not at failure granularity"),
+    (0, "Repair is a smaller instance of the same "
+        "optimization \u2014 the paper-2 schedulers become "
+        "the region solvers"),
+    (0, "The objective minimizes added makespan plus "
+        "tasks moved plus data re-shipped, subject to "
+        "accuracy and the deadline"),
+    (0, "The anchors enter as constants: arrival times "
+        "of data from tasks that stayed put"),
+    (0, "A greedy repair gives millisecond answers; the "
+        "exact solver is the reference on small regions"),
+], top=1.5)
+
+s = slide("RQ3: updating the paths", notes=(
+    "Moved tasks need new communication paths to their "
+    "parents and children. Recomputing all shortest paths "
+    "mid-workflow is too slow, so we reuse dynamic "
+    "shortest-path updates \u2014 the work of Riazi, "
+    "Khanda, and Dr. Bhowmick's group. Only the paths "
+    "through the deleted machine and the moved tasks get "
+    "updated. Using them to drive workflow recovery is, "
+    "as far as we know, new."))
+bullets(s, [
+    (0, "Moved tasks need new paths to their parents and "
+        "children"),
+    (0, "Recomputing all shortest paths mid-workflow is "
+        "too slow"),
+    (0, "So we reuse dynamic shortest-path updates "
+        "(Riazi, Khanda, Bhowmick and colleagues):"),
+    (1, "only paths through the deleted machine and the "
+        "moved tasks change"),
+    (0, "Using dynamic path updates to drive workflow "
+        "recovery is, as far as we know, new"),
+], top=1.5)
+
+s = slide("What is new here", notes=(
+    "The pieces exist separately: dynamic path updates, "
+    "fog rescheduling, partial reconsideration. Nobody "
+    "couples them. The novelty is the mapping: a failure "
+    "in the machine graph becomes the smallest affected "
+    "region in the task graph."))
+bullets(s, [
+    (0, "Dynamic shortest-path updates exist \u2014 but "
+        "have never driven workflow repartitioning"),
+    (0, "Fog rescheduling exists \u2014 but without the "
+        "two-graph coupling"),
+    (0, "Partial workflow reconsideration exists \u2014 "
+        "but not at failure granularity"),
     (0, ""),
-    (0, "What is new: an infrastructure-node failure "
-        "maps to the smallest affected DAG region; only "
-        "that region is repartitioned; the paths update "
-        "incrementally; the workflow resumes"),
-], width=12.0, size=16)
+    (0, "What is new: a machine failure maps to the "
+        "smallest affected region; only that region is "
+        "repartitioned; only its paths update; the "
+        "workflow resumes"),
+], top=1.5)
 
 # ==================================================================
-# SECTION 6 — EVALUATION PLAN & TIMELINE
+# Evaluation plan & timeline
 # ==================================================================
-divider("6  |  EVALUATION PLAN & TIMELINE",
-        "How it will be tested, and when",
-        "Baselines, metrics, failure injection, hypotheses, "
-        "milestones", AMBER, notes=(
-    "Section six. The evaluation design, then the "
-    "twelve-month plan."))
+section("Evaluation plan and timeline",
+        "Baselines, metrics, hypotheses, milestones",
+        notes="How I will test it, and when.")
 
-s = add_slide("Baselines and metrics", AMBER, S6, notes=(
-    "Four baselines: complete repartition as the naive "
-    "upper bound on disturbance, a greedy rescue as the "
-    "cheapest possible repair, a no-repair static baseline "
-    "as the quality floor, and the MILP on small cases as "
-    "the reference. The metrics cover recovery speed, "
-    "schedule quality, and the cost of the disturbance."))
+s = slide("Baselines and metrics", notes=(
+    "Four baselines: complete repartition \u2014 the "
+    "naive upper bound on disturbance; greedy rescue "
+    "\u2014 the cheapest possible repair; no repair at "
+    "all \u2014 the quality floor; and the exact solver "
+    "on small cases \u2014 the reference. The metrics "
+    "cover recovery speed, schedule quality, and the "
+    "cost of the disturbance itself."))
 table(s, [
     ["Baselines", "Metrics"],
-    ["Complete repartition: reschedule the whole DAG",
-     "Recovery time (detect to resume)"],
-    ["Greedy rescue: reassign stranded tasks one by one",
-     "Completion time / deadline success rate"],
-    ["Static, no repair: whatever survives",
-     "Communication cost and data re-shipped"],
-    ["MILP repair on small cases: the reference",
-     "Tasks moved; energy; repaired-schedule quality"],
-], 0.8, 1.4, 11.7, 3.4, col_widths=[6.2, 5.5], size=13)
-takeaway(s, "the platform from paper two already supplies "
-         "the baselines and the failure injection; the "
-         "testbed exists", accent=TEAL)
+    ["Complete repartition \u2013 reschedule everything",
+     "Recovery time, detect to resume"],
+    ["Greedy rescue \u2013 reassign stranded tasks one by "
+     "one", "Completion time and deadline success"],
+    ["No repair \u2013 whatever survives", "Data "
+     "re-shipped and communication cost"],
+    ["Exact repair on small cases \u2013 the reference",
+     "Tasks moved; repaired-schedule quality"],
+], 0.9, 1.5, 11.5, 3.6, col_widths=[6.0, 5.5], size=14)
+takeaway(s, "the platform from paper two already provides "
+         "the baselines and the failure injection \u2014 "
+         "the testbed exists")
 
-s = add_slide("Experiment design, and the hypotheses", AMBER,
-              S6, notes=(
+s = slide("What I will vary, and what I expect", notes=(
     "We vary what makes recovery hard: where the failure "
-    "hits, how many resources fail at once, how much slack "
-    "remains, and the scales. The interesting case is a "
-    "late failure on the critical path. Three hypotheses, "
-    "each falsifiable."))
+    "hits \u2014 the critical path is the interesting "
+    "case; how many machines fail at once; how much "
+    "slack remains; and the scales from paper two. "
+    "Three hypotheses, each falsifiable."))
 bullets(s, [
     (0, "Failure injection:"),
-    (1, "where it hits: a resource on the critical path "
-        "versus a peripheral one"),
-    (1, "how many: a single resource versus several at "
+    (1, "where \u2013 a machine on the critical path vs. "
+        "a peripheral one"),
+    (1, "how many \u2013 one machine vs. several at "
         "once"),
-    (1, "when: how much deadline slack remains at tau"),
-    (0, "Scale: workflows of 10, 100 and 1000 tasks, "
-        "federations of 2 to 10 nodes"),
+    (1, "when \u2013 how much deadline slack is left"),
+    (0, "Scale: workflows of 10\u20131000 tasks, "
+        "federations of 2\u201310 machines"),
     (0, "Hypotheses:"),
-    (1, "H1: recovery time grows with the size of the "
-        "region, not the size of the DAG"),
-    (1, "H2: tasks moved and data re-shipped are far "
-        "below the baselines at equal feasibility"),
-    (1, "H3: repair quality stays within a small margin "
-        "of the MILP reference on small cases"),
-], width=12.0, size=16)
+    (1, "H1 \u2013 recovery time grows with the region, "
+        "not the whole workflow"),
+    (1, "H2 \u2013 tasks moved and data re-shipped are "
+        "far below the baselines at equal feasibility"),
+    (1, "H3 \u2013 repair quality stays near the exact "
+        "reference on small cases"),
+], top=1.4, size=18)
 
-s = add_slide("Timeline: twelve months", AMBER, S6, notes=(
+s = slide("Twelve-month plan", notes=(
     "Four quarters: build, solve, evaluate, write. The "
-    "deliverables land on the existing public repository "
-    "and the paper targets the systems venues."))
+    "deliverables land on the public repository, and the "
+    "paper targets IPDPS or CCGrid."))
 table(s, [
     ["Months", "Milestone", "Deliverable"],
-    ["1-3", "Extend the simulator to resource failures; "
-     "boundary rule and affected-subgraph extraction; "
-     "complete-repartition baseline",
-     "RQ1 implemented; baseline working"],
-    ["4-6", "Repartition algorithm and replacement "
-     "selection; incremental SPT update",
-     "RQ2 and RQ3 implemented"],
-    ["7-9", "Full baseline comparison; MILP reference on "
-     "small cases; boundary-rule sensitivity",
-     "H1-H3 tested"],
-    ["10-12", "Write the paper; release the code on the "
-     "public repository; submit",
+    ["1\u20133", "Extend the simulator to machine "
+     "failures; the boundary rule and region extraction; "
+     "the complete-repartition baseline",
+     "RQ1 done; baseline working"],
+    ["4\u20136", "The repartition algorithm and "
+     "replacement selection; incremental path updates",
+     "RQ2 and RQ3 done"],
+    ["7\u20139", "Full baseline comparison; exact "
+     "reference on small cases; boundary sensitivity",
+     "H1\u2013H3 tested"],
+    ["10\u201312", "Write the paper; release the code "
+     "publicly; submit",
      "Paper and artifact"],
-], 0.8, 1.4, 11.7, 4.4, col_widths=[1.4, 7.0, 3.3], size=13)
+], 0.9, 1.4, 11.5, 4.4, col_widths=[1.4, 7.0, 3.1],
+    size=14)
 
-s = add_slide("Risks, and how I plan to handle them", AMBER,
-              S6, notes=(
+s = slide("Risks, and how I will handle them", notes=(
     "Three honest risks. The boundary rule might expand "
-    "to most of the DAG; the incremental SPT might not "
-    "pay off on small graphs; the region repair might "
-    "trail the MILP quality. Each has a mitigation built "
-    "into the plan."))
+    "to most of the workflow; incremental path updates "
+    "might not pay off on small graphs; the region "
+    "repair might trail the exact solver's quality. "
+    "Each has a mitigation built into the plan."))
 bullets(s, [
     (0, "The boundary rule might degenerate into "
         "'repartition everything'"),
-    (1, "so the cap on the region size is enforced, and "
-        "the sensitivity study measures it against "
-        "failure location and slack"),
-    (0, "Incremental SPT might not pay off on small "
-        "graphs"),
-    (1, "so we measure the break-even point and keep "
-        "full recomputation as a baseline"),
-    (0, "Region repair might trail the MILP quality"),
-    (1, "so the strategy is hybrid: greedy repair at "
-        "scale, MILP repair where the region is small"),
-], width=12.0, size=16)
+    (1, "the size cap is enforced, and the sensitivity "
+        "study measures it against failure location and "
+        "slack"),
+    (0, "Incremental path updates might not pay off on "
+        "small graphs"),
+    (1, "we measure the break-even point and keep full "
+        "recomputation as a baseline"),
+    (0, "Region repair might trail the exact solver's "
+        "quality"),
+    (1, "hybrid strategy: greedy repair at scale, exact "
+        "repair where the region is small"),
+], top=1.5, size=18)
 
 # ==================================================================
-# SECTION 7 — CONCLUSION
+# Conclusion
 # ==================================================================
-s = add_slide("Conclusion: what this research contributes",
-              NAVY, S7, notes=(
+s = slide("Conclusion", notes=(
     "To conclude. The completed work gives a proved, "
     "data-aware formulation, four schedulers on one cost "
     "model, and a reproducible platform. The proposal "
     "adds three contributions: a principled boundary "
-    "rule, a minimal-region repartitioning method, and "
-    "the first use of incremental path updates for "
-    "workflow recovery."))
+    "rule, minimal-region repartitioning, and the first "
+    "use of incremental path updates for workflow "
+    "recovery. Paper one placed the workflow, paper two "
+    "priced its data and its approximation, and paper "
+    "three keeps it alive when the infrastructure "
+    "fails."))
 bullets(s, [
     (0, "Already done: a proved, data-aware "
         "formulation, four schedulers on one cost "
-        "model, and a reproducible platform"),
-    (0, "Proposed contribution 1: a principled "
-        "boundary rule for the smallest affected DAG "
-        "region (RQ1)"),
-    (0, "Proposed contribution 2: minimal-region "
-        "repartitioning under a recovery cost model "
-        "(RQ2)"),
-    (0, "Proposed contribution 3: incremental path "
-        "updates for workflow recovery (RQ3)"),
-    (0, "Expected outcome: recovery that is faster "
-        "and less disturbing than a complete "
-        "repartition, at near-reference quality"),
+        "model, and a reproducible platform (Papers 1 "
+        "and 2)"),
+    (0, "Proposed: a boundary rule for the smallest "
+        "affected region (RQ1)"),
+    (0, "Proposed: minimal-region repartitioning under "
+        "a recovery cost model (RQ2)"),
+    (0, "Proposed: incremental path updates for "
+        "workflow recovery (RQ3)"),
+    (0, "Expected outcome: recovery that is faster and "
+        "less disturbing than a complete repartition, "
+        "at near-reference quality"),
     (0, ""),
-    (0, "Paper 1 placed the workflow; Paper 2 "
-        "priced its data and its approximation; "
-        "Paper 3 keeps it alive when the "
-        "infrastructure fails."),
-], width=12.0, size=17)
+    (0, "Paper 1 placed the workflow; Paper 2 priced "
+        "its data and approximation; Paper 3 keeps it "
+        "alive when the infrastructure fails."),
+], top=1.4, size=19)
 
 # ---- closing ----
-s = add_slide(notes="Questions welcome. Thank you.")
-_rect(s, 0, 0, PAGE_W, PAGE_H, NAVY)
-_rect(s, 0, Inches(3.4), PAGE_W, Inches(0.09), TEAL)
-tb = s.shapes.add_textbox(Inches(1), Inches(2.5), Inches(11.3),
+s = prs.slides.add_slide(BLANK)
+_no += 1
+tb = s.shapes.add_textbox(Inches(1), Inches(2.6), Inches(11.3),
                           Inches(1.2))
 p = tb.text_frame.paragraphs[0]
 p.text = "Thank you"
-p.font.size = Pt(48); p.font.bold = True; p.font.color.rgb = WHITE
+p.font.size = Pt(44)
+p.font.bold = True
+p.font.color.rgb = INK
 p.alignment = PP_ALIGN.CENTER
 sb = s.shapes.add_textbox(Inches(1), Inches(4.0), Inches(11.3),
-                          Inches(1.6))
-tf = sb.text_frame; tf.word_wrap = True
+                          Inches(1.4))
+tf = sb.text_frame
+tf.word_wrap = True
 p = tf.paragraphs[0]
-p.text = "Questions & discussion"
-p.font.size = Pt(20); p.font.color.rgb = PALE
+p.text = "Questions and discussion"
+p.font.size = Pt(20)
+p.font.color.rgb = GREY
 p.alignment = PP_ALIGN.CENTER
 p = tf.add_paragraph()
 p.text = "github.com/gayanigupta/data-aware-scheduling"
-p.font.size = Pt(15); p.font.color.rgb = GOLD
+p.font.size = Pt(15)
+p.font.color.rgb = GREY
 p.alignment = PP_ALIGN.CENTER
+s.notes_slide.notes_text_frame.text = "Questions welcome."
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 prs.save(OUT)
