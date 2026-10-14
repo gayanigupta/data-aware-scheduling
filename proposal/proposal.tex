@@ -622,9 +622,36 @@ Objective (b): data-aware scheduling & CCGrid 2027 &
 Abstract Nov 24 2026; paper Dec 1 2026 & In revision \\
 DBDBD abstract & DBDBD 2026, Delft & Nov 8 2026 &
 In revision \\
-Objective (c): partial repartitioning & IPDPS 2028 / CCGrid
-2028 & Abstract $\sim$Oct 2027; paper $\sim$Dec 2027 &
-RQ1--RQ3 in development \\
+Objective (c): partial repartitioning & Euro-Par 2027 or
+IPDPS 2028 & Submission after completion (Spring 2027) &
+In development \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The work on Objective (c) is planned as a six-month effort
+beginning August 2026 and finishing in Spring 2027:
+
+\begin{center}\small
+\begin{tabular}{@{}p{2.4cm}p{10.6cm}@{}}
+\toprule
+Month & Planned work \\
+\midrule
+Aug 2026 & Extend the simulator to resource-level failures;
+implement the boundary rule and affected-region extraction;
+build the complete-repartition baseline. \\
+Sep 2026 & Implement the repartition algorithm and
+replacement-resource selection on top of the paper-two
+schedulers. \\
+Oct 2026 & Implement incremental path updates for moved
+tasks; integrate the greedy and MILP region solvers. \\
+Nov 2026 & Run the full baseline comparison: failure
+location, failure count, remaining slack, workflow and
+federation size. \\
+Dec 2026 & Hypothesis testing (H1--H3) and the
+boundary-rule sensitivity study. \\
+Jan 2027 & Write the paper, release the code artifact, and
+prepare the submission --- finishing Spring 2027. \\
 \bottomrule
 \end{tabular}
 \end{center}
