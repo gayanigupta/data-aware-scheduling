@@ -8,10 +8,14 @@ schedule meets the deadline.
 import numpy as np
 
 
-def run_greedy(inst, beta=0.5, delta=0.005, data_aware=True):
+def run_greedy(inst, beta=0.5, delta=0.005, data_aware=True,
+               ell_min=0.0):
     # data_aware=False gives the compute-centric baseline: the scheduler
     # assumes transfers are free when picking nodes, but evaluation still
     # charges the real communication delay (Eq. comm)
+    # ell_min is the fraction floor: if the deadline is still missed there
+    # the run is reported infeasible, so the loop has at most ceil(1/delta)
+    # passes even when communication alone exceeds t_max
     n, m = inst.n, inst.m
     mean_bw = float(np.mean(inst.B[np.isfinite(inst.B)]))
 
@@ -39,7 +43,7 @@ def run_greedy(inst, beta=0.5, delta=0.005, data_aware=True):
     indeg0 = [len(inst.preds[i]) for i in range(n)]
 
     ell = 1.0
-    while ell > 0:
+    while ell >= ell_min:
         assign = np.full(n, -1)
         y = np.full(n, np.inf)
         indeg = indeg0.copy()
@@ -68,4 +72,4 @@ def run_greedy(inst, beta=0.5, delta=0.005, data_aware=True):
         if y.max() <= inst.t_max:
             return assign, np.full(n, ell)
         ell -= delta
-    return assign, np.full(n, max(ell, 0.0))       # best effort below deadline
+    return None    # even fraction-0 work misses the deadline: infeasible
