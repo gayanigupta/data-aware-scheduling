@@ -57,6 +57,8 @@ class Instance:
         y = np.zeros(self.n)
         for i in self.order:
             a = int(assign[i])
+            # comm(j,i,b,a) is 0 when b == a, so co-located predecessors
+            # pay no transfer (Eq. comm), exactly as in the MILP
             start = max((y[j] + self.comm(j, i, int(assign[j]), a)
                          for j in self.preds[i]), default=0.0)
             y[i] = start + self.t[i, a] * ell[i] * (2 if i in retry else 1)
