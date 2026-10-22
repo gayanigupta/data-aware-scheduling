@@ -137,30 +137,39 @@ def plot():
         # missing the deadline) -- so these get a feasibility panel too
         two_panel = kind in ("bandwidth", "failure")
         fig, axs = plt.subplots(1, 2 if two_panel else 1,
-                                figsize=(6.6 if two_panel else 3.5,
-                                         2.6), dpi=300)
+                                figsize=(7.2 if two_panel else 3.6,
+                                         3.0), dpi=300)
         ax = axs[0] if two_panel else axs
         df_s = df.dropna(subset=["score"])
         if "bound" in df_s.columns:
             bnd = df_s.groupby("param")["bound"].mean()
-            ax.plot(bnd.index, bnd.values, color="#555555", ls="--", lw=1.0,
+            ax.plot(bnd.index, bnd.values, color="#555555", ls="--", lw=1.6,
                     label="Max-accuracy bound")
         for meth, g in df_s.groupby("method"):
             mean = g.groupby("param")["score"].mean()
-            ax.plot(mean.index, mean.values, **style[meth], lw=1.4, ms=4)
-        ax.set_xlabel(xlabel[kind], fontsize=9)
-        ax.set_ylabel("average accuracy score", fontsize=9)
-        ax.tick_params(labelsize=8)
-        ax.legend(fontsize=7, framealpha=0.9)
+            ax.plot(mean.index, mean.values, **style[meth], lw=1.9, ms=6,
+                    mec="white", mew=0.7)
+        ax.set_xlabel(xlabel[kind], fontsize=11)
+        ax.set_ylabel("average accuracy score", fontsize=11)
+        ax.tick_params(labelsize=10)
+        ax.grid(alpha=0.3, lw=0.5)
+        ax.legend(fontsize=8.5, framealpha=0.95, loc="best")
+        if kind == "size":                    # 10/100/1000 bunch on a linear axis
+            ax.set_xscale("log")
+            ax.set_xticks([10, 100, 1000])
+            ax.get_xaxis().set_major_formatter(
+                matplotlib.ticker.ScalarFormatter())
         if two_panel:
             ax2 = axs[1]
             for meth, g in df.groupby("method"):
                 feas = g.groupby("param")["feasible"].mean()
-                ax2.plot(feas.index, feas.values, **style[meth], lw=1.4, ms=4)
-            ax2.set_xlabel(xlabel[kind], fontsize=9)
-            ax2.set_ylabel("deadline feasibility rate", fontsize=9)
+                ax2.plot(feas.index, feas.values, **style[meth], lw=1.9,
+                         ms=6, mec="white", mew=0.7)
+            ax2.set_xlabel(xlabel[kind], fontsize=11)
+            ax2.set_ylabel("deadline feasibility rate", fontsize=11)
             ax2.set_ylim(-0.05, 1.05)
-            ax2.tick_params(labelsize=8)
+            ax2.tick_params(labelsize=10)
+            ax2.grid(alpha=0.3, lw=0.5)
         fig.tight_layout()
         out = os.path.join(FIG_DIR, f"perf_{kind}_accuracy.png")
         fig.savefig(out, bbox_inches="tight", facecolor="white")
