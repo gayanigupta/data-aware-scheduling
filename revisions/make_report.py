@@ -10,7 +10,7 @@ from docx import Document
 from docx.shared import Inches, Pt
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
-FIG = os.path.join(ROOT, "data", "results", "figures")
+FIG = os.path.join(os.path.dirname(__file__), "results", "task-01")
 
 doc = Document()
 doc.styles["Normal"].font.name = "Calibri"
@@ -202,6 +202,32 @@ doc.add_paragraph(
     "a reader will notice is in the deadline-slack figure: the MILP "
     "curve no longer sits a hair below the bound at the middle slack "
     "values - it lies on it.")
+
+doc.add_heading("Files produced for this task", 1)
+doc.add_paragraph(
+    "Everything from this investigation is stored under "
+    "revisions/results/task-01/ and is fully reproducible:")
+for f in [
+    "revisions/results/task-01/milp_diagnostics.csv - per-instance solver "
+    "status, runtime, gap, and scores for every flagged point",
+    "revisions/results/task-01/perf_slack_accuracy.png - Figure 4, "
+    "regenerated from the corrected results (also copied to "
+    "paper/Figures/perf_slack_accuracy.png)",
+    "revisions/results/task-01/perf_nodes_accuracy.png - Figure 5, "
+    "regenerated (also in paper/Figures/perf_nodes_accuracy.png)",
+    "revisions/results/task-01/perf_bandwidth_accuracy.png - the "
+    "bandwidth experiment figure (also in paper/Figures/)",
+    "revisions/diagnose_milp_gap.py - the diagnostic script that "
+    "rebuilds each flagged instance and reruns the MILP at both limits",
+    "revisions/fix_flagged_milp.py - the correction script that "
+    "re-solves flagged rows and rewrites the result files",
+    "data/results/test_runs.csv - the fixed per-dataset test runs "
+    "(unchanged; the MILP was never below another method there)",
+    "data/results/slack.csv, nodes.csv, size.csv, failure.csv, "
+    "bandwidth.csv - the five experiment result files with the "
+    "certified MILP scores written back",
+]:
+    doc.add_paragraph(f, style="List Bullet")
 
 doc.save(os.path.join(os.path.dirname(__file__),
                       "MILP_vs_heuristic_analysis.docx"))
