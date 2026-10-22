@@ -18,27 +18,31 @@ doc.styles["Normal"].font.size = Pt(11)
 
 doc.add_heading("Why a heuristic sometimes scored above the MILP", 0)
 doc.add_paragraph(
-    "Investigation requested on the accuracy figures of the data-aware "
-    "scheduling paper: find every point where a heuristic beats the MILP, "
-    "rerun the MILP on the same instances, and determine the cause. "
-    "All numbers below are from data/results/*.csv and the diagnostic "
-    "reruns in this folder (diagnose_milp_gap.py, fix_flagged_milp.py, "
-    "milp_diagnostics.csv).")
+    "This review re-examined the accuracy results reported in the "
+    "data-aware scheduling paper with the specific aim of explaining the "
+    "few cases where a heuristic appears to exceed the MILP. The approach "
+    "was to enumerate every same-instance comparison in which the "
+    "heuristic score was higher, rerun the MILP on those exact instances, "
+    "and trace the discrepancy to its source. All values and comparisons "
+    "referenced here come from data/results/*.csv and from the diagnostic "
+    "reruns produced in this folder (diagnose_milp_gap.py, "
+    "fix_flagged_milp.py, milp_diagnostics.csv).")
 
-doc.add_heading("1. Where the heuristics scored higher", 1)
+doc.add_heading("1. Instances where a heuristic exceeded the MILP", 1)
 doc.add_paragraph(
-    "Figure 4 (deadline slack) and Figure 5 (federation size) each show a "
-    "few points where the greedy marker sits just above the MILP marker. "
-    "Checking every sweep CSV row (not only the plotted means), the full "
-    "list of same-instance points where a comparable method outscored the "
-    "MILP is:")
+    "In Figure 4 (deadline slack) and Figure 5 (federation size), a small "
+    "number of plotted points place the greedy marker slightly above the "
+    "MILP marker. To rule out averaging artifacts, the review inspected "
+    "the full sweep CSVs at the row level, rather than relying on the "
+    "plotted means. The following table lists every case where a "
+    "like-for-like heuristic scored above the MILP on the same generated "
+    "instance.")
 
 t = doc.add_table(rows=1, cols=5)
 t.style = "Light Grid Accent 1"
-hdr = t.rows[0].cells
 for i, h in enumerate(["Sweep", "Parameter", "Rep", "Greedy", "MILP"]):
-    hdr[i].text = h
-rows = [
+    t.rows[0].cells[i].text = h
+for r in [
     ("slack (Fig. 4)", "alpha = 1.2", "2", "1.4422", "1.4383"),
     ("slack (Fig. 4)", "alpha = 1.2", "3", "1.4226", "1.4040"),
     ("slack (Fig. 4)", "alpha = 1.2", "4", "1.4515", "1.4481"),
@@ -50,128 +54,144 @@ rows = [
     ("failure (Fig. 7)", "all rates", "1", "1.4370", "1.4369"),
     ("bandwidth (Fig. 8)", "scale = 1.0", "1", "1.4370", "1.4369"),
     ("bandwidth (Fig. 8)", "scale = 0.2", "4", "1.4515", "1.4207"),
-]
-for r in rows:
-    cells = t.add_row().cells
+]:
     for i, v in enumerate(r):
-        cells[i].text = v
+        t.add_row().cells[i].text = v
 
 doc.add_paragraph(
-    "The failure-sweep row at rep 1 appears at all six failure rates "
-    "because every rate is evaluated on the same generated instance; it is "
-    "one instance, not six. The slack alpha=1.5 rep-1, failure rep-1, and "
-    "bandwidth 1.0 rep-1 rows are likewise the same default instance. The "
-    "bandwidth-blind baseline also appears above the MILP at degraded "
-    "bandwidths, but it ignores transfer costs entirely and is not a "
-    "like-for-like comparator, so it is excluded here.")
+    "Two clarifications are necessary for interpreting this list. The "
+    "failure-sweep entry at rep 1 appears under all six failure rates "
+    "because each rate is evaluated on the same generated instance, so "
+    "this corresponds to a single instance rather than six distinct ones. "
+    "That same default instance also underlies slack alpha = 1.5 rep 1, "
+    "failure rep 1, and bandwidth scale = 1.0 rep 1. In addition, "
+    "although the bandwidth-blind baseline can exceed the MILP under "
+    "degraded bandwidth, it is not a like-for-like comparator because it "
+    "ignores transfer costs, so it is not included here.")
 
 doc.add_picture(os.path.join(FIG, "perf_slack_accuracy.png"),
                 width=Inches(5.5))
-doc.add_paragraph("Figure 4 as regenerated after the fix (below).")
+doc.add_paragraph("Figure 4 (deadline slack), regenerated after the fix.")
 doc.add_picture(os.path.join(FIG, "perf_nodes_accuracy.png"),
                 width=Inches(5.5))
-doc.add_paragraph("Figure 5 as regenerated after the fix.")
+doc.add_paragraph("Figure 5 (federation size), regenerated after the fix.")
 
-doc.add_heading("2. Rerunning the MILP on the same instances", 1)
+doc.add_heading("2. Diagnostic MILP reruns for the flagged points", 1)
 doc.add_paragraph(
-    "Each flagged instance was regenerated with the exact arguments and "
-    "seed the sweep used (seed = 1000 x rep; 50 tasks / 5 nodes / "
-    "alpha=1.5 unless the sweep axis changes it), then solved twice: "
-    "at the original 60 s limit, and at 300 s. Solver status, wall time, "
-    "and MIP gap:")
+    "To reproduce each flagged comparison, the corresponding instance was "
+    "regenerated deterministically using the identical sweep arguments "
+    "and seed (seed = 1000 x rep; defaults are 50 tasks, 5 nodes, "
+    "alpha = 1.5 unless overridden by the sweep axis). The MILP was then "
+    "solved twice per instance: first using the original 60 s limit, and "
+    "again with a 300 s time limit. The table below reports the solver "
+    "status, wall time, and resulting scores.")
 
 t2 = doc.add_table(rows=1, cols=7)
 t2.style = "Light Grid Accent 1"
 for i, h in enumerate(["Point", "60 s status", "60 s wall", "60 s score",
-                        "300 s status", "300 s score", "Greedy"]):
+                       "300 s status", "300 s score", "Greedy"]):
     t2.rows[0].cells[i].text = h
-diag = [
-    ("slack 1.2 r2", "time limit (1)", "60.6 s", "1.4383", "optimal (0)",
-     "1.4422", "1.4422"),
-    ("slack 1.2 r3", "time limit (1)", "60.6 s", "1.4040", "optimal (0)",
-     "1.4226", "1.4226"),
-    ("slack 1.2 r4", "time limit (1)", "60.6 s", "1.4481", "optimal (0)",
-     "1.4515", "1.4515"),
-    ("slack 1.3 r3", "time limit (1)", "60.6 s", "1.4156", "optimal (0)",
-     "1.4226", "1.4226"),
-    ("slack 1.5 r1", "optimal (0)", "0.7 s", "1.4369", "optimal (0)",
-     "1.4370*", "1.4370"),
-    ("nodes 10 r0", "time limit (1)", "61.4 s", "1.3412", "optimal (0)",
-     "1.3464", "1.3464"),
-    ("nodes 10 r3", "optimal (0)", "35.5 s", "1.4043", "optimal (0)",
-     "1.4044*", "1.4044"),
-    ("size 100 r4", "time limit (1)", "61.4 s", "1.4276", "optimal (0)",
-     "1.4322", "1.4322"),
+for r in [
+    ("slack 1.2 r2", "time limit (1)", "60.6 s", "1.4383",
+     "optimal (0)", "1.4422", "1.4422"),
+    ("slack 1.2 r3", "time limit (1)", "60.6 s", "1.4040",
+     "optimal (0)", "1.4226", "1.4226"),
+    ("slack 1.2 r4", "time limit (1)", "60.6 s", "1.4481",
+     "optimal (0)", "1.4515", "1.4515"),
+    ("slack 1.3 r3", "time limit (1)", "60.6 s", "1.4156",
+     "optimal (0)", "1.4226", "1.4226"),
+    ("slack 1.5 r1", "optimal (0)", "0.7 s", "1.4369",
+     "optimal (0)", "1.4370*", "1.4370"),
+    ("nodes 10 r0", "time limit (1)", "61.4 s", "1.3412",
+     "optimal (0)", "1.3464", "1.3464"),
+    ("nodes 10 r3", "optimal (0)", "35.5 s", "1.4043",
+     "optimal (0)", "1.4044*", "1.4044"),
+    ("size 100 r4", "time limit (1)", "61.4 s", "1.4276",
+     "optimal (0)", "1.4322", "1.4322"),
     ("bandwidth 0.2 r4", "time limit (1)", "60.5 s", "1.4207",
      "optimal (0)", "1.4515", "1.4515"),
-]
-for r in diag:
-    cells = t2.add_row().cells
+]:
     for i, v in enumerate(r):
-        cells[i].text = v
-doc.add_paragraph(
-    "* these two solves needed a tighter optimality gap (1e-6 instead of "
-    "the default 1e-4): the solver had already declared the run optimal, "
-    "but the certificate stopped within 1e-4 of the bound, leaving the "
-    "incumbent a hair below the greedy score.")
+        t2.add_row().cells[i].text = v
 
-doc.add_heading("3. Same instance check", 1)
 doc.add_paragraph(
-    "The sweeps do not load instance files -- each replication regenerates "
-    "its instance deterministically from (sweep kind, parameter, seed), so "
-    "all four methods always run on the identical generated object inside "
-    "one evaluate() call. To be certain the rebuilt instances matched the "
-    "recorded runs, I compared each rebuilt instance's max-accuracy bound "
-    "against the bound column stored in the CSVs: all 9 flagged instances "
-    "matched to 9 decimal places (see milp_diagnostics.csv, "
-    "instance_check column). Not a different-instances problem.")
-doc.add_paragraph(
-    "For completeness, the per-dataset test runs in "
-    "data/results/test_runs.csv were checked too: on those instances the "
-    "MILP is never below any other method (small and medium both sit on "
-    "the bound together with greedy).")
+    "* In these two rows, the solver required a tighter optimality "
+    "tolerance (mip_rel_gap = 1e-6 instead of the default 1e-4). With "
+    "the default tolerance, the solver returned an optimal status while "
+    "terminating within 1e-4 of the bound, leaving an incumbent "
+    "marginally below the greedy score.")
 
-doc.add_heading("4. The cause", 1)
+doc.add_heading("3. Confirmation that the same instances were evaluated", 1)
 doc.add_paragraph(
-    "Two separate causes, both numerical rather than methodological. "
-    "First, the 60 s solver time limit: eight of the nine flagged runs "
-    "ended with solver status 1 (time limit reached) and a positive MIP "
-    "gap of 0.2-2.2 percent. HiGHS was still improving the incumbent when "
-    "the clock stopped it, so the recorded score is a truncated incumbent, "
-    "not the optimum. Given 300 s, every one of those instances certifies "
-    "optimality (status 0, gap 0) and lands exactly on the bound, at or "
-    "above the greedy score. Second, the mip_rel_gap tolerance: two runs "
-    "finished 'optimal' but stopped within the default 1e-4 relative gap, "
-    "leaving the incumbent about 1e-4 below the bound -- a rounding-level "
-    "difference that read as 'greedy beats MILP' in the table. A 1e-6 gap "
-    "closes those to the bound. Not a bug in the model, and not a case of "
-    "different instances across methods.")
+    "Because the sweeps regenerate instances rather than loading saved "
+    "files, each replication is determined entirely by (sweep kind, "
+    "parameter, seed). Within a single evaluate() call, all methods "
+    "operate on the same generated object. To verify that the diagnostic "
+    "reruns reconstructed the instances used in the original sweeps, the "
+    "max-accuracy bound computed for each rebuilt instance was compared "
+    "to the bound stored in the CSV outputs. Across all nine flagged "
+    "instances, these bounds agreed to 9 decimal places (see "
+    "milp_diagnostics.csv, instance_check column), indicating that the "
+    "differences cannot be explained by evaluating different instances "
+    "across methods.")
+doc.add_paragraph(
+    "The per-dataset test runs in data/results/test_runs.csv were also "
+    "reviewed. In those experiments, the MILP is never below any other "
+    "method, and for both the small and medium datasets, the MILP and "
+    "greedy match the bound.")
 
-doc.add_heading("5. The fix", 1)
+doc.add_heading("4. Cause of the discrepancy", 1)
 doc.add_paragraph(
-    "Every MILP run that finished below another method on the same "
-    "instance was re-solved at a 300 s time limit with mip_rel_gap=1e-6 "
-    "(revisions/fix_flagged_milp.py). The affected rows in slack.csv, "
-    "nodes.csv, size.csv, failure.csv, and bandwidth.csv were updated "
-    "with the certified scores, makespans, feasibility flags, and run "
-    "times, and all five sweep figures were regenerated "
-    "(data/results/figures/, copied into paper/Figures/).")
+    "The apparent cases where greedy outperforms the MILP are explained "
+    "by numerical factors, not by a methodological difference, a modeling "
+    "error, or an instance mismatch.")
 doc.add_paragraph(
-    "Verification after the fix: a scan of every sweep CSV finds zero "
-    "rows where rounding, greedy, or GA outscore the MILP on the same "
-    "instance. At alpha=1.2 and 1.3 the MILP and greedy now coincide on "
-    "the bound, and at N=10 and n=100 the MILP sits on the bound as the "
-    "text already claimed.")
+    "The primary driver is truncation under the original 60 s time "
+    "limit. Eight of the nine flagged MILP runs ended with status 1 "
+    "(time limit reached) and retained a positive MIP gap between 0.2 "
+    "and 2.2 percent. In those runs, HiGHS was still improving the "
+    "incumbent when the time limit stopped the search, so the reported "
+    "value is a time-limited incumbent rather than the optimum. When the "
+    "same instances are instead solved for 300 s, each run certifies "
+    "optimality (status 0, gap 0) and reaches the bound, which matches "
+    "or exceeds the greedy score.")
+doc.add_paragraph(
+    "A second effect appears in two cases where the solver reported an "
+    "'optimal' status under the default mip_rel_gap = 1e-4. Because "
+    "termination is allowed within that relative tolerance, the "
+    "incumbent can remain roughly 1e-4 below the bound, which is "
+    "sufficient to show up as 'greedy beats MILP' in the tables. "
+    "Reducing the tolerance to mip_rel_gap = 1e-6 removes this "
+    "rounding-scale separation and returns solutions on the bound.")
 
-doc.add_heading("6. What changed in the paper", 1)
+doc.add_heading("5. Applied correction", 1)
 doc.add_paragraph(
-    "The experimental setup now discloses the 60 s first-pass limit and "
-    "the 300 s / 1e-6 certification re-solves, Section V-B's slack "
-    "discussion states that the MILP reaches the bound from alpha=1.2 "
-    "(matching the regenerated figure), the bottlenecks paragraph "
+    "For every instance where the MILP score fell below another method, "
+    "the MILP was re-solved with a 300 s time limit and "
+    "mip_rel_gap = 1e-6 (revisions/fix_flagged_milp.py). The resulting "
+    "certified outputs were written back to slack.csv, nodes.csv, "
+    "size.csv, failure.csv, and bandwidth.csv, updating scores, "
+    "makespans, feasibility flags, and run times. All five sweep figures "
+    "were then regenerated (data/results/figures/) and copied into "
+    "paper/Figures/.")
+doc.add_paragraph(
+    "After these updates, a full scan of the sweep CSVs finds no rows "
+    "where rounding, greedy, or GA exceed the MILP on the same instance. "
+    "For alpha = 1.2 and 1.3, the MILP and greedy now coincide at the "
+    "bound. The same holds for N = 10 and n = 100, where the MILP also "
+    "lies on the bound, aligning with the claims in the paper.")
+
+doc.add_heading("6. Paper revisions", 1)
+doc.add_paragraph(
+    "The experimental description was updated to reflect both the "
+    "initial 60 s MILP solve limit and the subsequent 300 s / 1e-6 "
+    "certification reruns. Section V-B now states that, in the "
+    "deadline-slack sweep, the MILP reaches the bound from alpha = 1.2, "
+    "consistent with the regenerated plot. The bottlenecks paragraph now "
     "references the certification limit, and the notebook documents the "
-    "re-solve. The deadline-slack figure changed slightly: the MILP curve "
-    "at alpha=1.2-1.5 now sits on the bound instead of a hair below it.")
+    "re-solve procedure. The deadline-slack figure changed slightly: for "
+    "alpha = 1.2 through 1.5, the MILP curve now lies on the bound "
+    "rather than appearing marginally below it.")
 
 doc.save(os.path.join(os.path.dirname(__file__),
                       "MILP_vs_heuristic_analysis.docx"))
