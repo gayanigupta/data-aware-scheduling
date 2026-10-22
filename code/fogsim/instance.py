@@ -44,7 +44,13 @@ class Instance:
         return order
 
     def comm(self, j, i, b, a):
-        """Communication delay c_{ji}^{ba} (Eq. comm of the paper)."""
+        """Communication delay c_{ji}^{ba} (Eq. comm of the paper).
+
+        Charged even when task j is skipped (ell_j = 0): a skipped task
+        still delivers the declared payload D[j,i] to its successor --
+        the edge data is a workflow input, not a function of how much of
+        the task ran.
+        """
         return 0.0 if b == a else self.D[j, i] / self.B[b, a]
 
     def forward_pass(self, assign, ell, retry=None):
