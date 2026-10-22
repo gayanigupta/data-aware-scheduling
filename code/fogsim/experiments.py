@@ -134,8 +134,9 @@ def plot():
         df = pd.read_csv(csv)
         # bandwidth and failure are special: score alone is misleading
         # (the blind baseline / retried tasks report full accuracy while
-        # missing the deadline) -- so these get a feasibility panel too
-        two_panel = kind in ("bandwidth", "failure")
+        # missing the deadline) -- so these get a feasibility panel.
+        # size gets a runtime panel instead: the point there is cost.
+        two_panel = kind in ("bandwidth", "failure", "size")
         fig, axs = plt.subplots(1, 2 if two_panel else 1,
                                 figsize=(7.2 if two_panel else 3.6,
                                          3.0), dpi=300)
@@ -161,13 +162,25 @@ def plot():
                 matplotlib.ticker.ScalarFormatter())
         if two_panel:
             ax2 = axs[1]
-            for meth, g in df.groupby("method"):
-                feas = g.groupby("param")["feasible"].mean()
-                ax2.plot(feas.index, feas.values, **style[meth], lw=1.9,
-                         ms=6, mec="white", mew=0.7)
+            if kind == "size":
+                for meth, g in df.groupby("method"):
+                    rt = g.groupby("param")["runtime_s"].mean()
+                    ax2.plot(rt.index, rt.values, **style[meth], lw=1.9,
+                             ms=6, mec="white", mew=0.7)
+                ax2.set_ylabel("mean runtime (s)", fontsize=11)
+                ax2.set_yscale("log")
+                ax2.set_xscale("log")
+                ax2.set_xticks([10, 100, 1000])
+                ax2.get_xaxis().set_major_formatter(
+                    matplotlib.ticker.ScalarFormatter())
+            else:
+                for meth, g in df.groupby("method"):
+                    feas = g.groupby("param")["feasible"].mean()
+                    ax2.plot(feas.index, feas.values, **style[meth],
+                             lw=1.9, ms=6, mec="white", mew=0.7)
+                ax2.set_ylabel("deadline feasibility rate", fontsize=11)
+                ax2.set_ylim(-0.05, 1.05)
             ax2.set_xlabel(xlabel[kind], fontsize=11)
-            ax2.set_ylabel("deadline feasibility rate", fontsize=11)
-            ax2.set_ylim(-0.05, 1.05)
             ax2.tick_params(labelsize=10)
             ax2.grid(alpha=0.3, lw=0.5)
         fig.tight_layout()
