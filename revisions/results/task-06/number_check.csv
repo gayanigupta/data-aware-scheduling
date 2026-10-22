@@ -1,0 +1,18 @@
+claim,paper,from_csv,match
+small MILP score (Table II),1.637,1.637,yes
+small bound = score of all methods,1.637,1.637,yes
+medium MILP makespan (text),60.940,60.939,yes
+medium greedy makespan (text),43.110,43.109,yes
+xlarge GA runtime 73.01 s (Table II),73.010,73.006,yes
+n=10 bound ~1.41 (V-F text),1.410,1.409,yes
+n=100 greedy score ~1.40 (V-F),1.400,1.399,yes
+n=100 rounding ~1.35 (V-F),1.350,1.351,yes
+n=100 GA ~1.26 (V-F),1.260,1.259,yes
+n=1000 greedy ~1.40 (V-F),1.400,1.396,yes
+n=1000 rounding ~1.37 (V-F),1.370,1.369,yes
+n=1000 GA ~1.10 (V-F),1.100,1.095,yes
+n=1000 greedy runtime ~0.15 s,0.150,0.147,yes
+n=1000 GA runtime ~159 s,159.000,158.929,yes
+n=1000 rounding runtime ~372 s,372.000,371.791,yes
+time-limited runs = 18 of 120,18,18,yes
+skipped tasks in certified-optimal runs = 0,0,0,yes
