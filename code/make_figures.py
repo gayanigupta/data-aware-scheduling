@@ -228,7 +228,7 @@ def figure_dag():
             color=DARK, fontstyle="italic")
 
     # ---------- the payoff callout ----------
-    call = FancyBboxPatch((2.9, 0.12), 10.2, 0.82,
+    call = FancyBboxPatch((0.35, 0.12), 15.3, 0.82,
                           boxstyle="round,pad=0.02,rounding_size=0.12",
                           linewidth=1.3, edgecolor=RED, facecolor="#fdf0ee")
     ax.add_patch(call)
