@@ -91,7 +91,11 @@ for _, r in show.iterrows():
 doc.add_paragraph(
     "Every run - solved or skipped over the cap - is in "
     "revisions/results/task-04/skipped_tasks.csv, produced by "
-    "revisions/check_skipped_tasks.py.")
+    "revisions/check_skipped_tasks.py. The same data is drawn as a "
+    "figure in the paper (revisions/results/task-04/skipped_tasks.png, "
+    "made by make_task4_figure.py):")
+doc.add_picture(os.path.join(HERE, "results", "task-04",
+                             "skipped_tasks.png"))
 
 doc.save(os.path.join(HERE, "MILP_skipped_tasks.docx"))
 print("wrote revisions/MILP_skipped_tasks.docx")
