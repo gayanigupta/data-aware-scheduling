@@ -698,17 +698,20 @@ s = slide("Four schedulers, one cost model", notes=(
     "a scheduler decides the mapping, and the "
     "simulator plays out the transfers and the "
     "execution."))
-pic(s, "scheduling-pipeline.png", 0.7, 1.3, width=6.6)
 bullets(s, [
+    (0, "Every method prices transfers the same "
+        "way, so the differences are "
+        "algorithmic, not accounting"),
     (0, "The exact solver is the benchmark"),
-    (0, "LP rounding relaxes, samples a machine "
-        "per task, re-solves the fractions"),
+    (0, "LP rounding relaxes the integer "
+        "choices, samples a machine per task, "
+        "and re-solves the fractions"),
     (0, "The greedy places ready tasks by "
-        "earliest finish; on a deadline miss it "
-        "lowers the fraction and retries"),
+        "earliest finish; on a deadline miss "
+        "it lowers the fraction and retries"),
     (0, "The GA searches assignments and "
         "fractions as one chromosome"),
-], left=7.7, width=5.2, top=1.5, size=17)
+], top=1.5, size=20)
 
 s = slide("Experimental setup", notes=(
     "The setup before the results. A "
