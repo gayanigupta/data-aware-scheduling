@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build revisions/MILP_skipped_tasks.docx -- the task-5 write-up.
+"""Build revisions/MILP_skipped_tasks.docx -- the task-4 write-up.
 Run after check_skipped_tasks.py has produced the CSV:
     python3 revisions/make_task5_report.py
 """
@@ -11,7 +11,7 @@ from docx import Document
 from docx.shared import Pt
 
 HERE = os.path.dirname(__file__)
-CSV = os.path.join(HERE, "results", "task-05", "skipped_tasks.csv")
+CSV = os.path.join(HERE, "results", "task-04", "skipped_tasks.csv")
 
 df = pd.read_csv(CSV)
 solved = df[df.note == "ok"]
@@ -90,7 +90,7 @@ for _, r in show.iterrows():
 
 doc.add_paragraph(
     "Every run - solved or skipped over the cap - is in "
-    "revisions/results/task-05/skipped_tasks.csv, produced by "
+    "revisions/results/task-04/skipped_tasks.csv, produced by "
     "revisions/check_skipped_tasks.py.")
 
 doc.save(os.path.join(HERE, "MILP_skipped_tasks.docx"))

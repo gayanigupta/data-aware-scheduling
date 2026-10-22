@@ -1,19 +1,38 @@
-# Task 4 — Abstract wording fix
+# Task 4 — What happens when a task runs at 0%
 
-**Changed in:** `paper/main.tex`, abstract (line 53).
+**Chosen fix:** option (b) — document the semantics of a skipped task.
+Option (a) (a minimum fraction l >= 0.1) was not needed: the measurement
+below shows skipped tasks never appear in certified-optimal solutions,
+so changing the model would add a constraint for a case that does not
+occur and would force a full rerun of every experiment.
 
-Before: "The data size on each edge, the bandwidth of each link, and the
-execution fraction of each task are all modeled jointly in the
-optimization" — this lumps fixed inputs together with decision
-variables.
+## What a skipped task sends
 
-After: "The model takes the data size on each edge and the bandwidth of
-each link as fixed inputs, and decides only where each task runs and how
-much of it runs; to our knowledge, no earlier model treats these inputs
-and decisions together."
+A task with ell_i = 0 performs no work and earns no accuracy, but the
+data D_ji on its outgoing edges is still delivered to its successors —
+the payload is a workflow input, not a function of the fraction run.
+So the transfer cost is charged whether or not the task ran. This is
+what the code has always done (`Instance.comm()` ignores ell), and the
+paper now says it in words after constraint (7).
 
-Now only node placement and execution fraction are described as
-decisions; data size and bandwidth are stated as inputs. The commented
-contribution bullet (line 81) was updated to match.
+## Evidence
 
-Verification: `main.pdf` recompiles cleanly.
+`skipped_tasks.csv` — every MILP run re-solved, fraction vector decoded:
+
+- 117 runs solved, 7 skipped over the model-size cap.
+- 40 skipped tasks out of 5,910 total (0.68%).
+- All 40 sit in the 13 runs that hit the time limit (alpha=1.0 or
+  bandwidth scale <= 0.2) — unpolished incumbents.
+- Every run that certified optimality has zero skipped tasks.
+
+Conclusion: skipping is a corner the incumbent may pass through under a
+time limit, not a property of optimal schedules. Documenting the
+semantics is sufficient.
+
+## Files
+
+- `check_skipped_tasks.py` — regenerates `skipped_tasks.csv`
+- `skipped_tasks.csv` — per-run skipped-task counts
+- `MILP_skipped_tasks.docx` — the write-up
+- `paper/main.tex` — sentence after constraint (7)
+- `code/fogsim/instance.py` — `comm()` documents the same semantics

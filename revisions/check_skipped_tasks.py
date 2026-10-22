@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Task 5 -- how often does the MILP actually skip a task (ell_i = 0)?
+"""Task 4 -- how often does the MILP actually skip a task (ell_i = 0)?
 
 The model allows the execution fraction to be zero.  A task with
 ell_i = 0 performs no work and earns no accuracy, yet its outgoing data
@@ -12,7 +12,7 @@ settings as revisions/milp_solver_report.py) the MILP is solved, the
 fraction vector is decoded, and the number of tasks with ell_i = 0 is
 recorded together with the minimum and mean fraction.
 
-Output: revisions/results/task-05/skipped_tasks.csv
+Output: revisions/results/task-04/skipped_tasks.csv
 
 Run from the repo root:  python3 revisions/check_skipped_tasks.py
 """
@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 from fogsim import generate_instance
 from fogsim.milp import _build_lp, _extract
 
-OUT_DIR = os.path.join(os.path.dirname(__file__), "results", "task-05")
+OUT_DIR = os.path.join(os.path.dirname(__file__), "results", "task-04")
 TOL = 1e-6          # a task counts as skipped when ell_i < TOL
 MILP_CAP = 800      # n*m assignment-variable cap, same as experiments
 
