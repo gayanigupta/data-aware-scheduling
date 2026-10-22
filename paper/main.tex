@@ -30,15 +30,14 @@
 \title{Data-Aware Scheduling of Approximate DAG Workflows in Federated Fog Systems}
 \author{
 \IEEEauthorblockN{Gayani Gupta\IEEEauthorrefmark{1}, Amisha Gupta\IEEEauthorrefmark{2},
-Mohsen Amini Salehi\IEEEauthorrefmark{1}}
-\IEEEauthorblockN{Antonio Fern\'andez Anta\IEEEauthorrefmark{3},
+Mohsen Amini Salehi\IEEEauthorrefmark{1}, Antonio Fern\'andez Anta\IEEEauthorrefmark{3},\\
 Sanjukta Bhowmick\IEEEauthorrefmark{1}, Jos\'e Aguilar\IEEEauthorrefmark{4}}
-\IEEEauthorblockA{\IEEEauthorrefmark{1}Dept.\ of Computer Science and Engineering, University of North Texas, USA \\
-\{gayani.gupta, mohsen.aminisalehi, sanjukta.bhowmick\}@unt.edu}
-\IEEEauthorblockA{\IEEEauthorrefmark{2}University of California, Berkeley, USA\\
-amisha.gupta@berkeley.edu}
-\IEEEauthorblockA{\IEEEauthorrefmark{3}IMDEA Networks Institute, Madrid, Spain \\ antonio.fernandez@imdea.org}
-\IEEEauthorblockA{\IEEEauthorrefmark{4}Universidad de Los Andes, M\'erida, Venezuela \\ aguilar@ula.ve}
+\IEEEauthorblockA{\IEEEauthorrefmark{1}University of North Texas, USA\quad
+\IEEEauthorrefmark{2}UC Berkeley, USA\quad
+\IEEEauthorrefmark{3}IMDEA Networks Institute, Spain\quad
+\IEEEauthorrefmark{4}Universidad de Los Andes, Venezuela\\
+\{gayani.gupta, mohsen.aminisalehi, sanjukta.bhowmick\}@unt.edu,
+amisha.gupta@berkeley.edu, antonio.fernandez@imdea.org, aguilar@ula.ve}
 }
 
 \date{}
@@ -141,6 +140,8 @@ This is the central cost in the model: placing a task is not only about how fast
     \item A task can be executed approximately: executing fraction $l$ of a task takes fraction $l$ of its full execution time and yields fraction $l$ of its accuracy.
 \end{itemize}
 
+The last assumption deserves a closer look. Running $T_i$ at $l_{ia}{=}0.5$ produces half of a full-quality result: an iterative solver stopped after half its iterations, a video pipeline processing every other frame, a training run cut at half its epochs. Time and accuracy are taken to grow linearly in the fraction run --- time because the same work is simply executed fewer times, accuracy because for incremental algorithms (iterative refinement, Monte Carlo estimation, sampled processing) quality grows roughly with the effort spent. This is a first-order model, not a law: some tasks are all-or-nothing, accuracy curves often saturate rather than rise uniformly, and the fixed cost of starting a task is ignored. We keep it because it makes the deadline--accuracy trade-off explicit and keeps \eqref{eq:obj}--\eqref{eq:bin} linear.
+
 \subsection{The Scheduling Problem}
 
 Table~\ref{tab:notation} lists the notation. Each task $T_i$ has a full-accuracy value $A_i$, an execution time $t_{ia}$ on each node $f_a$, and a placement-eligibility indicator $P_{ia}$. The workflow must finish by a deadline $t_{\max}$.
@@ -195,7 +196,7 @@ subject to
  &e_{ia} \in\{0,1\}. && \label{eq:bin}
 \end{align}
 
-Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only be (partially) run where it is placed, and at most one $l_{ia}$ per task is non-zero. The case $l_{ia}=0$ means the task is placed but never runs. A skipped task earns no accuracy, but it still hands its output data $D_{ji}$ to every successor, so the transfer cost in \eqref{eq:comm} is charged whether or not the task ran. Skipping is rare in practice: across the experiment runs of Section~\ref{sec:evaluation} it appears only in time-limited incumbents (Fig.~\ref{fig:skipped}), and in every run certified optimal the solver executes all tasks at least partially. The constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link, which is where $D_{ji}$ and $B_{ba}$ enter the optimization through Eq.~\eqref{eq:comm}. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} make this a mixed-integer nonlinear constraint as written; the Appendix gives the standard linearization (auxiliary variables $z_{ia}=e_{ia}M_{ia}$) together with the correctness argument.
+Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only be (partially) run where it is placed, and at most one $l_{ia}$ per task is non-zero. The case $l_{ia}=0$ means the task is placed but never runs. A skipped task earns no accuracy, but it still hands its output data $D_{ji}$ to every successor, so the transfer cost in \eqref{eq:comm} is charged whether or not the task ran. Skipping is rare in practice (Fig.~\ref{fig:skipped}); every certified-optimal run executes all tasks at least partially. The constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link, which is where $D_{ji}$ and $B_{ba}$ enter the optimization through Eq.~\eqref{eq:comm}. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} make this a mixed-integer nonlinear constraint as written; the Appendix gives the standard linearization (auxiliary variables $z_{ia}=e_{ia}M_{ia}$) together with the correctness argument.
 
 \subsection{Complexity}
 
@@ -392,7 +393,7 @@ Fig.~\ref{fig:nodes} shows the reported accuracy score as the federation grows f
 \subsection{Workflow Size}
 \label{sec:eval-size}
 
-Fig.~\ref{fig:tasksize} shows accuracy for DAGs of 10, 100, and 1000 tasks. These experiment instances are generated per replication with different seeds than the Table~\ref{tab:runs} datasets, so their bounds differ (about 1.41 at 10 tasks here vs.\ 1.637 on the small test dataset). At 10 tasks all four methods sit on the bound (1.41); at 100 the MILP and the greedy match the bound (1.40), rounding follows at 1.35, and the GA is the first to drift at 1.26. At 1000 tasks, the MILP is no longer reported, since it exceeds our 800-assignment-variable cap. Of the remaining methods, the greedy stays on the bound (1.40), randomized rounding follows at 1.37 (each LP re-solve costs about 93\,s here, so its trial count is reduced to four per run), and the GA falls to 1.10. The reason is that the GA's population and generation budget stay fixed while the search space grows with $n$, so its accuracy declines with size. The greedy, in contrast, makes one dependency-ordered pass, so it scales almost linearly and loses nothing in this regime, where the slack is loose enough to run most tasks fully. The right panel puts a wall-clock price on the same runs: at 1000 tasks the greedy answers in about 0.1\,s, while the GA takes roughly $10^2$\,s and rounding a few hundred seconds more on top of that.
+Fig.~\ref{fig:tasksize} shows accuracy for DAGs of 10, 100, and 1000 tasks (the small, medium, and extra-large scales of Table~\ref{tab:runs}). These experiment instances are generated per replication with different seeds than the Table~\ref{tab:runs} datasets, so their bounds differ (about 1.41 at 10 tasks here vs.\ 1.637 on the small test dataset). At 10 tasks all four methods sit on the bound (1.41); at 100 the MILP and the greedy match the bound (1.40), rounding follows at 1.35, and the GA is the first to drift at 1.26. At 1000 tasks, the MILP is no longer reported, since it exceeds our 800-assignment-variable cap. Of the remaining methods, the greedy stays on the bound (1.40), randomized rounding follows at 1.37 (each LP re-solve costs about 93\,s here, so its trial count is reduced to four per run), and the GA falls to 1.10. The reason is that the GA's population and generation budget stay fixed while the search space grows with $n$, so its accuracy declines with size. The greedy, in contrast, makes one dependency-ordered pass, so it scales almost linearly and loses nothing in this regime, where the slack is loose enough to run most tasks fully. The right panel puts a wall-clock price on the same runs: at 1000 tasks the greedy answers in about 0.1\,s, while the GA takes roughly $10^2$\,s and rounding a few hundred seconds more on top of that.
 
 \begin{figure}[h!]
 \centering
