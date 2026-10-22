@@ -195,7 +195,7 @@ subject to
  &e_{ia} \in\{0,1\}. && \label{eq:bin}
 \end{align}
 
-Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only be (partially) run where it is placed, and at most one $l_{ia}$ per task is non-zero. The case $l_{ia}=0$ means the task is placed but never runs. A skipped task earns no accuracy, but it still hands its output data $D_{ji}$ to every successor, so the transfer cost in \eqref{eq:comm} is charged whether or not the task ran. Skipping is rare in practice: across the experiment runs of Section~\ref{sec:evaluation} it appears only in time-limited incumbents, and in every run certified optimal the solver executes all tasks at least partially. The constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link, which is where $D_{ji}$ and $B_{ba}$ enter the optimization through Eq.~\eqref{eq:comm}. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} make this a mixed-integer nonlinear constraint as written; the Appendix gives the standard linearization (auxiliary variables $z_{ia}=e_{ia}M_{ia}$) together with the correctness argument.
+Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only be (partially) run where it is placed, and at most one $l_{ia}$ per task is non-zero. The case $l_{ia}=0$ means the task is placed but never runs. A skipped task earns no accuracy, but it still hands its output data $D_{ji}$ to every successor, so the transfer cost in \eqref{eq:comm} is charged whether or not the task ran. Skipping is rare in practice: across the experiment runs of Section~\ref{sec:evaluation} it appears only in time-limited incumbents (Fig.~\ref{fig:skipped}), and in every run certified optimal the solver executes all tasks at least partially. The constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link, which is where $D_{ji}$ and $B_{ba}$ enter the optimization through Eq.~\eqref{eq:comm}. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} make this a mixed-integer nonlinear constraint as written; the Appendix gives the standard linearization (auxiliary variables $z_{ia}=e_{ia}M_{ia}$) together with the correctness argument.
 
 \subsection{Complexity}
 
@@ -435,6 +435,13 @@ Fig.~\ref{fig:bandwidth} shows the two metrics that matter. On score alone, the 
 \includegraphics[width=0.95\linewidth]{Figures/perf_bandwidth_accuracy.png}
 \caption{Accuracy score (left) and deadline feasibility rate (right) as all link bandwidths are scaled down. The bandwidth-blind baseline reports bound-level scores but its schedules miss the deadline whenever links drop below roughly half capacity; the data-aware methods trade accuracy for feasibility instead.}
 \label{fig:bandwidth}
+\end{figure}
+
+\begin{figure}[b!]
+\centering
+\includegraphics[width=0.7\linewidth]{Figures/skipped_tasks.png}
+\caption{Skipped tasks ($\ell_i{=}0$) per setting, summed over five repetitions (250 tasks each). They appear only inside time-limited incumbents; no certified-optimal run skips a task.}
+\label{fig:skipped}
 \end{figure}
 
 \subsection{Discussion}
