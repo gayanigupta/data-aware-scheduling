@@ -486,21 +486,18 @@ $l_{ia}>0\Rightarrow e_{ia}\ge l_{ia}>0\Rightarrow e_{ia}=1$ by \eqref{eq:frac},
 and Lemma~\ref{lem:one} leaves no other node with $e_{ia}=1$.
 \end{proof}
 
-It is possible that an instance of the problem has several feasible solutions with different values $M_{ia}$. The minimal such values have the following property.
+It is possible that an instance of the problem has several feasible solutions with different values $M_{ia}$: the model does not force start times to be minimal, it only requires that no task starts before its inputs have arrived.
 
 \begin{lemma}
 \label{lem:timing}
-The minimal possible $M_{ia}$ is the earliest time $T_i$ can start on $f_a$.
-%, and $y_i$ is the earliest completion time of $T_i$ on the node it is assigned to.
+In any feasible solution, the start time $M_{ia}$ respects data arrival: $T_i$ cannot start on $f_a$ before every predecessor has completed and its output has reached $f_a$.
 \end{lemma}
 \begin{proof}
 Induction on the distance of $T_i$ from a source. A source task has
-$\mathrm{in}_i=\varnothing$, so $M_{ia}=0$ by \eqref{eq:startsrc} and
-$y_i=\sum_a e_{ia}(M_{ia}+t_{ia}l_{ia})=t_{ia^{\star}}l_{ia^{\star}}$ on its
-assigned node $f_{a^{\star}}$ by Lemma~\ref{lem:one}. For the induction step, suppose
-the claim holds for every task whose distance from a source is less than $k$, and the
-minimal $M_{ia}$ is used for these tasks,
-and let $T_i$ have distance $k$. Every $T_j\in\mathrm{in}_i$ completes at
+$\mathrm{in}_i=\varnothing$, so $M_{ia}=0$ by \eqref{eq:startsrc} and the
+claim is vacuous. For the induction step, suppose the claim holds for
+every task whose distance from a source is less than $k$, and let $T_i$
+have distance $k$. Every $T_j\in\mathrm{in}_i$ completes at
 $y_j$ on its assigned node $f_{b^{\star}}$; the data then needs
 $c_{ji}^{b^{\star}a}=\sum_b e_{jb}c_{ji}^{ba}$ to reach $f_a$, so $T_i$
 cannot start on $f_a$ before $y_j+\sum_b e_{jb}c_{ji}^{ba}$. Taking the
@@ -509,7 +506,11 @@ maximum over $j\in\mathrm{in}_i$, \eqref{eq:start} gives
     M_{ia}\;\ge\;\max_{j\in\mathrm{in}_i}\Bigl(y_j+\sum_{f_b\in F} \label{eq:maxMia}
 e_{jb}\,c_{ji}^{ba}\Bigr).
 \end{equation}
-Conversely, setting $M_{ia}$ to exactly this bound (with predecessors at their minimal values by the induction hypothesis) satisfies \eqref{eq:start} and \eqref{eq:startsrc}, so the minimal possible $M_{ia}$ equals the earliest feasible start time.
+Thus every $M_{ia}$ in a feasible solution is a valid start time. Setting
+$M_{ia}$ to exactly this bound recovers the earliest-start schedule as a
+special case, but nothing in the formulation requires it: larger values
+that still satisfy \eqref{eq:deadline} describe equally valid, if later,
+schedules.
 \end{proof}
 
 \begin{lemma}
@@ -517,13 +518,14 @@ Conversely, setting $M_{ia}$ to exactly this bound (with predecessors at their m
 If $T_i$ is assigned to $f_a$ (i.e., $e_{ia}=1$), 
 \begin{enumerate}
     \item $M_{ia} \le y_i$ and
-    \item $y_i=M_{ia} + t_{ia} l_{ia}$ is the earliest completion time of $T_i$,
+    \item $y_i=M_{ia} + t_{ia} l_{ia}$ is the completion time of $T_i$,
 \end{enumerate}
-where $M_{ia}$ is the minimal value from Lemma~\ref{lem:timing}.
+where $M_{ia}$ satisfies the data-arrival bound of Lemma~\ref{lem:timing}.
 \end{lemma}
 \begin{proof}
-Follows from \eqref{eq:compl} and the fact that 
-$M_{ia}$ is the earliest time $T_i$ can start on $f_a$ (Lemma~\ref{lem:timing}).
+Follows from \eqref{eq:compl} and Lemma~\ref{lem:timing}: $T_i$ starts on
+its assigned node no earlier than its inputs arrive, and runs for
+$t_{ia}l_{ia}$ time units from that start.
 \end{proof}
 
 \begin{lemma}
@@ -532,16 +534,30 @@ All tasks $T_i$ complete by $y_i \le t_{\max}$.
 \end{lemma}
 \begin{proof}
 By \eqref{eq:deadline}, after Lemma~\ref{lem:completion} identifies $y_i$ as the
-earliest completion time of $T_i$.
+completion time of $T_i$.
 \end{proof}
 
 \begin{theorem}
-Any optimal solution of \eqref{eq:obj}--\eqref{eq:bin} is feasible and
-maximizes the total achieved accuracy $\sum_i A_i\sum_a l_{ia}$.
+\label{thm:correspondence}
+Feasible solutions of \eqref{eq:obj}--\eqref{eq:bin} and valid schedules
+are in one-to-one correspondence: every feasible solution describes a
+valid schedule in which each task runs on one permitted node, starts only
+after its inputs arrive, and finishes by $t_{\max}$; and every valid
+schedule yields a feasible solution of equal accuracy. In particular, the
+optimal value of \eqref{eq:obj} is the maximum achievable average
+weighted accuracy.
 \end{theorem}
 \begin{proof}
-Lemmas~\ref{lem:elig}--\ref{lem:deadline} establish feasibility. Optimality
-of the accuracy total is the objective \eqref{eq:obj} itself.
+For the first direction, Lemmas~\ref{lem:elig}--\ref{lem:deadline} show
+that a feasible $(e,l,M,y)$ is a valid schedule, and the objective
+\eqref{eq:obj} counts exactly its achieved accuracy. For the converse,
+take any valid schedule and set $e_{ia}=1$ on the node that runs $T_i$,
+$l_{ia}$ to the fraction executed, $M_{ia}$ to the realized start time,
+and $y_i$ to the realized completion time. Because the schedule is
+valid---one permitted node per task, inputs received before start,
+deadline met---the assignment satisfies \eqref{eq:one}--\eqref{eq:bin},
+and its objective value equals the schedule's accuracy. Since the two
+sets correspond, the MILP optimum equals the best achievable accuracy.
 \end{proof}
 
 For an MILP solver, some constraints need rewriting. First, let us denote
