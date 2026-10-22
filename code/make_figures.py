@@ -43,7 +43,8 @@ def box(ax, x, y, w, h, text, fc=LT_BLUE, ec=BLUE, fs=FS, dashed=False,
 
 
 def arrow(ax, p1, p2, dashed=False, color=DARK, lw=1.3, label=None,
-          fs=FS_SM, rad=0.0, label_dx=0.0, label_dy=0.12):
+          fs=FS_SM, rad=0.0, label_dx=0.0, label_dy=0.12,
+          label_color=GREY):
     a = FancyArrowPatch(p1, p2, arrowstyle="-|>", mutation_scale=11,
                         linewidth=lw, color=color,
                         linestyle="--" if dashed else "-",
@@ -52,8 +53,8 @@ def arrow(ax, p1, p2, dashed=False, color=DARK, lw=1.3, label=None,
     if label:
         mx = (p1[0] + p2[0]) / 2 + label_dx
         my = (p1[1] + p2[1]) / 2 + label_dy
-        ax.text(mx, my, label, fontsize=fs, ha="center", color=GREY,
-                fontstyle="italic")
+        ax.text(mx, my, label, fontsize=fs, ha="center",
+                color=label_color, fontstyle="italic")
 
 
 def figure_architecture():
@@ -161,9 +162,9 @@ def figure_dag():
                            facecolor="#f4f9fd")
     ax.add_patch(panel)
     ax.text(3.65, 9.30, "workflow DAG", ha="center", fontsize=FS,
-            color="#4a6fa5", fontweight="bold")
+            color=DARK, fontweight="bold")
     ax.text(3.65, 8.80, "edges carry data $D_{ji}$", ha="center",
-            fontsize=FS_SM, color=GREY, fontstyle="italic")
+            fontsize=FS_SM, color=DARK, fontstyle="italic")
 
     T = {}
     T[1] = box(ax, 2.15, 7.65, 2.8, 0.8, "T1  ingest", fs=FS)
@@ -187,7 +188,7 @@ def figure_dag():
               color=RED if heavy else DARK,
               lw=1.9 if heavy else 1.1, rad=-0.06 if abs(a - b) == 2 else 0.0,
               label=f"$D_{{{a}{b}}}={lbl}$", fs=FS_SM,
-              label_dx=dx, label_dy=dy)
+              label_dx=dx, label_dy=dy, label_color=DARK)
 
     # ---------- right panel: infrastructure graph ----------
     panel2 = FancyBboxPatch((9.05, 1.15), 6.6, 8.6,
@@ -196,9 +197,9 @@ def figure_dag():
                             facecolor="#f5faf2")
     ax.add_patch(panel2)
     ax.text(12.35, 9.30, "fog infrastructure graph", ha="center",
-            fontsize=FS, color=GREEN_EDGE, fontweight="bold")
+            fontsize=FS, color=DARK, fontweight="bold")
     ax.text(12.35, 8.80, "links carry bandwidth $B_{ba}$", ha="center",
-            fontsize=FS_SM, color=GREY, fontstyle="italic")
+            fontsize=FS_SM, color=DARK, fontstyle="italic")
 
     F = {}
     F[1] = box(ax, 9.55, 7.0, 2.2, 0.95, "$f_1$\ngateway", fs=FS)
@@ -214,7 +215,8 @@ def figure_dag():
         p2 = (F[b][0], F[b][1] + 0.42 if b in (3, 4) else F[b][1])
         arrow(ax, p1, p2, color=RED if heavy else GREY,
               lw=2.1 if heavy else 1.0, rad=rad,
-              label=f"$B_{{{a}{b}}}={lbl}$", fs=FS_SM, label_dy=0.10)
+              label=f"$B_{{{a}{b}}}={lbl}$", fs=FS_SM, label_dy=0.10,
+              label_color=DARK)
 
     # ---------- mapping arrows: task -> node ----------
     mapping = [(1, 1), (2, 1), (3, 1), (4, 3), (5, 2), (6, 4)]
@@ -223,7 +225,7 @@ def figure_dag():
               (F[f][0] - 1.15, F[f][1] + 0.10),
               dashed=True, color=BLUE, lw=0.9, rad=0.10)
     ax.text(8.0, 8.35, "placement $e_{ia}$", ha="center", fontsize=FS_SM,
-            color=BLUE, fontstyle="italic")
+            color=DARK, fontstyle="italic")
 
     # ---------- the payoff callout ----------
     call = FancyBboxPatch((2.9, 0.12), 10.2, 0.82,
@@ -233,7 +235,7 @@ def figure_dag():
     ax.text(8.0, 0.53,
             "T3 on $f_1$, T4 on $f_3$: input $D_{34}{=}40$ crosses "
             "$B_{13}{=}10$, delay $=4$",
-            ha="center", va="center", fontsize=FS, color=RED,
+            ha="center", va="center", fontsize=FS, color=DARK,
             fontweight="bold")
 
     fig.savefig(os.path.join(FIG, "disaster-response-dag.png"),
