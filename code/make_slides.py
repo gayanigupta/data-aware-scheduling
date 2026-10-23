@@ -18,6 +18,10 @@ Run from the repo root:  python3 code/make_slides.py
 """
 import os
 
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -189,6 +193,52 @@ def arrow(s, x1, y1, x2, y2):
                                 Inches(x2), Inches(y2))
     ln.line.color.rgb = GREY
     ln.line.width = Pt(1.25)
+
+
+_EQD = os.path.join(ROOT, "slides", "eq")
+os.makedirs(_EQD, exist_ok=True)
+_eqn = 0
+
+
+def eq(s, tex, left, top, size=18):
+    """Render a math expression via matplotlib mathtext and
+    place it on the slide at its natural size."""
+    global _eqn
+    _eqn += 1
+    path = os.path.join(_EQD, f"eq{_eqn}.png")
+    fig = plt.figure()
+    t = fig.text(0, 0, f"${tex}$", fontsize=size,
+                 color="#1a1a1a")
+    fig.canvas.draw()
+    bb = t.get_window_extent()
+    w, h = bb.width / fig.dpi, bb.height / fig.dpi
+    plt.close(fig)
+    fig = plt.figure(figsize=(max(w, 0.1), max(h, 0.1)))
+    fig.text(0, 0, f"${tex}$", fontsize=size,
+             color="#1a1a1a")
+    fig.savefig(path, dpi=200, transparent=True,
+                pad_inches=0.02)
+    plt.close(fig)
+    pic(s, f"eq{_eqn}.png", left, top, width=w, base=_EQD)
+    return w, h
+
+
+def code(s, lines, left=0.9, top=1.5, width=11.5,
+         height=4.8, size=14):
+    """A monospace pseudocode block."""
+    tb = s.shapes.add_textbox(Inches(left), Inches(top),
+                              Inches(width), Inches(height))
+    tf = tb.text_frame
+    tf.word_wrap = True
+    for i, ln in enumerate(lines):
+        p = tf.paragraphs[0] if i == 0 else \
+            tf.add_paragraph()
+        p.text = ln
+        p.font.name = "Menlo"
+        p.font.size = Pt(size)
+        p.font.color.rgb = INK
+        p.space_after = Pt(4)
+    return tb
 
 
 def table(s, rows, l, t, w, h, col_widths=None, size=14):
@@ -599,6 +649,34 @@ takeaway(s, "data sizes and bandwidths are given; the "
             "only decisions are where each task runs "
             "and how much of it runs")
 
+s = slide("The transfer cost", notes=(
+    "The one equation that makes the problem "
+    "data-aware. If task j ran on node b and its "
+    "successor i runs on node a, the input has to "
+    "cross the link: cost D over B. If they sit on "
+    "the same node the transfer is free. Every "
+    "method in both papers prices this term; the "
+    "bandwidth-blind baseline is what happens when "
+    "it is ignored."))
+eq(s, r"c_{ji}^{ba} \;=\; 0 "
+      r"\qquad \mathrm{if}\ f_b = f_a \ \ "
+      r"\mathrm{(same\ node)}",
+   2.2, 1.7, size=22)
+eq(s, r"c_{ji}^{ba} \;=\; \frac{D_{ji}}{B_{ba}} "
+      r"\qquad \mathrm{if}\ f_b \neq f_a \ \ "
+      r"\mathrm{(different\ nodes)}",
+   2.2, 2.55, size=22)
+bullets(s, [
+    (0, "Same node \u2014 the data never touches a "
+        "link, so the transfer is free"),
+    (0, "Different nodes \u2014 the transfer costs "
+        "data size over bandwidth, which can rival "
+        "the task itself"),
+    (0, "This term is where D_ji and B_ba enter the "
+        "optimization \u2014 and what a "
+        "bandwidth-blind scheduler never sees"),
+], top=4.1)
+
 s = slide("The static problem (Papers 1 and 2)", notes=(
     "The completed work solved this version. Given the "
     "two graphs and a deadline: decide where each task "
@@ -623,6 +701,48 @@ bullets(s, [
 takeaway(s, "choose a machine and a fraction for every "
             "task so the workflow is feasible and its "
             "accuracy is maximal")
+
+s = slide("The formulation", notes=(
+    "The static problem written as the paper writes "
+    "it. Maximize average delivered accuracy. The "
+    "constraints say: every task sits on exactly one "
+    "permitted node; a task can only run where it is "
+    "placed; a task cannot start before every "
+    "predecessor has finished and its data has "
+    "crossed the link \u2014 the line that carries "
+    "the communication cost; and everything "
+    "finishes by the deadline."))
+eq(s, r"\max\ \bar{A} = \frac{1}{n}\sum_{T_i\in T} "
+      r"A_i \sum_{f_a\in F} l_{ia}",
+   0.9, 1.35, size=19)
+para(s, "subject to", left=0.9, top=2.15, size=15,
+     color=GREY)
+_rows = [
+    (r"\sum_{f_a\in F} e_{ia} = 1",
+     "one node per task"),
+    (r"e_{ia} \leq P_{ia}",
+     "only eligible nodes"),
+    (r"0 \leq l_{ia} \leq e_{ia}",
+     "runs only where placed"),
+    (r"M_{ia} \geq y_j + \sum_{f_b\in F} e_{jb}\, "
+     r"c_{ji}^{ba}",
+     "starts only after inputs arrive"),
+    (r"y_i = \sum_{f_a\in F} e_{ia}\left(M_{ia} + "
+     r"t_{ia}\, l_{ia}\right)",
+     "completion time"),
+    (r"y_i \leq t_{\max}",
+     "deadline"),
+    (r"e_{ia} \in \{0,1\}",
+     "placement is binary"),
+]
+for k, (tex, note) in enumerate(_rows):
+    y = 2.55 + k * 0.56
+    eq(s, tex, 1.1, y, size=16)
+    para(s, note, left=8.6, top=y + 0.05, width=4.2,
+         size=13, color=GREY, italic=True)
+takeaway(s, "the line M_ia \u2265 y_j + \u03a3 e_jb "
+            "c_ji is where data size and bandwidth "
+            "enter the optimization")
 
 s = slide("The dynamic problem (Paper 3)", notes=(
     "The proposal adds one event to the same model. "
@@ -718,6 +838,13 @@ table(s, [
      "5\u201370 s per instance"],
 ], 0.7, 1.4, 12.0, 4.4, col_widths=[2.6, 6.6, 2.8],
     size=14)
+para(s, "GA fitness \u2014 accuracy minus deadline "
+        "penalties:", left=0.8, top=6.0, size=13,
+     color=GREY, italic=True)
+eq(s, r"\Phi = \frac{1}{n}\sum_i A_i\,\ell_i \;-\; "
+      r"\lambda_1\,\mathbb{I}[Y>t_{\max}] \;-\; "
+      r"\lambda_2\,\frac{(Y-t_{\max})_+}{t_{\max}}",
+   3.6, 5.95, size=15)
 
 # ==================================================================
 # Paper 2
@@ -777,7 +904,13 @@ bullets(s, [
     (0, "Together they frame the question the "
         "experiments answer: how close can each "
         "method get, and at what cost?"),
-], top=1.5)
+], top=1.4, size=19)
+eq(s, r"\bar{A} = \frac{1}{n}\sum_i A_i\,\ell_i "
+      r"\qquad \mathrm{(the\ score)}",
+   1.2, 5.35, size=17)
+eq(s, r"\bar{A}^{*} = \frac{1}{n}\sum_i A_i "
+      r"\qquad \mathrm{(the\ bound)}",
+   7.6, 5.35, size=17)
 
 s = slide("Four schedulers, one cost model", notes=(
     "Every method prices transfers the same way, so "
@@ -803,6 +936,39 @@ bullets(s, [
 pic(s, "scheduling-pipeline.png", 7.0, 1.7, width=6.0)
 caption(s, "The pipeline every method runs through",
         7.0, 6.3, 6.0)
+
+s = slide("The greedy scheduler, in code", notes=(
+    "This is the algorithm that wins at scale. It "
+    "walks the DAG in dependency order; at each "
+    "ready task it prices every eligible node by "
+    "earliest finish \u2014 including the transfer "
+    "of the inputs \u2014 and takes the cheapest. "
+    "If the schedule misses the deadline it "
+    "lowers the execution fraction by a step and "
+    "tries again, down to a floor. One pass is "
+    "O(nm), so the whole thing is milliseconds."))
+eq(s, r"\pi_i = \beta\, A_i + (1-\beta)\, "
+      r"\mathrm{CP}_i \qquad \mathrm{(priority:"
+      r"\ accuracy\ vs.\ urgency)}",
+   0.9, 1.3, size=17)
+code(s, [
+    "l \u2190 1",
+    "repeat",
+    "    R \u2190 source tasks;  y \u2190 \u221e",
+    "    while R \u2260 \u2205:",
+    "        pick T_i \u2208 R with max \u03c0_i",
+    "        for each node a with P_ia = 1:",
+    "            M_ia \u2190 max over T_j \u2208 "
+    "in_i of ( y_j + \u03a3_b e_jb c_ji^ba )",
+    "            y(a) \u2190 M_ia + t_ia \u00b7 l",
+    "        place T_i on arg-min_a y(a); "
+    "release successors",
+    "    if makespan > t_max:  l \u2190 l - \u03b4",
+    "until makespan \u2264 t_max  or  l < l_min",
+], top=2.0, size=15)
+takeaway(s, "one dependency-ordered pass per "
+            "fraction level \u2014 O(nm) per pass, "
+            "which is why it scales to 1000 tasks")
 
 s = slide("Experimental setup", notes=(
     "The setup before the results. A "
@@ -1169,7 +1335,11 @@ bullets(s, [
     (1, "each term is measured "
         "separately in the "
         "evaluation"),
-], top=1.5)
+], top=1.4, size=19)
+eq(s, r"C_{rec} = w_1\,(\mathrm{added\ makespan}) "
+      r"+ w_2\,(\mathrm{tasks\ moved}) "
+      r"+ w_3\,(\mathrm{bytes\ re\!-\!shipped})",
+   1.2, 5.5, size=18)
 
 s = slide("The method, in seven steps",
           notes=(
@@ -1235,27 +1405,32 @@ s = slide("RQ1: where does the "
     "the claim we verify."))
 bullets(s, [
     (0, "Start with the stranded "
-        "tasks \u2014 mandatory"),
-    (0, "Then admit a neighbor "
-        "only while it fails a "
+        "tasks \u2014 mandatory "
+        "\u2014 then grow the "
+        "region only while a "
+        "neighbor fails a "
         "stay-test:"),
-    (1, "deadline test \u2013 "
-        "staying pushes its finish "
-        "time past the remaining "
-        "slack"),
-    (1, "locality test \u2013 "
-        "staying strands its "
-        "input on a path too "
-        "slow to serve it in "
-        "time"),
-    (0, "Stop when no neighbor "
-        "fails, or at a size "
-        "cap"),
-    (0, "The tasks that stayed "
-        "put become fixed anchors "
-        "the repair must "
-        "respect"),
-], top=1.5)
+], top=1.35)
+code(s, [
+    "R \u2190 {unfinished tasks on the failed node}",
+    "repeat",
+    "    for each neighbor T_i of R:",
+    "        if staying misses the deadline        "
+    "\u2192 admit T_i",
+    "        if its input can\u2019t arrive in time "
+    "   \u2192 admit T_i",
+    "until no neighbor fails a test  or  |R| = cap",
+], left=1.1, top=2.0, size=14, height=2.2)
+bullets(s, [
+    (0, "The tasks that stayed put "
+        "become fixed anchors \u2014 "
+        "their output arrival times "
+        "enter the repair as "
+        "constants"),
+    (0, "The minimality of R is "
+        "the claim the experiments "
+        "verify"),
+], top=4.6, size=19)
 
 s = slide("RQ2: repairing the "
           "region", notes=(
