@@ -128,7 +128,7 @@ This is the central cost in the model: placing a task is not only about how fast
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{Figures/disaster-response-dag.png}
-\caption{Example disaster-response workflow. Edge labels are data sizes $D_{ji}$; dashed arrows show an assignment $e_{ia}$ of tasks to federated fog nodes. Running a task off the node that produced its input pays the transfer delay of Eq.~\eqref{eq:comm}.}
+\caption{Example disaster-response workflow (a) and federated fog network (b). Edge labels are data sizes $D_{ji}$; link labels are bandwidths $B_{ba}$; the fog node inside each task shows its placement $e_{ia}$. The highlighted transfer---$T_3$ on $f_1$ sending to $T_4$ on $f_3$---pays $D_{ji}/B_{ba} = 40\,\mathrm{MB}/10\,\mathrm{MB/s} = 4\,\mathrm{s}$, the transfer delay of Eq.~\eqref{eq:comm}.}
 \label{fig:dag}
 \end{figure}
 
