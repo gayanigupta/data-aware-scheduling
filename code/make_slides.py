@@ -42,6 +42,7 @@ prs.slide_width = PAGE_W
 prs.slide_height = PAGE_H
 BLANK = prs.slide_layouts[6]
 _no = 0
+_tag = None
 
 
 def _num(slide):
@@ -57,8 +58,17 @@ def _num(slide):
 
 
 def slide(title=None, notes=None):
-    """Plain white slide: bold title top-left, thin rule, number."""
+    """Plain white slide: bold title top-left, thin rule, number.
+    While a section is open its tag is shown top-right."""
     s = prs.slides.add_slide(BLANK)
+    if _tag:
+        tb = s.shapes.add_textbox(Inches(8.8), Inches(0.36),
+                                  Inches(4.0), Inches(0.3))
+        p = tb.text_frame.paragraphs[0]
+        p.text = _tag.upper()
+        p.font.size = Pt(11)
+        p.font.color.rgb = GREY
+        p.alignment = PP_ALIGN.RIGHT
     if title:
         tb = s.shapes.add_textbox(Inches(0.5), Inches(0.22),
                                   Inches(12.4), Inches(0.75))
@@ -153,6 +163,34 @@ def caption(s, text, left, top, width):
     p.alignment = PP_ALIGN.CENTER
 
 
+def flowbox(s, x, y, w, h, text, size=13, bold=False):
+    """A small rounded box with centered text, for diagrams."""
+    box = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,
+                             Inches(x), Inches(y), Inches(w),
+                             Inches(h))
+    box.fill.solid()
+    box.fill.fore_color.rgb = WHITE
+    box.line.color.rgb = INK
+    box.line.width = Pt(1.0)
+    tf = box.text_frame
+    tf.word_wrap = True
+    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+    p = tf.paragraphs[0]
+    p.text = text
+    p.font.size = Pt(size)
+    p.font.bold = bold
+    p.font.color.rgb = INK
+    p.alignment = PP_ALIGN.CENTER
+    return box
+
+
+def arrow(s, x1, y1, x2, y2):
+    ln = s.shapes.add_connector(1, Inches(x1), Inches(y1),
+                                Inches(x2), Inches(y2))
+    ln.line.color.rgb = GREY
+    ln.line.width = Pt(1.25)
+
+
 def table(s, rows, l, t, w, h, col_widths=None, size=14):
     """Plain table: grey header row, white body, black text."""
     nr, nc = len(rows), len(rows[0])
@@ -178,8 +216,11 @@ def table(s, rows, l, t, w, h, col_widths=None, size=14):
     return tbl
 
 
-def section(title, sub, notes=None):
-    """Minimal section slide: centered text on white."""
+def section(title, sub, notes=None, tag=None):
+    """Minimal section slide: centered text on white.
+    Also opens a section tag shown on following slides."""
+    global _tag
+    _tag = tag
     s = prs.slides.add_slide(BLANK)
     tb = s.shapes.add_textbox(Inches(1), Inches(2.6),
                               Inches(11.3), Inches(1.4))
@@ -261,24 +302,26 @@ s = slide("What this talk covers", notes=(
     "problem. Parts four and five are the completed work. "
     "The last two are the proposal itself and the plan."))
 bullets(s, [
-    (0, "The setting \u2014 disaster-response workflows on "
-        "federated fog"),
-    (0, "Related work, and what is still missing"),
-    (0, "The problem, stated precisely"),
-    (0, "Paper 1 \u2013 task allocation across federated fog "
-        "(published, IEEE Cloud Summit 2025)"),
-    (0, "Paper 2 \u2013 data-aware scheduling with approximate "
-        "execution (in revision, CCGrid 2027)"),
-    (0, "Paper 3 \u2013 the proposal: partial repartitioning "
-        "after a resource failure"),
-    (0, "Evaluation plan, timeline, and expected "
-        "contributions"),
-], top=1.4)
+    (0, "1.  Motivation \u2014 disaster-response workflows "
+        "on federated fog"),
+    (0, "2.  Related work, and what is still missing"),
+    (0, "3.  Problem definition \u2014 inputs, decisions, "
+        "objective"),
+    (0, "4.  Completed work: Paper 1 (published, IEEE Cloud "
+        "Summit 2025)"),
+    (0, "5.  Completed work: Paper 2 (in revision, CCGrid "
+        "2027), with experimental results"),
+    (0, "6.  Proposed research: dynamic partial "
+        "repartitioning after node failures"),
+    (0, "7.  Evaluation plan, timeline, risks, and "
+        "expected contributions"),
+], top=1.4, size=19)
 
 # ==================================================================
 # Motivation
 # ==================================================================
-section("The setting", "Why this problem exists",
+section("1.  Motivation", "Why this problem exists",
+        tag="Motivation",
         notes="First the setting. The running example is a "
               "disaster-response workflow that has to run "
               "exactly when the network is at its worst.")
@@ -398,8 +441,8 @@ bullets(s, [
 # ==================================================================
 # Related work
 # ==================================================================
-section("What is already known", "Four research threads, and "
-        "the gap none of them covers",
+section("2.  Related work", "Four research threads, and "
+        "the gap none of them covers", tag="Related work",
         notes="Now the related work. Four threads matter "
               "here, and I will end on the gap.")
 
@@ -496,8 +539,9 @@ para(s, "Nobody couples a machine failure to the smallest "
 # ==================================================================
 # Problem definition
 # ==================================================================
-section("The problem, stated precisely",
+section("3.  Problem definition",
         "Two graphs, one coupling, a hard deadline",
+        tag="Problem definition",
         notes="Before the algorithms, the problem pinned "
               "down \u2014 the static version the completed "
               "work solved, and the dynamic version this "
@@ -524,7 +568,36 @@ bullets(s, [
     (0, "A schedule maps tasks onto machines; a failure "
         "deletes a machine and strands whatever was on "
         "it"),
-])
+], width=6.2)
+pic(s, "disaster-response-dag.png", 7.3, 1.4, width=5.6)
+caption(s, "A task graph (left) mapped onto the machine "
+           "graph (right)", 7.3, 6.55, 5.6)
+
+s = slide("Inputs and decisions", notes=(
+    "Before the algorithms, the exact contract. The "
+    "model takes the task times and accuracies, the "
+    "data on every edge, and the bandwidth on every "
+    "link as fixed inputs. It decides only two "
+    "things per task: which machine it runs on, and "
+    "how much of it runs. Everything the schedulers "
+    "can change is in those two columns; everything "
+    "else is data they must respect."))
+table(s, [
+    ["Symbol", "Meaning", "Fixed input or decided?"],
+    ["T_i ,  A_i", "task runtime, and accuracy at a "
+     "full run", "fixed input"],
+    ["D_ji", "data size on each workflow edge",
+     "fixed input"],
+    ["B_ba", "bandwidth on each machine link",
+     "fixed input"],
+    ["e_ia", "which machine task i runs on", "decided"],
+    ["l_ia", "what fraction of task i runs "
+     "(0 to 1)", "decided"],
+], 0.9, 1.5, 11.5, 3.8, col_widths=[2.2, 6.8, 2.5],
+    size=15)
+takeaway(s, "data sizes and bandwidths are given; the "
+            "only decisions are where each task runs "
+            "and how much of it runs")
 
 s = slide("The static problem (Papers 1 and 2)", notes=(
     "The completed work solved this version. Given the "
@@ -547,6 +620,9 @@ bullets(s, [
     (0, "NP-hard even on parallel machines \u2014 the "
         "exact solver is a reference, not the product"),
 ], top=1.5)
+takeaway(s, "choose a machine and a fraction for every "
+            "task so the workflow is feasible and its "
+            "accuracy is maximal")
 
 s = slide("The dynamic problem (Paper 3)", notes=(
     "The proposal adds one event to the same model. "
@@ -570,12 +646,17 @@ bullets(s, [
         "runtime, tasks moved, data re-shipped \u2014 "
         "while keeping the accuracy"),
 ], top=1.5)
+takeaway(s, "repair only what the failure broke \u2014 "
+            "done work is never redone and healthy "
+            "placements never move")
 
 # ==================================================================
 # Paper 1
 # ==================================================================
-section("Paper 1", "Task allocation across federated fog "
-        "\u2014 published at IEEE Cloud Summit 2025",
+section("4.  Paper 1 \u2014 completed work",
+        "Task allocation across federated fog \u2014 "
+        "published at IEEE Cloud Summit 2025",
+        tag="Paper 1 \u00b7 completed",
         notes="Now the completed work. Paper one "
               "established the model and four ways to "
               "solve it.")
@@ -604,6 +685,8 @@ bullets(s, [
         "against, no link-degradation study, no "
         "machine-level failures"),
 ])
+takeaway(s, "paper 1 delivered the model, the proofs, "
+            "and four schedulers on one cost model")
 
 s = slide("The four schedulers, in plain terms", notes=(
     "Four ways to solve the same problem. The "
@@ -639,8 +722,10 @@ table(s, [
 # ==================================================================
 # Paper 2
 # ==================================================================
-section("Paper 2", "Data-aware scheduling of approximate "
-        "DAG workflows \u2014 in revision for CCGrid 2027",
+section("5.  Paper 2 \u2014 completed work",
+        "Data-aware scheduling of approximate DAG "
+        "workflows \u2014 in revision for CCGrid 2027",
+        tag="Paper 2 \u00b7 completed",
         notes="Paper two hardened the model. The "
               "additions, the experimental setup, and "
               "then the five experiments, each with its "
@@ -664,6 +749,9 @@ bullets(s, [
         "breaks: solver caps, search budgets, "
         "dense-storage limits"),
 ])
+takeaway(s, "paper 2 made every score interpretable "
+            "\u2014 a bound, a blind baseline, a "
+            "failure model, and stated limits")
 
 s = slide("The bound and the blind baseline", notes=(
     "Two additions make the results interpretable. "
@@ -711,7 +799,10 @@ bullets(s, [
         "it lowers the fraction and retries"),
     (0, "The GA searches assignments and "
         "fractions as one chromosome"),
-], top=1.5, size=20)
+], top=1.5, size=19, width=5.8)
+pic(s, "scheduling-pipeline.png", 7.0, 1.7, width=6.0)
+caption(s, "The pipeline every method runs through",
+        7.0, 6.3, 6.0)
 
 s = slide("Experimental setup", notes=(
     "The setup before the results. A "
@@ -719,7 +810,7 @@ s = slide("Experimental setup", notes=(
     "HiGHS solver. The parameters are chosen so "
     "a transfer can genuinely rival a task, "
     "which is the regime that matters. Four "
-    "datasets, five sweeps, five fresh "
+    "datasets, five experiments, five fresh "
     "instances per point."))
 table(s, [
     ["Component", "Setting"],
@@ -731,8 +822,9 @@ table(s, [
      "transfer can rival a task)"],
     ["Workflow sizes", "10, 100, 500, 1000 tasks "
      "on 3\u201310 machines"],
-    ["Sweeps", "deadline slack, federation size, "
-     "workflow size, failure rate, bandwidth"],
+    ["Experiments", "deadline slack, federation "
+     "size, workflow size, failure rate, "
+     "bandwidth"],
     ["Metrics", "score vs. the bound, "
      "feasibility, wall time (5 fresh instances "
      "per point)"],
@@ -805,10 +897,11 @@ bullets(s, [
         "on the bound"),
     (0, "At 1000 tasks the exact solver "
         "is past its cap; the greedy "
-        "stays on the bound in 0.15 s"),
-    (0, "Rounding needs ~93 s per "
-        "re-solve; the GA drops to 1.10 "
-        "in ~159 s"),
+        "stays on the bound"),
+    (0, "The right panel prices the run: "
+        "greedy answers in 0.15 s, "
+        "rounding needs ~93 s, and the GA "
+        "takes ~159 s for a worse score"),
 ], left=7.8, width=5.0, top=1.5, size=16)
 takeaway(s, "at scale only the greedy is "
          "both fast and bound-level")
@@ -953,9 +1046,9 @@ bullets(s, [
 # ==================================================================
 # Paper 3 — proposed research
 # ==================================================================
-section("Paper 3 \u2014 the proposal",
-        "Dynamic partial repartitioning "
-        "after a resource failure",
+section("6.  Paper 3 \u2014 the proposed research",
+        "Dynamic partial repartitioning after a node "
+        "failure", tag="Paper 3 \u00b7 proposal",
         notes="Now the proposal itself. "
               "The question, the three "
               "research questions inside "
@@ -1032,7 +1125,19 @@ bullets(s, [
         "completed work never "
         "restarts, and tasks that "
         "are fine never move"),
-], top=1.5)
+], top=1.5, width=6.6, size=18)
+flowbox(s, 7.8, 1.6, 4.6, 0.95,
+        "Workflow runs under the "
+        "initial schedule")
+arrow(s, 10.1, 2.55, 10.1, 3.0)
+flowbox(s, 7.8, 3.0, 4.6, 0.95,
+        "A node fails \u2014 its "
+        "unfinished tasks are "
+        "stranded", bold=True)
+arrow(s, 10.1, 3.95, 10.1, 4.4)
+flowbox(s, 7.8, 4.4, 4.6, 0.95,
+        "Repair only the affected "
+        "region, then resume")
 
 s = slide("The recovery cost model", notes=(
     "What 'minimum disturbance' means "
@@ -1085,27 +1190,33 @@ s = slide("The method, in seven steps",
     "resume from the last good "
     "point."))
 bullets(s, [
-    (0, "1.  Make the initial "
-        "partition (any paper-1 "
-        "scheduler)"),
-    (0, "2.  Detect the failure"),
-    (0, "3.  Isolate the affected "
-        "region \u2014 stranded "
-        "tasks plus neighbors that "
-        "fail a stay-test"),
-    (0, "4.  Pick replacement "
-        "machines by capacity and "
-        "distance to the parents "
-        "and children"),
+    (0, "1.  Build the initial "
+        "partition with any paper-1 "
+        "scheduler \u2014 that part "
+        "is already done"),
+    (0, "2.  Detect the failure and "
+        "mark the tasks stranded on "
+        "the failed node"),
+    (0, "3.  Grow the affected "
+        "region: stranded tasks, "
+        "plus any neighbor that "
+        "fails a stay-test"),
+    (0, "4.  Choose replacement "
+        "nodes by spare capacity "
+        "and by distance to the "
+        "parents and children"),
     (0, "5.  Repartition only that "
-        "region under the recovery "
+        "region, under the recovery "
         "cost model"),
     (0, "6.  Update only the "
-        "affected communication "
-        "paths"),
-    (0, "7.  Resume from the last "
-        "good point"),
-], top=1.4, size=19)
+        "communication paths that "
+        "actually changed"),
+    (0, "7.  Resume the workflow "
+        "from the last good point"),
+], top=1.4, size=18)
+takeaway(s, "only the affected region is "
+            "re-planned \u2014 the rest of the "
+            "schedule runs untouched")
 
 s = slide("RQ1: where does the "
           "boundary lie?", notes=(
@@ -1255,7 +1366,7 @@ bullets(s, [
         "\u2014 but not at "
         "failure granularity"),
     (0, ""),
-    (0, "What is new: a machine "
+    (0, "What is new: a node "
         "failure maps to the "
         "smallest affected "
         "region; only that "
@@ -1264,18 +1375,25 @@ bullets(s, [
         "its paths update; the "
         "workflow resumes"),
 ], top=1.5)
+takeaway(s, "the novelty is the "
+            "coupling: a failure "
+            "in one graph becomes "
+            "a small, well-defined "
+            "repair in the other")
 
 # ==================================================================
 # Evaluation plan & timeline
 # ==================================================================
-section("Evaluation plan and "
+section("7.  Evaluation plan and "
         "timeline",
         "Baselines, metrics, "
         "hypotheses, milestones",
+        tag="Evaluation plan",
         notes="How I will test it, "
               "and when.")
 
-s = slide("Baselines and metrics",
+s = slide("Evaluation setup: "
+          "baselines and metrics",
           notes=(
     "Four baselines: complete "
     "repartition, the naive "
@@ -1326,8 +1444,8 @@ takeaway(s, "the platform "
          "the testbed "
          "exists")
 
-s = slide("What I will vary, "
-          "and what I expect",
+s = slide("Factors and "
+          "hypotheses",
           notes=(
     "We vary what makes "
     "recovery hard: where "
@@ -1342,52 +1460,34 @@ s = slide("What I will vary, "
     "hypotheses, each "
     "falsifiable."))
 bullets(s, [
-    (0, "Failure "
-        "injection:"),
-    (1, "where \u2013 a "
-        "machine on the "
-        "critical path "
-        "vs. a "
-        "peripheral "
-        "one"),
-    (1, "how many \u2013 "
-        "one machine vs. "
-        "several at "
-        "once"),
-    (1, "when \u2013 how "
-        "much deadline "
-        "slack is "
-        "left"),
-    (0, "Scale: "
-        "workflows of "
-        "10\u20131000 "
-        "tasks, "
-        "federations of "
-        "2\u201310 "
-        "machines"),
-    (0, "Hypotheses:"),
-    (1, "H1 \u2013 "
-        "recovery time "
-        "grows with "
-        "the region, "
-        "not the whole "
-        "workflow"),
-    (1, "H2 \u2013 "
-        "tasks moved "
-        "and data "
-        "re-shipped "
-        "are far below "
-        "the "
-        "baselines at "
-        "equal "
-        "feasibility"),
-    (1, "H3 \u2013 "
-        "repair "
-        "quality "
-        "stays near "
-        "the exact "
-        "reference on "
-        "small "
+    (0, "What I will vary:"),
+    (1, "where the failure hits "
+        "\u2014 a node on the "
+        "critical path versus a "
+        "peripheral one"),
+    (1, "how many nodes fail "
+        "\u2014 one versus several "
+        "at once"),
+    (1, "when it happens \u2014 "
+        "how much deadline slack "
+        "is left"),
+    (0, "Scale: workflows of "
+        "10\u20131,000 tasks on "
+        "federations of 2\u201310 "
+        "nodes, as in paper 2"),
+    (0, "Three falsifiable "
+        "hypotheses:"),
+    (1, "H1 \u2013 recovery time "
+        "grows with the affected "
+        "region, not with the "
+        "whole workflow"),
+    (1, "H2 \u2013 tasks moved and "
+        "data re-shipped stay far "
+        "below the baselines at "
+        "equal feasibility"),
+    (1, "H3 \u2013 the repair "
+        "stays near the exact "
+        "solver's quality on small "
         "cases"),
 ], top=1.4, size=18)
 
@@ -1489,55 +1589,35 @@ s = slide("Risks, and how I "
     "the "
     "plan."))
 bullets(s, [
-    (0, "The boundary "
-        "rule might "
-        "degenerate "
-        "into "
-        "'repartition "
-        "everything'"),
-    (1, "the size "
-        "cap is "
-        "enforced, "
-        "and the "
-        "sensitivity "
-        "study "
-        "measures "
-        "it"),
-    (0, "Incremental "
-        "path "
-        "updates "
-        "might not "
-        "pay off on "
-        "small "
-        "graphs"),
-    (1, "we measure "
-        "the "
-        "break-even "
-        "point and "
-        "keep full "
-        "recomputation "
-        "as a "
-        "baseline"),
-    (0, "Region "
-        "repair "
-        "might "
-        "trail the "
-        "exact "
-        "solver's "
-        "quality"),
-    (1, "hybrid: "
-        "greedy "
-        "repair at "
-        "scale, "
-        "exact "
-        "repair on "
-        "small "
+    (0, "The boundary rule might "
+        "grow until it covers most "
+        "of the workflow"),
+    (1, "then it is no better "
+        "than repartitioning "
+        "everything \u2014 the size "
+        "cap prevents this, and "
+        "the sensitivity study "
+        "shows when it happens"),
+    (0, "Incremental path "
+        "updates might not pay "
+        "off on small graphs"),
+    (1, "we measure the "
+        "break-even point and "
+        "keep full recomputation "
+        "as a baseline"),
+    (0, "The region repair might "
+        "fall short of the exact "
+        "solver's quality"),
+    (1, "hybrid plan: greedy "
+        "repair at scale, exact "
+        "repair on small "
         "regions"),
 ], top=1.5, size=18)
 
 # ==================================================================
 # Conclusion
 # ==================================================================
+_tag = "Conclusion"
 s = slide("Conclusion", notes=(
     "To conclude. The "
     "completed work "
@@ -1573,66 +1653,45 @@ s = slide("Conclusion", notes=(
     "infrastructure "
     "fails."))
 bullets(s, [
-    (0, "Already done: "
-        "a proved, "
-        "data-aware "
-        "formulation, "
-        "four "
-        "schedulers "
-        "on one cost "
-        "model, and a "
-        "reproducible "
-        "platform "
-        "(Papers 1 "
-        "and 2)"),
-    (0, "Proposed: a "
-        "boundary "
-        "rule for the "
-        "smallest "
-        "affected "
-        "region "
-        "(RQ1)"),
-    (0, "Proposed: "
-        "minimal-region "
+    (0, "Done \u2014 Papers 1 "
+        "and 2: a proved, "
+        "data-aware formulation, "
+        "four schedulers on one "
+        "cost model, and a "
+        "reproducible platform"),
+    (0, "Proposed \u2014 RQ1: a "
+        "boundary rule that finds "
+        "the smallest part of the "
+        "workflow a failure "
+        "actually breaks"),
+    (0, "Proposed \u2014 RQ2: "
+        "repartitioning that "
+        "repairs only that "
+        "region, under a "
+        "recovery cost model"),
+    (0, "Proposed \u2014 RQ3: "
+        "incremental updates to "
+        "the communication "
+        "paths, instead of "
+        "recomputing them"),
+    (0, "Expected outcome: "
+        "recovery that is "
+        "faster and less "
+        "disturbing than "
         "repartitioning "
-        "under a "
-        "recovery "
-        "cost model "
-        "(RQ2)"),
-    (0, "Proposed: "
-        "incremental "
-        "path updates "
-        "for workflow "
-        "recovery "
-        "(RQ3)"),
-    (0, "Expected "
-        "outcome: "
-        "recovery "
-        "that is "
-        "faster and "
-        "less "
-        "disturbing "
-        "than a "
-        "complete "
-        "repartition, "
-        "at "
+        "everything, at "
         "near-reference "
         "quality"),
     (0, ""),
-    (0, "Paper 1 "
-        "placed the "
-        "workflow; "
-        "Paper 2 "
-        "priced its "
-        "data and "
-        "approximation; "
-        "Paper 3 "
-        "keeps it "
-        "alive when "
-        "the "
+    (0, "Paper 1 placed the "
+        "workflow; Paper 2 "
+        "priced its data and "
+        "its approximation; "
+        "Paper 3 keeps it "
+        "alive when the "
         "infrastructure "
         "fails."),
-], top=1.4, size=19)
+], top=1.4, size=18)
 
 # ---- closing ----
 s = prs.slides.add_slide(BLANK)
