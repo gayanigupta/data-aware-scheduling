@@ -29,6 +29,18 @@ FS = 9.0         # box text
 FS_SM = 8.0      # edge / side labels
 
 
+def hand_drawn(fn):
+    """Run the figure body inside matplotlib's xkcd sketch style with a
+    handwriting font, so conceptual figures look hand-drawn."""
+    def wrapper():
+        with plt.xkcd(randomness=2):
+            plt.rcParams["font.family"] = ["Bradley Hand",
+                                           "Chalkboard SE",
+                                           "Comic Sans MS"]
+            return fn()
+    return wrapper
+
+
 def box(ax, x, y, w, h, text, fc=LT_BLUE, ec=BLUE, fs=FS, dashed=False,
         bold=False):
     b = FancyBboxPatch((x, y), w, h,
@@ -58,95 +70,99 @@ def arrow(ax, p1, p2, dashed=False, color=DARK, lw=1.3, label=None,
 
 
 def figure_architecture():
-    fig, ax = plt.subplots(figsize=(6.4, 4.4), dpi=300)
-    ax.set_xlim(0, 16); ax.set_ylim(0, 11); ax.axis("off")
+    """High-level design of the wildfire-response system: sensor inputs
+    feed the federated fog network, the data-aware scheduler places the
+    six workflow tasks on the four fog nodes, and results return to the
+    emergency operations centre.  Node names, colours, task placements
+    and link rates match Fig. 2 exactly."""
+    fig, ax = plt.subplots(figsize=(6.4, 8.2), dpi=300)
+    ax.set_xlim(0, 16); ax.set_ylim(0, 27.5); ax.axis("off")
 
-    # unreachable cloud (crossed out, dashed)
-    box(ax, 5.7, 9.85, 4.6, 0.95, "Cloud  (unreachable)",
-        fc="#f5f5f5", ec="#aaaaaa", fs=FS, dashed=True)
-    cx = (8.0, 10.32)
-    ax.plot([cx[0] - 0.18, cx[0] + 0.18], [cx[1] - 0.15, cx[1] + 0.15],
-            color=RED, lw=2.0)
-    ax.plot([cx[0] + 0.18, cx[0] - 0.18], [cx[1] - 0.15, cx[1] + 0.15],
-            color=RED, lw=2.0)
+    NODE_FC = {1: "#dbe9f6", 2: "#e8e4f3", 3: "#dff0e6", 4: "#fdf3d7"}
+    EDGE_BLUE = "#2c7fb8"
+    PILL_FC, PILL_EC = "#eaf2fb", EDGE_BLUE
 
-    # federation boundary
-    fed = FancyBboxPatch((0.4, 0.7), 15.2, 8.6,
+    def pill(x, y, text, heavy=False):
+        ax.text(x, y, text, fontsize=FS_SM, ha="center", va="center",
+                color=RED if heavy else DARK, zorder=5,
+                bbox=dict(boxstyle="round,pad=0.35",
+                          fc="#fdecea" if heavy else PILL_FC,
+                          ec=RED if heavy else PILL_EC, lw=0.9))
+
+    # ---------- top row: inputs and scheduler ----------
+    box(ax, 0.6, 24.9, 6.6, 2.1,
+        "Wildfire monitoring inputs\ndrone imagery, cameras and\n"
+        "environmental sensors", fs=FS)
+    box(ax, 8.6, 24.9, 7.0, 2.1,
+        "Data-aware scheduler\nassign tasks using compute time,\n"
+        "data size and network bandwidth",
+        fc=YELLOW, ec=YELLOW_EDGE, fs=FS, bold=True)
+
+    # ---------- federated fog container ----------
+    fed = FancyBboxPatch((1.6, 3.8), 13.0, 20.0,
                          boxstyle="round,pad=0.02,rounding_size=0.18",
-                         linewidth=1.4, edgecolor=GREEN_EDGE,
-                         facecolor="none", linestyle="--")
+                         linewidth=1.4, edgecolor="#9a9a9a",
+                         facecolor="#f5f5f5", zorder=0)
     ax.add_patch(fed)
-    ax.text(8.0, 8.72, "Federated fog — multiple sites share load directly",
-            ha="center", fontsize=FS + 0.5, color=GREEN_EDGE,
-            fontweight="bold")
+    ax.text(5.4, 23.1, "Federated fog network", ha="center",
+            fontsize=FS + 0.5, color="#555555", fontweight="bold")
 
-    # scheduler
-    sch = box(ax, 5.3, 7.05, 5.4, 1.25,
-              "Data-aware scheduler\nplaces tasks across the federation",
-              fc=YELLOW, ec=YELLOW_EDGE, fs=FS, bold=True)
+    # ---------- fog nodes with their Fig. 2 task assignments ----------
+    box(ax, 2.4, 19.4, 5.2, 2.9,
+        "$f_1$ — Gateway\nT1: Collect data\nT2: Prepare data\n"
+        "T3: Detect smoke", fc=NODE_FC[1], ec=EDGE_BLUE, fs=FS)
+    box(ax, 9.2, 15.7, 5.0, 2.0,
+        "$f_3$ — Hospital\nT4: Predict spread",
+        fc=NODE_FC[3], ec=EDGE_BLUE, fs=FS)
+    box(ax, 2.8, 11.9, 4.8, 2.0,
+        "$f_2$ — Shelter\nT5: Map fire",
+        fc=NODE_FC[2], ec=EDGE_BLUE, fs=FS)
+    box(ax, 5.4, 7.9, 5.2, 2.0,
+        "$f_4$ — Mobile unit\nT6: Assess damage",
+        fc=NODE_FC[4], ec=EDGE_BLUE, fs=FS)
 
-    # two fog sites (different owners), each with two nodes
-    site_a = FancyBboxPatch((0.9, 3.0), 6.6, 3.5,
-                            boxstyle="round,pad=0.02,rounding_size=0.15",
-                            linewidth=1.0, edgecolor="#8fb8de",
-                            facecolor="#f4f9fd", linestyle="-")
-    site_b = FancyBboxPatch((8.5, 3.0), 6.6, 3.5,
-                            boxstyle="round,pad=0.02,rounding_size=0.15",
-                            linewidth=1.0, edgecolor="#8fb8de",
-                            facecolor="#f4f9fd", linestyle="-")
-    ax.add_patch(site_a); ax.add_patch(site_b)
-    ax.text(4.2, 6.10, "fog site A", ha="center", fontsize=FS_SM,
-            color="#4a6fa5", fontweight="bold")
-    ax.text(11.8, 6.10, "fog site B", ha="center", fontsize=FS_SM,
-            color="#4a6fa5", fontweight="bold")
+    # ---------- inter-node links (same rates as Fig. 2b) ----------
+    def link(p1, p2, lbl, lx, ly, heavy=False):
+        a = FancyArrowPatch(p1, p2, arrowstyle="-|>", mutation_scale=11,
+                            linewidth=2.0 if heavy else 1.1,
+                            color=RED if heavy else "#555555", zorder=3)
+        ax.add_patch(a)
+        pill(lx, ly, lbl, heavy=heavy)
 
-    fgs = {}
-    fgs[0] = box(ax, 1.2, 4.45, 2.9, 1.15, "Fog 1\n(base station)", fs=FS)
-    fgs[1] = box(ax, 4.3, 4.45, 2.9, 1.15, "Fog 2\n(shelter gateway)", fs=FS)
-    fgs[2] = box(ax, 8.8, 4.45, 2.9, 1.15, "Fog 3\n(hospital edge)", fs=FS)
-    fgs[3] = box(ax, 12.0, 4.45, 2.9, 1.15, "Fog 4\n(mobile unit)", fs=FS)
+    link((3.4, 19.4), (4.4, 13.9), "800 Mbps", 2.0, 16.6)             # f1->f2
+    link((6.6, 19.4), (9.8, 17.7), "80 Mbps — bottleneck", 9.9, 18.9,
+         heavy=True)                                                  # f1->f3
+    link((9.6, 15.7), (7.0, 13.9), "300 Mbps", 9.7, 14.7)             # f3->f2
+    link((12.8, 15.7), (10.8, 9.9), "400 Mbps", 13.7, 12.7)           # f3->f4
+    link((4.8, 11.9), (6.6, 9.9), "500 Mbps", 3.6, 10.8)              # f2->f4
 
-    # intra-site links (solid grey) and one cross-site federation link (dashed)
-    for a, b in [(0, 1), (2, 3)]:
-        arrow(ax, (fgs[a][0] + 1.45, fgs[a][1]), (fgs[b][0] - 1.45, fgs[b][1]),
-              color=GREY, lw=0.9)
-    arrow(ax, (fgs[1][0] + 1.45, fgs[1][1]), (fgs[2][0] - 1.45, fgs[2][1]),
-          dashed=True, color=GREEN_EDGE, lw=1.4)
-    ax.text(8.0, 5.35, "inter-site link", fontsize=FS_SM, color=GREEN_EDGE,
-            fontstyle="italic", ha="center")
+    # ---------- raw data in, task placement, results out ----------
+    arrow(ax, (3.8, 24.9), (4.6, 22.3), color=DARK, lw=1.2)
+    pill(2.0, 23.9, "Raw data")
 
-    # scheduler -> fog nodes (assignments)
-    for i in range(4):
-        arrow(ax, (sch[0] - 1.7 + i * 1.15, sch[1] - 0.50),
-              (fgs[i][0], fgs[i][1] + 0.50), color=BLUE, lw=1.0)
-    ax.text(11.6, 6.6, "task assignment", fontsize=FS_SM, color=BLUE,
-            fontstyle="italic", ha="center")
+    for x0, dst in [(9.8, (6.8, 22.35)), (10.9, (11.6, 17.75)),
+                    (12.0, (5.6, 13.95))]:
+        arrow(ax, (x0, 24.9), dst, dashed=True, color=GREY, lw=0.9)
+    # route the f4 placement arrow down the right edge so it does not
+    # cross the f3 box
+    ax.plot([14.3, 14.3], [24.9, 10.4], color=GREY, lw=0.9,
+            linestyle=(0, (1, 2)), zorder=2)
+    arrow(ax, (14.3, 10.4), (10.65, 9.97), dashed=True, color=GREY,
+          lw=0.9)
+    pill(12.6, 23.9, "Task placement")
 
-    # field sensors feeding site A
-    s1 = box(ax, 0.9, 1.05, 5.4, 1.2,
-             "field sensors\nriver gauges, drones, cameras",
-             fc=GREEN, ec=GREEN_EDGE, fs=FS)
-    arrow(ax, (s1[0] + 0.5, s1[1] + 0.5), (fgs[0][0] - 0.4, fgs[0][1] - 0.48),
-          color=GREEN_EDGE, label="raw data", label_dx=-0.9)
-
-    # results flow to the operations centre
-    oc = box(ax, 10.2, 1.05, 5.2, 1.0,
-             "emergency operations centre",
-             fc=GREEN, ec=GREEN_EDGE, fs=FS)
-    arrow(ax, (fgs[3][0], fgs[3][1] - 0.48), (oc[0] + 0.6, oc[1] + 0.5),
-          color=GREEN_EDGE, label="results", label_dx=0.9)
-
-    # dead uplink to the cloud
-    arrow(ax, (fgs[2][0] + 0.4, fgs[2][1] + 0.48), (8.0, 9.85), dashed=True,
-          color="#aaaaaa", lw=1.1)
-    ax.text(11.2, 8.45, "uplink down", fontsize=FS_SM, color="#999999",
-            fontstyle="italic", ha="left")
+    box(ax, 4.8, 0.4, 6.8, 2.1,
+        "Emergency operations centre\nfire map, spread prediction\n"
+        "and damage assessment", fc=GREEN, ec=GREEN_EDGE, fs=FS)
+    arrow(ax, (8.0, 7.9), (8.0, 2.55), color=DARK, lw=1.2)
+    pill(9.9, 5.2, "Response results")
 
     fig.savefig(os.path.join(FIG, "federated-fog-architecture.png"),
                 bbox_inches="tight", facecolor="white", pad_inches=0.04)
     plt.close(fig)
 
 
+@hand_drawn
 def figure_dag():
     """Two-panel wildfire-response figure.  Left: the workflow DAG --
     circular task nodes, edges carry realistic data sizes (hundreds of
