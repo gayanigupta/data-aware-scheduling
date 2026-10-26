@@ -184,12 +184,12 @@ def figure_dag():
 
     # ---------- left: workflow DAG (circles) ----------
     T = {}
-    T[1] = tnode(3.5, 7.9, "T1\nIngest\n$f_1$", 1)
-    T[2] = tnode(1.5, 5.7, "T2\nEnv prep\n$f_1$", 1)
-    T[3] = tnode(5.5, 5.7, "T3\nSmoke\ndetect\n$f_1$", 1, r=0.68)
-    T[4] = tnode(1.5, 3.3, "T4\nSpread\npredict\n$f_3$", 3)
-    T[5] = tnode(5.5, 3.3, "T5\nFire map\n$f_2$", 2)
-    T[6] = tnode(3.5, 1.2, "T6\nDamage\nassess\n$f_4$", 4)
+    T[1] = tnode(3.5, 7.9, "T1\nCollect\ndata\n$f_1$", 1, r=0.66)
+    T[2] = tnode(1.5, 5.7, "T2\nPrepare\ndata\n$f_1$", 1, r=0.66)
+    T[3] = tnode(5.5, 5.7, "T3\nDetect\nsmoke\n$f_1$", 1, r=0.68)
+    T[4] = tnode(1.5, 3.3, "T4\nPredict\nspread\n$f_3$", 3, r=0.66)
+    T[5] = tnode(5.5, 3.3, "T5\nMap\nfire\n$f_2$", 2)
+    T[6] = tnode(3.5, 1.2, "T6\nAssess\ndamage\n$f_4$", 4, r=0.66)
 
     edges = [(1, 2, "200 MB", (-0.75, 0.05)), (1, 3, "800 MB", (0.80, 0.05)),
              (2, 4, "150 MB", (-0.75, 0.05)), (3, 4, "400 MB", (0.45, -0.1)),
@@ -235,8 +235,8 @@ def figure_dag():
                 fontstyle="italic")
 
     # ---------- payoff callout under the network panel ----------
-    ax.text(12.4, 2.35, "Highlighted transfer: smoke-detection "
-            "frames T3 ($f_1$) $\\rightarrow$ spread prediction T4 "
+    ax.text(12.4, 2.35, "Highlighted transfer: smoke frames "
+            "T3 ($f_1$) $\\rightarrow$ spread prediction T4 "
             "($f_3$)", ha="center", fontsize=9, color="#c0392b")
     ax.text(12.4, 1.85, "Delay = data size / link bandwidth",
             ha="center", fontsize=9.5, color="black")
