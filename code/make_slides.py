@@ -620,8 +620,8 @@ bullets(s, [
         "it"),
 ], width=6.2)
 pic(s, "disaster-response-dag.png", 7.3, 1.4, width=5.6)
-caption(s, "A task graph (left) mapped onto the machine "
-           "graph (right)", 7.3, 6.55, 5.6)
+caption(s, "A wildfire workflow mapped onto the fog "
+           "resource network", 7.3, 6.55, 5.6)
 
 s = slide("Inputs and decisions", notes=(
     "Before the algorithms, the exact contract. The "
