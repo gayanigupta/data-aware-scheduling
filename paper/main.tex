@@ -108,12 +108,12 @@ Trading result quality for resources is not a new idea in scheduling. Probabilis
 
 We consider a federation of fog nodes $F=\{f_1,\ldots,f_m\}$ deployed in a disaster-prone area such as a cluster of offshore oil platforms (Fig.~\ref{fig:architecture}). Each pair of nodes is connected by a link of known bandwidth, and the federation operates even when the cloud is unreachable. A workflow arrives as a DAG $G=(T,E)$, where each node $T_i\in T$ is a computational task, and each edge $(T_j,T_i)\in E$ is both a precedence constraint and a data transfer of size $D_{ji}$.
 
-\begin{figure}[h!]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\linewidth]{Figures/federated-fog-architecture.png}
+\includegraphics[width=0.45\textwidth]{Figures/federated-fog-architecture.png}
 \caption{Federated fog deployment for wildfire response. Smoke cameras, drones, and weather stations feed a workflow of dependent tasks; the scheduler assigns each task to one fog node ($f_1$ Gateway, $f_2$ Shelter, $f_3$ Hospital, $f_4$ Mobile --- the same nodes as Fig.~\ref{fig:dag}), priced by both compute time and inter-node data-transfer cost.}
 \label{fig:architecture}
-\end{figure}
+\end{figure*}
 
 If task $T_j$ runs on node $f_b$ and its successor $T_i$ runs on node $f_a$, the input of $T_i$ has to cross the link $(f_b,f_a)$ with bandwidth $B_{ba}$. That transfer takes:
 \begin{equation}
@@ -128,7 +128,7 @@ This is the central cost in the model: placing a task is not only about how fast
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{Figures/disaster-response-dag.png}
-\caption{A wildfire-response workflow (a) mapped onto a federated fog network (b): imagery is ingested, environmental data prepared, smoke detected, the fire spread predicted and mapped, and damage assessed. Edge labels are data sizes $D_{ji}$; link labels are bandwidths $B_{ba}$; the fog node inside each task shows its placement $e_{ia}$. The highlighted transfer---smoke-detection frames $T_3$ on $f_1$ feeding spread prediction $T_4$ on $f_3$---pays $D_{ji}/B_{ba} = 4800\,\mathrm{Mb}/80\,\mathrm{Mbp/s} = 60\,\mathrm{s}$ (600 MB expressed in megabits), the transfer delay of Eq.~\eqref{eq:comm}.}
+\caption{A wildfire-response workflow (a) mapped onto a federated fog network (b): imagery is ingested, environmental data prepared, smoke detected, the fire spread predicted and mapped, and damage assessed. Edge labels are data sizes $D_{ji}$; link labels are bandwidths $B_{ba}$; the fog node inside each task shows its placement $e_{ia}$. The highlighted transfer---smoke-detection frames $T_3$ on $f_1$ feeding spread prediction $T_4$ on $f_3$---pays $D_{ji}/B_{ba} = 14400\,\mathrm{Mb}/80\,\mathrm{Mbp/s} = 180\,\mathrm{s}$ (1800 MB expressed in megabits), the transfer delay of Eq.~\eqref{eq:comm}.}
 \label{fig:dag}
 \end{figure}
 
