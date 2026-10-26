@@ -42,9 +42,10 @@ def hand_drawn(fn):
 
 
 def box(ax, x, y, w, h, text, fc=LT_BLUE, ec=BLUE, fs=FS, dashed=False,
-        bold=False):
-    b = FancyBboxPatch((x, y), w, h,
-                       boxstyle="round,pad=0.02,rounding_size=0.12",
+        bold=False, square=False):
+    style = "square,pad=0.02" if square else \
+        "round,pad=0.02,rounding_size=0.12"
+    b = FancyBboxPatch((x, y), w, h, boxstyle=style,
                        linewidth=1.2, edgecolor=ec, facecolor=fc,
                        linestyle="--" if dashed else "-")
     ax.add_patch(b)
@@ -78,9 +79,7 @@ def figure_architecture():
     fig, ax = plt.subplots(figsize=(7.2, 8.6), dpi=300)
     ax.set_xlim(0, 22); ax.set_ylim(0, 27.5); ax.axis("off")
 
-    NODE_FC = {1: "#dbe9f6", 2: "#e8e4f3", 3: "#dff0e6", 4: "#fdf3d7"}
     EDGE_BLUE = "#2c7fb8"
-    PILL_FC, PILL_EC = "#eaf2fb", EDGE_BLUE
 
     def pill(x, y, text, heavy=False, ha="center"):
         ax.text(x, y, text, fontsize=FS_SM, ha=ha, va="center",
@@ -100,92 +99,37 @@ def figure_architecture():
     # ---------- top row: inputs and scheduler ----------
     box(ax, 0.6, 24.9, 6.8, 2.1,
         "Wildfire monitoring inputs\ndrone imagery, cameras and\n"
-        "environmental sensors", fs=FS)
+        "environmental sensors", fc="white", ec=DARK, fs=FS,
+        square=True)
     box(ax, 11.5, 24.9, 9.8, 2.1,
         "Data-aware scheduler\nassign tasks using compute time,\n"
         "data size and network bandwidth",
-        fc=YELLOW, ec=YELLOW_EDGE, fs=FS, bold=True)
+        fc="white", ec=DARK, fs=FS, bold=True, square=True)
 
     # ---------- federated fog container ----------
     fed = FancyBboxPatch((1.0, 3.8), 20.3, 20.0,
-                         boxstyle="round,pad=0.02,rounding_size=0.18",
-                         linewidth=1.4, edgecolor="#9a9a9a",
-                         facecolor="#f5f5f5", zorder=0)
-    def icon(kind, cx, cy, s=0.62, c=EDGE_BLUE):
-        """Small line-art pictogram: antenna tower / house / hospital
-        cross / mobile unit, so each fog node type reads differently."""
-        lw = 1.5
-        if kind == "gateway":
-            ax.plot([cx, cx], [cy - 0.45 * s, cy + 0.55 * s],
-                    color=c, lw=lw)
-            ax.plot([cx - 0.5 * s, cx + 0.5 * s],
-                    [cy - 0.45 * s, cy - 0.45 * s], color=c, lw=lw)
-            ax.plot([cx - 0.4 * s, cx], [cy - 0.45 * s, cy + 0.5 * s],
-                    color=c, lw=lw * 0.8)
-            ax.plot([cx + 0.4 * s, cx], [cy - 0.45 * s, cy + 0.5 * s],
-                    color=c, lw=lw * 0.8)
-            for r in (0.28, 0.48):
-                ax.add_patch(Arc((cx, cy + 0.55 * s), 2 * r * s,
-                                 2 * r * s, theta1=40, theta2=140,
-                                 color=c, lw=lw * 0.8))
-        elif kind == "shelter":
-            ax.add_patch(FancyBboxPatch((cx - 0.4 * s, cy - 0.45 * s),
-                                        0.8 * s, 0.6 * s,
-                                        boxstyle="square,pad=0",
-                                        edgecolor=c, facecolor="none",
-                                        lw=lw))
-            ax.plot([cx - 0.55 * s, cx, cx + 0.55 * s],
-                    [cy + 0.15 * s, cy + 0.6 * s, cy + 0.15 * s],
-                    color=c, lw=lw)
-        elif kind == "hospital":
-            ax.add_patch(FancyBboxPatch((cx - 0.45 * s, cy - 0.45 * s),
-                                        0.9 * s, 0.9 * s,
-                                        boxstyle="round,pad=0,"
-                                        "rounding_size=0.1",
-                                        edgecolor=c, facecolor="none",
-                                        lw=lw))
-            ax.plot([cx, cx], [cy - 0.28 * s, cy + 0.28 * s],
-                    color=c, lw=lw + 0.4)
-            ax.plot([cx - 0.28 * s, cx + 0.28 * s], [cy, cy],
-                    color=c, lw=lw + 0.4)
-        elif kind == "mobile":
-            ax.add_patch(FancyBboxPatch((cx - 0.6 * s, cy - 0.25 * s),
-                                        1.2 * s, 0.5 * s,
-                                        boxstyle="round,pad=0,"
-                                        "rounding_size=0.08",
-                                        edgecolor=c, facecolor="none",
-                                        lw=lw))
-            for wx in (cx - 0.32 * s, cx + 0.32 * s):
-                ax.add_patch(plt.Circle((wx, cy - 0.32 * s), 0.12 * s,
-                                        edgecolor=c, facecolor="none",
-                                        lw=lw))
-            ax.plot([cx + 0.55 * s, cx + 0.55 * s],
-                    [cy + 0.25 * s, cy + 0.75 * s], color=c, lw=lw * 0.8)
-            ax.plot([cx + 0.55 * s, cx + 0.7 * s],
-                    [cy + 0.75 * s, cy + 0.62 * s], color=c, lw=lw * 0.8)
-
+                         boxstyle="square,pad=0.02",
+                         linewidth=1.3, edgecolor="#9a9a9a",
+                         facecolor="none", zorder=0)
     ax.add_patch(fed)
-    ax.text(4.8, 23.35, "Federated fog network", ha="center",
+    ax.text(10.2, 23.45, "Federated fog network", ha="center",
             va="center", fontsize=FS + 0.5, color="#555555",
             fontweight="bold", zorder=5)
 
     # ---------- fog nodes with their Fig. 2 task assignments ----------
     box(ax, 2.4, 19.2, 5.4, 3.0,
         "f1 — Gateway\nT1: Collect data\nT2: Prepare data\n"
-        "T3: Detect smoke", fc=NODE_FC[1], ec=EDGE_BLUE, fs=FS)
-    icon("gateway", 2.85, 21.6)
+        "T3: Detect smoke", fc="white", ec=EDGE_BLUE, fs=FS,
+        square=True)
     box(ax, 13.4, 19.4, 5.4, 2.6,
         "f3 — Hospital\nT4: Predict spread",
-        fc=NODE_FC[3], ec=EDGE_BLUE, fs=FS)
-    icon("hospital", 13.85, 21.45)
+        fc="white", ec=EDGE_BLUE, fs=FS, square=True)
     box(ax, 2.4, 11.6, 5.4, 2.2,
         "f2 — Shelter\nT5: Map fire",
-        fc=NODE_FC[2], ec=EDGE_BLUE, fs=FS)
-    icon("shelter", 2.85, 13.25)
+        fc="white", ec=EDGE_BLUE, fs=FS, square=True)
     box(ax, 8.6, 5.6, 5.6, 2.2,
         "f4 — Mobile unit\nT6: Assess damage",
-        fc=NODE_FC[4], ec=EDGE_BLUE, fs=FS)
-    icon("mobile", 9.05, 7.2)
+        fc="white", ec=EDGE_BLUE, fs=FS, square=True)
 
     # ---------- inter-node links (same rates as Fig. 2b) ----------
     # f1 -> f3: straight horizontal, the bottleneck carrying T3 -> T4
@@ -209,7 +153,7 @@ def figure_architecture():
 
     # ---------- raw data in (straight vertical) ----------
     elbow([(3.0, 24.9), (3.0, 22.2)], color=DARK, lw=1.2)
-    pill(2.6, 23.6, "Raw data", ha="right")
+    pill(1.35, 24.25, "Raw data", ha="left")
 
     # ---------- task placement: dashed, orthogonal drops ----------
     elbow([(13.0, 24.9), (13.0, 23.2), (5.1, 23.2), (5.1, 22.25)],
@@ -225,7 +169,8 @@ def figure_architecture():
     # ---------- results out ----------
     box(ax, 7.6, 0.4, 7.6, 2.2,
         "Emergency operations centre\nfire map, spread prediction\n"
-        "and damage assessment", fc=GREEN, ec=GREEN_EDGE, fs=FS)
+        "and damage assessment", fc="white", ec=DARK, fs=FS,
+        square=True)
     elbow([(11.4, 5.6), (11.4, 2.65)], color=DARK, lw=1.2)
     pill(11.9, 4.1, "Response results", ha="left")
 
