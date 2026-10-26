@@ -191,9 +191,9 @@ def figure_dag():
     T[5] = tnode(5.5, 3.3, "T5\nMap\nfire\n$f_2$", 2)
     T[6] = tnode(3.5, 1.2, "T6\nAssess\ndamage\n$f_4$", 4, r=0.66)
 
-    edges = [(1, 2, "200 MB", (-0.75, 0.05)), (1, 3, "800 MB", (0.80, 0.05)),
-             (2, 4, "150 MB", (-0.75, 0.05)), (3, 4, "400 MB", (0.45, -0.1)),
-             (3, 5, "300 MB", (0.85, 0.05)), (4, 6, "120 MB", (-0.75, 0.05)),
+    edges = [(1, 2, "250 MB", (-0.75, 0.05)), (1, 3, "1100 MB", (0.85, 0.05)),
+             (2, 4, "150 MB", (-0.75, 0.05)), (3, 4, "600 MB", (0.45, -0.1)),
+             (3, 5, "300 MB", (0.85, 0.05)), (4, 6, "150 MB", (-0.75, 0.05)),
              (5, 6, "250 MB", (0.85, 0.05))]
     for a, b, lbl, (dx, dy) in edges:
         heavy = (a, b) == (3, 4)
@@ -212,11 +212,11 @@ def figure_dag():
     F[3] = fnode(10.4, 4.2, "$f_3$\nHospital", 3)
     F[4] = fnode(14.4, 4.2, "$f_4$\nMobile", 4)
 
-    links = [(1, 2, "90 MB/s", (0, 0.14), 0.0),
-             (1, 3, "10 MB/s", (-0.95, 0.0), 0.0),
-             (2, 4, "60 MB/s", (0.95, 0.0), 0.0),
-             (3, 4, "45 MB/s", (0, 0.14), 0.0),
-             (2, 3, "30 MB/s", (-0.5, 0.35), 0.0)]
+    links = [(1, 2, "800 Mbp/s", (0, 0.14), 0.0),
+             (1, 3, "80 Mbp/s", (-1.05, 0.0), 0.0),
+             (2, 4, "500 Mbp/s", (1.05, 0.0), 0.0),
+             (3, 4, "400 Mbp/s", (0, 0.14), 0.0),
+             (2, 3, "300 Mbp/s", (-0.6, 0.4), 0.0)]
     for a, b, lbl, (dx, dy), rad in links:
         heavy = (a, b) == (1, 3)
         if b in (3, 4):
@@ -238,10 +238,11 @@ def figure_dag():
     ax.text(12.4, 2.35, "Highlighted transfer: smoke frames "
             "T3 ($f_1$) $\\rightarrow$ spread prediction T4 "
             "($f_3$)", ha="center", fontsize=9, color="#c0392b")
-    ax.text(12.4, 1.85, "Delay = data size / link bandwidth",
+    ax.text(12.4, 1.85, "Delay = data size / link rate",
             ha="center", fontsize=9.5, color="black")
-    ax.text(12.4, 1.30, "400 MB / 10 MB/s = 40 s", ha="center",
-            fontsize=11, color="#c0392b", fontweight="bold")
+    ax.text(12.4, 1.30, "600 MB = 4800 Mb,   4800 / 80 Mbp/s "
+            "= 60 s", ha="center", fontsize=10.5,
+            color="#c0392b", fontweight="bold")
 
     ax.text(3.5, 0.30,
             "Task colours and fog IDs show placement.  Edge labels: "
