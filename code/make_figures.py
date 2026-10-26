@@ -148,95 +148,105 @@ def figure_architecture():
 
 
 def figure_dag():
-    """Two-panel mapping figure: workflow DAG (edges carry data D) on the
-    left, fog infrastructure graph (links with bandwidth B) on the right.
-    Shows why placement matters: the highlighted edge crosses sites, so
-    its input pays D/B before the task can start."""
-    fig, ax = plt.subplots(figsize=(6.4, 4.8), dpi=300)
-    ax.set_xlim(0, 16); ax.set_ylim(0, 10.4); ax.axis("off")
+    """Two-panel wildfire-response figure.  Left: the workflow DAG --
+    circular task nodes, edges carry realistic data sizes (hundreds of
+    MB).  Right: the fog resource network -- rectangular nodes, links
+    carry bandwidths in MB/s.  Task colours mark which fog node runs
+    them; the highlighted transfer crosses a slow link and pays D/B."""
+    NODE_FC = {1: "#dbe9f6", 2: "#e8e4f3", 3: "#dff0e6", 4: "#fdf3d7"}
+    EDGE_BLUE = "#2c7fb8"
 
-    # ---------- left panel: workflow DAG ----------
-    panel = FancyBboxPatch((0.35, 1.15), 6.6, 8.6,
-                           boxstyle="round,pad=0.02,rounding_size=0.15",
-                           linewidth=1.0, edgecolor="#8fb8de",
-                           facecolor="#f4f9fd")
-    ax.add_patch(panel)
-    ax.text(3.65, 9.30, "workflow DAG", ha="center", fontsize=FS,
-            color=DARK, fontweight="bold")
-    ax.text(3.65, 8.80, "edges carry data $D_{ji}$", ha="center",
-            fontsize=FS_SM, color=DARK, fontstyle="italic")
+    fig, ax = plt.subplots(figsize=(10.2, 5.4), dpi=300)
+    ax.set_xlim(0, 16.4); ax.set_ylim(0, 9.4); ax.axis("off")
 
+    def tnode(x, y, name, f, r=0.62):
+        c = plt.Circle((x, y), r, facecolor=NODE_FC[f],
+                       edgecolor=EDGE_BLUE, lw=1.6, zorder=3)
+        ax.add_patch(c)
+        ax.text(x, y, name, ha="center", va="center", fontsize=8.5,
+                color="black", zorder=4, linespacing=1.15)
+        return (x, y)
+
+    def fnode(x, y, name, f, w=1.7, h=1.0):
+        b = FancyBboxPatch((x - w / 2, y - h / 2), w, h,
+                           boxstyle="round,pad=0.02,rounding_size=0.18",
+                           linewidth=1.6, edgecolor=EDGE_BLUE,
+                           facecolor=NODE_FC[f])
+        ax.add_patch(b)
+        ax.text(x, y, name, ha="center", va="center", fontsize=9,
+                color="black", zorder=4, linespacing=1.15)
+        return (x, y)
+
+    ax.text(3.5, 9.05, "(a) Wildfire response workflow", ha="center",
+            fontsize=11, color="black", fontweight="bold")
+    ax.text(12.4, 9.05, "(b) Fog resource network", ha="center",
+            fontsize=11, color="black", fontweight="bold")
+
+    # ---------- left: workflow DAG (circles) ----------
     T = {}
-    T[1] = box(ax, 2.15, 7.65, 2.8, 0.8, "T1  ingest", fs=FS)
-    T[2] = box(ax, 0.75, 5.95, 2.8, 0.8, "T2  clean", fs=FS)
-    T[3] = box(ax, 3.75, 5.95, 2.8, 0.8, "T3  fuse", fs=FS)
-    T[4] = box(ax, 0.75, 4.25, 2.8, 0.8, "T4  forecast", fs=FS)
-    T[5] = box(ax, 3.75, 4.25, 2.8, 0.8, "T5  assess", fs=FS)
-    T[6] = box(ax, 2.15, 2.50, 2.8, 0.8, "T6  plan", fs=FS,
-               fc=YELLOW, ec=YELLOW_EDGE, bold=True)
+    T[1] = tnode(3.5, 7.9, "T1\nIngest\n$f_1$", 1)
+    T[2] = tnode(1.5, 5.7, "T2\nEnv prep\n$f_1$", 1)
+    T[3] = tnode(5.5, 5.7, "T3\nSmoke\ndetect\n$f_1$", 1, r=0.68)
+    T[4] = tnode(1.5, 3.3, "T4\nSpread\npredict\n$f_3$", 3)
+    T[5] = tnode(5.5, 3.3, "T5\nFire map\n$f_2$", 2)
+    T[6] = tnode(3.5, 1.2, "T6\nDamage\nassess\n$f_4$", 4)
 
-    edges = [(1, 2, "20"), (1, 3, "45"), (2, 4, "15"), (3, 4, "40"),
-             (3, 5, "25"), (4, 6, "10"), (5, 6, "30")]
-    label_offsets = {(1, 2): (-0.95, 0.0), (1, 3): (0.95, 0.0),
-                     (2, 4): (-0.95, 0.0), (3, 4): (0.55, -0.38),
-                     (3, 5): (0.95, 0.0), (4, 6): (-0.95, 0.0),
-                     (5, 6): (0.95, 0.0)}
-    for a, b, lbl in edges:
+    edges = [(1, 2, "200 MB", (-0.75, 0.05)), (1, 3, "800 MB", (0.80, 0.05)),
+             (2, 4, "150 MB", (-0.75, 0.05)), (3, 4, "400 MB", (0.45, -0.1)),
+             (3, 5, "300 MB", (0.85, 0.05)), (4, 6, "120 MB", (-0.75, 0.05)),
+             (5, 6, "250 MB", (0.85, 0.05))]
+    for a, b, lbl, (dx, dy) in edges:
         heavy = (a, b) == (3, 4)
-        dx, dy = label_offsets[(a, b)]
-        arrow(ax, (T[a][0], T[a][1] - 0.40), (T[b][0], T[b][1] + 0.40),
-              color=RED if heavy else DARK,
-              lw=1.9 if heavy else 1.1, rad=-0.06 if abs(a - b) == 2 else 0.0,
-              label=f"$D_{{{a}{b}}}={lbl}$", fs=FS_SM,
-              label_dx=dx, label_dy=dy, label_color=DARK)
+        arrow(ax, (T[a][0], T[a][1] - 0.62), (T[b][0], T[b][1] + 0.62),
+              color="#c0392b" if heavy else DARK,
+              lw=2.0 if heavy else 1.1,
+              rad=-0.10 if abs(a - b) == 2 else 0.0,
+              label=lbl, fs=8.5,
+              label_dx=dx, label_dy=dy,
+              label_color="#c0392b" if heavy else "black")
 
-    # ---------- right panel: infrastructure graph ----------
-    panel2 = FancyBboxPatch((9.05, 1.15), 6.6, 8.6,
-                            boxstyle="round,pad=0.02,rounding_size=0.15",
-                            linewidth=1.0, edgecolor=GREEN_EDGE,
-                            facecolor="#f5faf2")
-    ax.add_patch(panel2)
-    ax.text(12.35, 9.30, "fog infrastructure graph", ha="center",
-            fontsize=FS, color=DARK, fontweight="bold")
-    ax.text(12.35, 8.80, "links carry bandwidth $B_{ba}$", ha="center",
-            fontsize=FS_SM, color=DARK, fontstyle="italic")
-
+    # ---------- right: resource network (rectangles) ----------
     F = {}
-    F[1] = box(ax, 9.55, 7.0, 2.2, 0.95, "$f_1$\ngateway", fs=FS)
-    F[2] = box(ax, 12.85, 7.0, 2.2, 0.95, "$f_2$\nshelter", fs=FS)
-    F[3] = box(ax, 9.55, 4.3, 2.2, 0.95, "$f_3$\nhospital", fs=FS)
-    F[4] = box(ax, 12.85, 4.3, 2.2, 0.95, "$f_4$\nmobile", fs=FS)
+    F[1] = fnode(10.4, 7.6, "$f_1$\nGateway", 1)
+    F[2] = fnode(14.4, 7.6, "$f_2$\nShelter", 2)
+    F[3] = fnode(10.4, 4.2, "$f_3$\nHospital", 3)
+    F[4] = fnode(14.4, 4.2, "$f_4$\nMobile", 4)
 
-    links = [(1, 2, "90", 0.0), (1, 3, "10", 0.0), (2, 4, "60", 0.0),
-             (3, 4, "45", 0.0), (2, 3, "30", -0.14)]
-    for a, b, lbl, rad in links:
+    links = [(1, 2, "90 MB/s", (0, 0.14), 0.0),
+             (1, 3, "10 MB/s", (-0.95, 0.0), 0.0),
+             (2, 4, "60 MB/s", (0.95, 0.0), 0.0),
+             (3, 4, "45 MB/s", (0, 0.14), 0.0),
+             (2, 3, "30 MB/s", (-0.5, 0.35), 0.0)]
+    for a, b, lbl, (dx, dy), rad in links:
         heavy = (a, b) == (1, 3)
-        p1 = (F[a][0], F[a][1] - 0.42 if b in (3, 4) else F[a][1])
-        p2 = (F[b][0], F[b][1] + 0.42 if b in (3, 4) else F[b][1])
-        arrow(ax, p1, p2, color=RED if heavy else GREY,
-              lw=2.1 if heavy else 1.0, rad=rad,
-              label=f"$B_{{{a}{b}}}={lbl}$", fs=FS_SM, label_dy=0.10,
-              label_color=DARK)
+        if b in (3, 4):
+            p1 = (F[a][0], F[a][1] - 0.52)
+            p2 = (F[b][0], F[b][1] + 0.52)
+        else:
+            p1 = (F[a][0] + 0.85, F[a][1])
+            p2 = (F[b][0] - 0.85, F[b][1])
+        # resource links are undirected: plain lines, no arrowhead
+        ax.plot([p1[0], p2[0]], [p1[1], p2[1]],
+                color="#c0392b" if heavy else GREY,
+                lw=2.0 if heavy else 1.0, zorder=2)
+        ax.text((p1[0] + p2[0]) / 2 + dx, (p1[1] + p2[1]) / 2 + dy,
+                lbl, fontsize=8.5, ha="center",
+                color="#c0392b" if heavy else "black",
+                fontstyle="italic")
 
-    # ---------- mapping arrows: task -> node ----------
-    mapping = [(1, 1), (2, 1), (3, 1), (4, 3), (5, 2), (6, 4)]
-    for t, f in mapping:
-        arrow(ax, (T[t][0] + 1.4, T[t][1] - 0.10),
-              (F[f][0] - 1.15, F[f][1] + 0.10),
-              dashed=True, color=BLUE, lw=0.9, rad=0.10)
-    ax.text(8.0, 8.35, "placement $e_{ia}$", ha="center", fontsize=FS_SM,
-            color=DARK, fontstyle="italic")
+    # ---------- payoff callout under the network panel ----------
+    ax.text(12.4, 2.35, "Highlighted transfer: smoke-detection "
+            "frames T3 ($f_1$) $\\rightarrow$ spread prediction T4 "
+            "($f_3$)", ha="center", fontsize=9, color="#c0392b")
+    ax.text(12.4, 1.85, "Delay = data size / link bandwidth",
+            ha="center", fontsize=9.5, color="black")
+    ax.text(12.4, 1.30, "400 MB / 10 MB/s = 40 s", ha="center",
+            fontsize=11, color="#c0392b", fontweight="bold")
 
-    # ---------- the payoff callout ----------
-    call = FancyBboxPatch((0.35, 0.12), 15.3, 0.82,
-                          boxstyle="round,pad=0.02,rounding_size=0.12",
-                          linewidth=1.3, edgecolor=RED, facecolor="#fdf0ee")
-    ax.add_patch(call)
-    ax.text(8.0, 0.53,
-            "T3 on $f_1$, T4 on $f_3$: input $D_{34}{=}40$ crosses "
-            "$B_{13}{=}10$, delay $=4$",
-            ha="center", va="center", fontsize=FS, color=DARK,
-            fontweight="bold")
+    ax.text(3.5, 0.30,
+            "Task colours and fog IDs show placement.  Edge labels: "
+            "data size.  Link labels: bandwidth.",
+            ha="center", fontsize=8, color="black")
 
     fig.savefig(os.path.join(FIG, "disaster-response-dag.png"),
                 bbox_inches="tight", facecolor="white", pad_inches=0.04)
