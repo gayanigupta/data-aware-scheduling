@@ -474,6 +474,8 @@ deployments.
 
 This paper formulated data- and bandwidth-aware scheduling of approximate DAG workflows in federated fog systems as a mixed-integer linear program, and gave three scalable schedulers built on the same cost model. In simulation, the MILP earns a clear accuracy advantage when deadlines are tight; with generous slack the MILP and the greedy coincide at the bound; and at large workflow sizes the lightweight greedy holds its own while the GA's fixed search budget becomes its weakness. Under the retry-once failure model, the schedulers separate on deadline feasibility rather than accuracy.
 
+Together, these results close the loop on the problem set out in the introduction: placements now pay the true cost of moving data between fog sites---the blind baseline shows what goes wrong without that term---and the execution fraction lets a workflow finish at reduced accuracy when full quality would miss the deadline.
+
 Future work follows the shortcomings documented above: sparse storage and decomposed formulations to reach the $10^6$-task graphs we can already generate structurally; adaptive GA budgets that scale with $n$; richer failure semantics such as replication and checkpointing; and online re-scheduling with validation on a real federated fog testbed.
 
 \section*{Acknowledgments}
