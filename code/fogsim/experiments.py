@@ -1,4 +1,4 @@
-"""Experiment driver: per-run evaluation, the four sweeps of Section VI,
+"""Experiment driver: per-run evaluation, the five experiments of Section VI,
 and the result figures.
 """
 
@@ -46,7 +46,7 @@ def evaluate(inst, method, failed=None, seed=0, trials=40):
                 runtime_s=elapsed)
 
 
-def sweep(kind, tasks=50, nodes=5, reps=5, seed=0):
+def experiment(kind, tasks=50, nodes=5, reps=5, seed=0):
     rows = []
     grid = {
         "slack":     [1.0, 1.2, 1.3, 1.5, 2.0],
@@ -82,19 +82,19 @@ def sweep(kind, tasks=50, nodes=5, reps=5, seed=0):
             # the trial count down on large instances (34 s/solve at
             # n*m = 4000) instead of fixing 40 trials for every size
             trials = max(4, min(40, 20000 // (inst.n * inst.m)))
-            # the bandwidth sweep adds the bandwidth-blind baseline so the
+            # the bandwidth experiment adds the bandwidth-blind baseline so the
             # chart can show what data-aware placement is worth
             meths = list(METHODS) + (["blind"] if kind == "bandwidth" else [])
             for meth in meths:
                 if meth == "milp" and inst.n * inst.m > MILP_CAP:
-                    rows.append(dict(sweep=kind, param=x, method=meth,
+                    rows.append(dict(experiment=kind, param=x, method=meth,
                                      rep=rep, score=np.nan, makespan=np.nan,
                                      feasible=np.nan, runtime_s=np.nan,
                                      bound=bound))
                     continue
                 r = evaluate(inst, meth, failed=failed, seed=s + rep,
                              trials=trials)
-                rows.append(dict(sweep=kind, param=x, method=meth, rep=rep,
+                rows.append(dict(experiment=kind, param=x, method=meth, rep=rep,
                                  bound=bound, **r))
                 print(f"{kind}={x} rep={rep} {meth}: "
                       f"score={r['score']:.3f} feas={r['feasible']} "

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Why does a heuristic sometimes beat the MILP?
 
-For every sweep point where the greedy scored above the MILP, this script
+For every experiment point where the greedy scored above the MILP, this script
 rebuilds the exact same instance (same generator arguments and seed),
 checks it really is the same instance by comparing the stored accuracy
 bound, then reruns the MILP twice: once at the original 60-second limit
@@ -28,7 +28,7 @@ from fogsim.greedy import run_greedy
 
 RESULTS = os.path.join(os.path.dirname(__file__), "..", "data", "results")
 
-# every (sweep, parameter, rep) where the greedy scored above the MILP
+# every (experiment, parameter, rep) where the greedy scored above the MILP
 FLAGGED = [
     ("slack", 1.2, 2),
     ("slack", 1.2, 3),
@@ -43,7 +43,7 @@ FLAGGED = [
 
 
 def rebuild(kind, param, rep):
-    """Recreate the exact instance sweep() used for this point."""
+    """Recreate the exact instance experiment() used for this point."""
     seed = 1000 * rep
     if kind == "slack":
         inst = generate_instance(n_tasks=50, n_nodes=5, alpha=param,
@@ -83,7 +83,7 @@ for kind, param, rep in FLAGGED:
     inst, seed = rebuild(kind, param, rep)
     bound = inst.score(np.ones(inst.n))
 
-    # check it really is the same instance the sweep used
+    # check it really is the same instance the experiment used
     csv = pd.read_csv(os.path.join(RESULTS, kind + ".csv"))
     stored = csv[(csv.param == param) & (csv.rep == rep)].bound.iloc[0]
     same = "SAME" if abs(bound - stored) < 1e-9 else "MISMATCH"
@@ -101,7 +101,7 @@ for kind, param, rep in FLAGGED:
     print(f"   300 s: status={s300[0]} wall={s300[1]:.1f}s "
           f"gap={s300[2]:.4g} score={s300[3]:.4f}\n")
 
-    rows.append(dict(sweep=kind, param=param, rep=rep, seed=seed,
+    rows.append(dict(experiment=kind, param=param, rep=rep, seed=seed,
                      instance_check=same, bound=bound,
                      greedy=greedy_score,
                      milp60_status=s60[0], milp60_wall_s=round(s60[1], 1),

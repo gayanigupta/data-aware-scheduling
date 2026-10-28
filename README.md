@@ -26,11 +26,11 @@ Before submitting, confirm the author list, affiliations, and emails in the
 | `paper/cas-refs.bib` | Bibliography shared by both documents. |
 | `paper/IEEEtran.cls` | Official IEEE class file (V1.8b, CTAN) for local builds. |
 | `paper/Figures/` | All figures used by the paper (`perf_*` results + the two draw.io-style diagrams). |
-| `code/fogsim.py` | CLI entry point (`gen` / `sweep` / `plot`). |
-| `code/fogsim/` | Simulator package: `instance.py` (DAG/federation generation), `milp.py` (MILP + LP relaxation via HiGHS), `rounding.py`, `greedy.py`, `ga.py` (the three scalable schedulers), `experiments.py` (sweeps and figures). |
+| `code/fogsim.py` | CLI entry point (`gen` / `experiment` / `plot`). |
+| `code/fogsim/` | Simulator package: `instance.py` (DAG/federation generation), `milp.py` (MILP + LP relaxation via HiGHS), `rounding.py`, `greedy.py`, `ga.py` (the three scalable schedulers), `experiments.py` (experiments and figures). |
 | `code/make_figures.py` | Regenerates the two architecture/DAG diagrams. |
 | `data/instances/` | Generated workflow instances (JSON). |
-| `data/results/` | Sweep CSVs and rendered result figures. |
+| `data/results/` | Experiment CSVs and rendered result figures. |
 | `Sources/` | Reference material from earlier drafts; not compiled. |
 
 ## Reproducing the Experiments
@@ -41,12 +41,12 @@ Requires Python 3 with NumPy, SciPy, and pandas.
 # generate a workflow instance
 python3 code/fogsim.py gen --tasks 50 --nodes 5 --seed 0
 
-# run one experiment sweep -> data/results/<kind>.csv
-python3 code/fogsim.py sweep slack     --tasks 30 --nodes 4 --reps 5
-python3 code/fogsim.py sweep nodes     --tasks 30 --reps 5
-python3 code/fogsim.py sweep size      --nodes 4 --reps 2
-python3 code/fogsim.py sweep failure   --tasks 30 --nodes 4 --reps 5
-python3 code/fogsim.py sweep bandwidth --tasks 50 --nodes 5 --reps 3
+# run one experiment -> data/results/<kind>.csv
+python3 code/fogsim.py experiment slack     --tasks 30 --nodes 4 --reps 5
+python3 code/fogsim.py experiment nodes     --tasks 30 --reps 5
+python3 code/fogsim.py experiment size      --nodes 4 --reps 2
+python3 code/fogsim.py experiment failure   --tasks 30 --nodes 4 --reps 5
+python3 code/fogsim.py experiment bandwidth --tasks 50 --nodes 5 --reps 3
 
 # render figures from the CSVs -> data/results/figures/
 python3 code/fogsim.py plot

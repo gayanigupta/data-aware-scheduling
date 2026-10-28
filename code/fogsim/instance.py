@@ -78,8 +78,18 @@ class Instance:
 
 
 def generate_instance(n_tasks=50, n_nodes=5, density=0.15, alpha=1.5,
-                      seed=0, link_drop=0.15):
-    """Reproducible random instance: DAG + heterogeneous fog federation."""
+                      seed=0, link_drop=0.15,
+                      t_range=(2.0, 6.0), speed_range=(0.8, 1.25),
+                      d_range=(10.0, 80.0), b_range=(10.0, 80.0)):
+    """Reproducible random instance: DAG + heterogeneous fog federation.
+
+    The ranges are chosen so the data-aware terms decide the schedule:
+    task times stay within a modest band (t_range over speed_range gives
+    ~5x spread instead of the ~12x of the earlier [1,5]x[0.5,2] draw),
+    while per-edge data sizes and per-link bandwidths vary widely, so
+    cross-node transfers are comparable to task execution time -- the
+    setting where data-aware placement actually matters.
+    """
     rng = np.random.default_rng(seed)
     n, m = n_tasks, n_nodes
 
@@ -93,16 +103,16 @@ def generate_instance(n_tasks=50, n_nodes=5, density=0.15, alpha=1.5,
     for i in range(n):
         for j in range(n):
             if pos[j] < pos[i] and rng.random() < density:
-                D[j, i] = rng.uniform(5.0, 50.0)
+                D[j, i] = rng.uniform(*d_range)
     for i in range(n):
         if pos[i] > 0 and not np.any(D[:, i]):
             j = perm[rng.integers(0, pos[i])]
-            D[j, i] = rng.uniform(5.0, 50.0)
+            D[j, i] = rng.uniform(*d_range)
 
     # Fog nodes run at different speeds; links have different bandwidths.
-    speed = rng.uniform(0.5, 2.0, m)
-    t = rng.uniform(1.0, 5.0, n)[:, None] / speed[None, :]
-    B = rng.uniform(10.0, 100.0, (m, m))
+    speed = rng.uniform(*speed_range, m)
+    t = rng.uniform(*t_range, n)[:, None] / speed[None, :]
+    B = rng.uniform(*b_range, (m, m))
     np.fill_diagonal(B, np.inf)
     A = rng.uniform(0.8, 2.0, n)
     P = (rng.random((n, m)) > link_drop).astype(int)

@@ -9,7 +9,9 @@ import matplotlib
 matplotlib.use("Agg")
 matplotlib.rcParams["font.family"] = "Arial"
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Arc
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Arc, PathPatch
+from matplotlib.path import Path
+import math
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -67,17 +69,20 @@ def arrow(ax, p1, p2, dashed=False, color=DARK, lw=1.3, label=None,
         mx = (p1[0] + p2[0]) / 2 + label_dx
         my = (p1[1] + p2[1]) / 2 + label_dy
         ax.text(mx, my, label, fontsize=fs, ha="center",
-                color=label_color, fontstyle="italic")
+                color=label_color, fontstyle="italic",
+                bbox=dict(boxstyle="round,pad=0.15", fc="white",
+                          ec="none", alpha=0.9))
 
 
 def figure_architecture():
     """High-level design of the wildfire-response system: sensor inputs
     feed the federated fog network, the data-aware scheduler places the
     six workflow tasks on the four fog nodes, and results return to the
-    emergency operations centre.  Node names, colours, task placements
-    and link rates match Fig. 2 exactly."""
-    fig, ax = plt.subplots(figsize=(7.2, 8.6), dpi=300)
-    ax.set_xlim(0, 22); ax.set_ylim(0, 27.5); ax.axis("off")
+    emergency operations centre.  Landscape layout so it reads well as a
+    two-column figure.  Node names, task placements and link rates match
+    Fig. 2 exactly."""
+    fig, ax = plt.subplots(figsize=(12.0, 6.4), dpi=300)
+    ax.set_xlim(0, 34); ax.set_ylim(0, 18.5); ax.axis("off")
 
     EDGE_BLUE = "#2c7fb8"
 
@@ -96,85 +101,121 @@ def figure_architecture():
                             color=color, zorder=z + 1)
         ax.add_patch(a)
 
+    def cloud(x, y, w, h):
+        """The classic cloud glyph (Font Awesome outline) scaled to
+        (x, y, w, h).  Cubics are already expanded to absolute coords in
+        a 640 x 512 box; y is flipped for matplotlib."""
+        pts640 = [
+            (537.6, 226.6),
+            (594.3, 245.5), (633.6, 299.1), (633.6, 362.2),
+            (633.6, 440.9), (569.8, 504.9), (491.1, 504.9),
+            (160.0, 504.9),
+            (71.6, 504.9), (0.0, 433.3), (0.0, 355.4),
+            (0.0, 286.3), (50.0, 228.1), (116.5, 215.0),
+            (123.2, 139.0), (191.6, 86.3), (270.1, 86.3),
+            (331.4, 86.3), (384.6, 125.2), (405.6, 181.6),
+            (420.8, 163.3), (446.2, 151.9), (474.2, 151.9),
+            (529.7, 151.9), (574.8, 197.0), (574.8, 252.5),
+            (574.8, 254.1), (574.7, 255.7), (574.6, 257.2),
+            (0, 0),
+        ]
+        codes = ([Path.MOVETO] + [Path.CURVE4] * 6 + [Path.LINETO] +
+                 [Path.CURVE4] * 21 + [Path.CLOSEPOLY])
+        pts = [(x + vx / 640.0 * w, y + (512.0 - vy) / 512.0 * h)
+               for vx, vy in pts640]
+        ax.add_patch(PathPatch(Path(pts, codes), facecolor="white",
+                               edgecolor=GREY, lw=1.3, linestyle="--",
+                               zorder=4))
+
     # ---------- top row: inputs and scheduler ----------
-    box(ax, 0.6, 24.9, 6.8, 2.1,
+    box(ax, 0.8, 15.6, 9.4, 2.3,
         "Wildfire monitoring inputs\ndrone imagery, cameras and\n"
         "environmental sensors", fc="white", ec=DARK, fs=FS,
         square=True)
-    box(ax, 11.5, 24.9, 9.8, 2.1,
+    box(ax, 12.2, 15.6, 12.2, 2.3,
         "Data-aware scheduler\nassign tasks using compute time,\n"
         "data size and network bandwidth",
         fc="white", ec=DARK, fs=FS, bold=True, square=True)
 
+    # ---------- cloud: unreachable during the event ----------
+    cloud(27.3, 13.6, 5.4, 4.3)
+    ax.text(30.0, 15.95, "Cloud", ha="center", va="center",
+            fontsize=FS, color=DARK, zorder=6)
+    ax.plot([28.2, 31.9], [13.9, 17.6], color=RED, lw=1.6,
+            solid_capstyle="round", zorder=6)
+    ax.text(30.0, 12.85, "unreachable during the event", ha="center",
+            va="center", fontsize=FS_SM, color=RED,
+            fontstyle="italic", zorder=6)
+
     # ---------- federated fog container ----------
-    fed = FancyBboxPatch((1.0, 3.8), 20.3, 20.0,
+    fed = FancyBboxPatch((0.8, 1.6), 24.6, 13.0,
                          boxstyle="square,pad=0.02",
                          linewidth=1.3, edgecolor="#9a9a9a",
                          facecolor="none", zorder=0)
     ax.add_patch(fed)
-    ax.text(10.2, 23.45, "Federated fog network", ha="center",
+    ax.text(13.1, 14.1, "Federated fog network", ha="center",
             va="center", fontsize=FS + 0.5, color="#555555",
             fontweight="bold", zorder=5)
 
     # ---------- fog nodes with their Fig. 2 task assignments ----------
-    box(ax, 2.4, 19.2, 5.4, 3.0,
+    box(ax, 2.2, 9.6, 6.8, 3.6,
         "f1 — Gateway\nT1: Collect data\nT2: Prepare data\n"
         "T3: Detect smoke", fc="white", ec=EDGE_BLUE, fs=FS,
         square=True)
-    box(ax, 13.4, 19.4, 5.4, 2.6,
-        "f3 — Hospital\nT4: Predict spread",
+    box(ax, 16.8, 10.0, 6.8, 3.2,
+        "f3 — Hospital\nT4: Predict fire spread",
         fc="white", ec=EDGE_BLUE, fs=FS, square=True)
-    box(ax, 2.4, 11.6, 5.4, 2.2,
+    box(ax, 2.2, 3.2, 6.8, 3.0,
         "f2 — Shelter\nT5: Map fire",
         fc="white", ec=EDGE_BLUE, fs=FS, square=True)
-    box(ax, 8.6, 5.6, 5.6, 2.2,
+    box(ax, 16.8, 3.2, 6.8, 3.0,
         "f4 — Mobile unit\nT6: Assess damage",
         fc="white", ec=EDGE_BLUE, fs=FS, square=True)
 
     # ---------- inter-node links (same rates as Fig. 2b) ----------
     # f1 -> f3: straight horizontal, the bottleneck carrying T3 -> T4
-    elbow([(7.8, 20.7), (13.4, 20.7)], color=RED, lw=2.0)
-    pill(10.6, 21.3, "80 Mbp/s — bottleneck\nT3→T4: 1800 MB",
+    elbow([(9.0, 11.4), (16.8, 11.4)], color=RED, lw=2.0)
+    pill(12.9, 12.35, "80 Mbp/s — bottleneck\nT3→T4: 1.8 GB",
          heavy=True)
     # f1 -> f2: straight vertical
-    elbow([(5.1, 19.2), (5.1, 13.8)], color="#555555")
-    pill(4.55, 16.5, "800 Mbp/s\nT3→T5: 900 MB", ha="right")
+    elbow([(5.6, 9.6), (5.6, 6.2)], color="#555555")
+    pill(4.9, 7.9, "800 Mbp/s\nT3→T5: 0.9 GB", ha="right")
     # f3 -> f2: elbow down, left, down
-    elbow([(16.1, 19.4), (16.1, 15.6), (6.9, 15.6), (6.9, 13.8)],
+    elbow([(20.2, 10.0), (20.2, 7.8), (7.2, 7.8), (7.2, 6.2)],
           color="#555555")
-    pill(11.5, 16.05, "300 Mbp/s")
-    # f3 -> f4: straight down the right, then left into f4
-    elbow([(17.6, 19.4), (17.6, 6.7), (14.2, 6.7)], color="#555555")
-    pill(17.95, 13.0, "400 Mbp/s\nT4→T6: 350 MB", ha="left")
-    # f2 -> f4: down, right, down into f4
-    elbow([(5.1, 11.6), (5.1, 9.3), (9.6, 9.3), (9.6, 7.8)],
-          color="#555555")
-    pill(7.35, 9.75, "500 Mbp/s\nT5→T6: 700 MB")
+    pill(13.6, 8.15, "300 Mbp/s")
+    # f3 -> f4: straight down
+    elbow([(21.0, 10.0), (21.0, 6.2)], color="#555555")
+    pill(21.7, 8.1, "400 Mbp/s\nT4→T6: 0.35 GB", ha="left")
+    # f2 -> f4: straight horizontal
+    elbow([(9.0, 4.7), (16.8, 4.7)], color="#555555")
+    pill(12.9, 5.15, "500 Mbp/s\nT5→T6: 0.7 GB")
 
-    # ---------- raw data in (straight vertical) ----------
-    elbow([(3.0, 24.9), (3.0, 22.2)], color=DARK, lw=1.2)
-    pill(1.35, 24.25, "Raw data", ha="left")
+    # ---------- raw data in ----------
+    elbow([(3.2, 15.6), (3.2, 13.2)], color=DARK, lw=1.2)
+    pill(2.7, 14.75, "Raw data", ha="right")
 
     # ---------- task placement: dashed, orthogonal drops ----------
-    elbow([(13.0, 24.9), (13.0, 23.2), (5.1, 23.2), (5.1, 22.25)],
+    elbow([(13.6, 15.6), (13.6, 14.55), (5.6, 14.55), (5.6, 13.2)],
           dashed=True, color=GREY, lw=0.9, z=2)
-    elbow([(16.1, 24.9), (16.1, 22.05)], dashed=True, color=GREY,
+    elbow([(18.3, 15.6), (18.3, 13.2)], dashed=True, color=GREY,
           lw=0.9, z=2)
-    elbow([(19.5, 24.9), (19.5, 14.6), (4.2, 14.6), (4.2, 13.85)],
+    elbow([(22.9, 15.6), (22.9, 8.6), (4.0, 8.6), (4.0, 6.2)],
           dashed=True, color=GREY, lw=0.9, z=2)
-    elbow([(20.4, 24.9), (20.4, 9.6), (10.8, 9.6), (10.8, 7.85)],
+    elbow([(24.0, 15.6), (24.0, 8.95), (18.9, 8.95), (18.9, 6.2)],
           dashed=True, color=GREY, lw=0.9, z=2)
-    pill(16.5, 23.6, "Task placement", ha="left")
+    pill(16.6, 15.1, "Task placement", ha="left")
 
     # ---------- results out ----------
-    box(ax, 7.6, 0.4, 7.6, 2.2,
-        "Emergency operations centre\nfire map, spread prediction\n"
-        "and damage assessment", fc="white", ec=DARK, fs=FS,
+    box(ax, 27.0, 7.0, 6.4, 3.4,
+        "Emergency\noperations centre\nfire map, spread\n"
+        "prediction, damage", fc="white", ec=DARK, fs=FS,
         square=True)
-    elbow([(11.4, 5.6), (11.4, 2.65)], color=DARK, lw=1.2)
-    pill(11.9, 4.1, "Response results", ha="left")
+    elbow([(23.2, 4.9), (24.7, 4.9), (24.7, 8.7), (27.0, 8.7)],
+          color=DARK, lw=1.2)
+    pill(24.5, 6.5, "Response results", ha="center")
 
-    ax.text(2.0, 4.25, "Link labels: rate in Mbp/s; task data in MB "
+    ax.text(1.4, 2.0, "Link labels: rate in Mbp/s; task data in GB "
             "where used", fontsize=FS_SM - 0.5, color="#777777",
             fontstyle="italic", ha="left")
 
@@ -192,98 +233,111 @@ def figure_dag():
     NODE_FC = {1: "#dbe9f6", 2: "#e8e4f3", 3: "#dff0e6", 4: "#fdf3d7"}
     EDGE_BLUE = "#2c7fb8"
 
-    fig, ax = plt.subplots(figsize=(10.2, 5.4), dpi=300)
+    fig, ax = plt.subplots(figsize=(7.6, 4.15), dpi=300)
     ax.set_xlim(0, 16.4); ax.set_ylim(0, 9.4); ax.axis("off")
 
     def tnode(x, y, name, f, r=0.62):
         c = plt.Circle((x, y), r, facecolor=NODE_FC[f],
                        edgecolor=EDGE_BLUE, lw=1.6, zorder=3)
         ax.add_patch(c)
-        ax.text(x, y, name, ha="center", va="center", fontsize=8.5,
-                color="black", zorder=4, linespacing=1.15)
+        ax.text(x, y, name, ha="center", va="center", fontsize=9.5,
+                color="black", zorder=4, linespacing=1.2)
         return (x, y)
 
-    def fnode(x, y, name, f, w=1.7, h=1.0):
+    def fnode(x, y, name, f, w=2.05, h=1.1):
         b = FancyBboxPatch((x - w / 2, y - h / 2), w, h,
                            boxstyle="round,pad=0.02,rounding_size=0.18",
                            linewidth=1.6, edgecolor=EDGE_BLUE,
                            facecolor=NODE_FC[f])
         ax.add_patch(b)
-        ax.text(x, y, name, ha="center", va="center", fontsize=9,
+        ax.text(x, y, name, ha="center", va="center", fontsize=11,
                 color="black", zorder=4, linespacing=1.15)
         return (x, y)
 
     ax.text(3.5, 9.05, "(a) Wildfire response workflow", ha="center",
-            fontsize=11, color="black", fontweight="bold")
-    ax.text(12.4, 9.05, "(b) Fog resource network", ha="center",
-            fontsize=11, color="black", fontweight="bold")
+            fontsize=14, color="black", fontweight="bold")
+    ax.text(11.2, 9.05, "(b) Fog resource network", ha="center",
+            fontsize=14, color="black", fontweight="bold")
 
     # ---------- left: workflow DAG (circles) ----------
     T = {}
-    T[1] = tnode(3.5, 7.9, "T1\nCollect\ndata\nf1", 1, r=0.66)
-    T[2] = tnode(1.5, 5.7, "T2\nPrepare\ndata\nf1", 1, r=0.66)
-    T[3] = tnode(5.5, 5.7, "T3\nDetect\nsmoke\nf1", 1, r=0.68)
-    T[4] = tnode(1.5, 3.3, "T4\nPredict\nspread\nf3", 3, r=0.66)
-    T[5] = tnode(5.5, 3.3, "T5\nMap\nfire\nf2", 2)
-    T[6] = tnode(3.5, 1.2, "T6\nAssess\ndamage\nf4", 4, r=0.66)
+    T[1] = tnode(3.5, 7.9, "T1\nCollect\nf1", 1, r=0.82)
+    T[2] = tnode(1.4, 5.7, "T2\nPrepare\nf1", 1, r=0.82)
+    T[3] = tnode(5.6, 5.7, "T3\nDetect\nf1", 1, r=0.82)
+    T[4] = tnode(1.4, 3.3, "T4\nPredict\nf3", 3, r=0.82)
+    T[5] = tnode(5.6, 3.3, "T5\nMap\nf2", 2, r=0.82)
+    T[6] = tnode(3.5, 1.3, "T6\nAssess\nf4", 4, r=0.82)
 
-    edges = [(1, 2, "1200 MB", (-0.85, 0.05)), (1, 3, "2400 MB", (0.9, 0.05)),
-             (2, 4, "450 MB", (-0.75, 0.05)), (3, 4, "1800 MB", (0.5, -0.1)),
-             (3, 5, "900 MB", (0.85, 0.05)), (4, 6, "350 MB", (-0.75, 0.05)),
-             (5, 6, "700 MB", (0.85, 0.05))]
+    edges = [(1, 2, "1.2 GB", (-0.85, 0.05)), (1, 3, "2.4 GB", (0.9, 0.05)),
+             (2, 4, "0.45 GB", (-0.75, 0.05)), (3, 4, "1.8 GB", (0.5, -0.1)),
+             (3, 5, "0.9 GB", (0.85, 0.05)), (4, 6, "0.35 GB", (-0.75, 0.05)),
+             (5, 6, "0.7 GB", (0.85, 0.05))]
     for a, b, lbl, (dx, dy) in edges:
         heavy = (a, b) == (3, 4)
-        arrow(ax, (T[a][0], T[a][1] - 0.62), (T[b][0], T[b][1] + 0.62),
+        ux, uy = T[b][0] - T[a][0], T[b][1] - T[a][1]
+        d = math.hypot(ux, uy)
+        ux, uy = ux / d, uy / d
+        p1 = (T[a][0] + ux * 0.84, T[a][1] + uy * 0.84)
+        p2 = (T[b][0] - ux * 0.84, T[b][1] - uy * 0.84)
+        arrow(ax, p1, p2,
               color="#c0392b" if heavy else DARK,
               lw=2.0 if heavy else 1.1,
-              rad=-0.10 if abs(a - b) == 2 else 0.0,
-              label=lbl, fs=8.5,
+              rad=0.0,
+              label=lbl, fs=11,
               label_dx=dx, label_dy=dy,
               label_color="#c0392b" if heavy else "black")
 
     # ---------- right: resource network (rectangles) ----------
     F = {}
-    F[1] = fnode(10.4, 7.6, "f1\nGateway", 1)
-    F[2] = fnode(14.4, 7.6, "f2\nShelter", 2)
-    F[3] = fnode(10.4, 4.2, "f3\nHospital", 3)
-    F[4] = fnode(14.4, 4.2, "f4\nMobile", 4)
+    F[1] = fnode(9.2, 7.6, "f1\nGateway\nedge server", 1, h=1.55)
+    F[2] = fnode(13.2, 7.6, "f2\nShelter\nedge server", 2, h=1.55)
+    F[3] = fnode(9.2, 4.2, "f3\nHospital\nedge server", 3, h=1.55)
+    F[4] = fnode(13.2, 4.2, "f4\nMobile\nJetson-class", 4, h=1.55)
 
-    links = [(1, 2, "800 Mbp/s", (0, 0.14), 0.0),
-             (1, 3, "80 Mbp/s", (-1.05, 0.0), 0.0),
-             (2, 4, "500 Mbp/s", (1.05, 0.0), 0.0),
-             (3, 4, "400 Mbp/s", (0, 0.14), 0.0),
-             (2, 3, "300 Mbp/s", (-0.6, 0.4), 0.0)]
-    for a, b, lbl, (dx, dy), rad in links:
+    # (a, b, label, label offset, carries a transfer in direction a -> b?)
+    links = [(1, 2, "800 Mbp/s", (0, 0.62), True, 0),
+             (1, 3, "80 Mbp/s", (-1.0, 0.0), True, 0),
+             (2, 4, "500 Mbp/s", (1.0, 0.0), True, 0),
+             (3, 4, "400 Mbp/s", (0.1, 0.62), True, 0),
+             (2, 3, "300 Mbp/s", (-0.8, 0.5), False, 0)]
+    for a, b, lbl, (dx, dy), directed, rot in links:
         heavy = (a, b) == (1, 3)
         if b in (3, 4):
-            p1 = (F[a][0], F[a][1] - 0.52)
-            p2 = (F[b][0], F[b][1] + 0.52)
+            p1 = (F[a][0], F[a][1] - 0.80)
+            p2 = (F[b][0], F[b][1] + 0.80)
         else:
-            p1 = (F[a][0] + 0.85, F[a][1])
-            p2 = (F[b][0] - 0.85, F[b][1])
-        # resource links are undirected: plain lines, no arrowhead
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]],
-                color="#c0392b" if heavy else GREY,
-                lw=2.0 if heavy else 1.0, zorder=2)
+            p1 = (F[a][0] + 1.05, F[a][1])
+            p2 = (F[b][0] - 1.05, F[b][1])
+        col = "#c0392b" if heavy else GREY
+        if directed:
+            ax.add_patch(FancyArrowPatch(
+                p1, p2, arrowstyle="-|>", mutation_scale=13,
+                linewidth=2.0 if heavy else 1.1,
+                color=col, zorder=2))
+        else:
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]],
+                    color=col, lw=1.0, ls=":", zorder=2)
         ax.text((p1[0] + p2[0]) / 2 + dx, (p1[1] + p2[1]) / 2 + dy,
-                lbl, fontsize=8.5, ha="center",
+                lbl, fontsize=10.5, ha="center", va="center",
+                rotation=rot,
                 color="#c0392b" if heavy else "black",
-                fontstyle="italic")
+                fontstyle="italic", linespacing=1.25, zorder=5,
+                bbox=dict(boxstyle="round,pad=0.15", fc="white",
+                          ec="none", alpha=0.9))
 
-    # ---------- payoff callout under the network panel ----------
-    ax.text(12.4, 2.35, "Highlighted transfer: smoke frames "
-            "T3 (f1) → spread prediction T4 (f3)",
-            ha="center", fontsize=9, color="#c0392b")
-    ax.text(12.4, 1.85, "Delay = data size / link rate",
-            ha="center", fontsize=9.5, color="black")
-    ax.text(12.4, 1.30, "1800 MB = 14400 Mb,   14400 / 80 Mbp/s "
-            "= 180 s", ha="center", fontsize=10.5,
-            color="#c0392b", fontweight="bold")
+    # ---------- payoff note under the network panel ----------
+    ax.text(11.2, 1.85, "Highlighted transfer: T3 on f1 → T4 on f3",
+            ha="center", fontsize=10.5, color=DARK, zorder=2)
+    ax.text(11.2, 1.4, "Delay = data size / link bandwidth",
+            ha="center", fontsize=10, color=DARK, zorder=2)
+    ax.text(11.2, 0.85, "1.8 GB = 14.4 Gb / 80 Mbp/s = 180 s",
+            ha="center", fontsize=12, color="#c0392b",
+            fontweight="bold", zorder=2)
 
-    ax.text(3.5, 0.30,
-            "Task colours and fog IDs show placement.  Edge labels: "
-            "data size.  Link labels: bandwidth.",
-            ha="center", fontsize=8, color="black")
+    ax.text(8.2, 0.0,
+            "Task colours and fog IDs show placement.   Edge labels: "
+            "data sizes.   Link labels: bandwidth.",
+            ha="center", va="bottom", fontsize=9.5, color=GREY)
 
     fig.savefig(os.path.join(FIG, "disaster-response-dag.png"),
                 bbox_inches="tight", transparent=True, pad_inches=0.04)
