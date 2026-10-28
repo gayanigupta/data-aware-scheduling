@@ -244,7 +244,7 @@ def figure_dag():
                 color="black", zorder=4, linespacing=1.2)
         return (x, y)
 
-    def fnode(x, y, name, f, w=2.05, h=1.1):
+    def fnode(x, y, name, f, w=2.15, h=1.1):
         b = FancyBboxPatch((x - w / 2, y - h / 2), w, h,
                            boxstyle="round,pad=0.02,rounding_size=0.18",
                            linewidth=1.6, edgecolor=EDGE_BLUE,
@@ -289,16 +289,16 @@ def figure_dag():
 
     # ---------- right: resource network (rectangles) ----------
     F = {}
-    F[1] = fnode(9.2, 7.6, "f1\nGateway\nedge server", 1, h=1.55)
-    F[2] = fnode(13.2, 7.6, "f2\nShelter\nedge server", 2, h=1.55)
-    F[3] = fnode(9.2, 4.2, "f3\nHospital\nedge server", 3, h=1.55)
-    F[4] = fnode(13.2, 4.2, "f4\nMobile\nJetson-class", 4, h=1.55)
+    F[1] = fnode(9.2, 7.6, "f1\nGateway\nedge server + GPU", 1, h=1.55)
+    F[2] = fnode(13.2, 7.6, "f2\nShelter\nsmall edge server", 2, h=1.55)
+    F[3] = fnode(9.2, 4.2, "f3\nHospital\nedge server + GPU", 3, h=1.55)
+    F[4] = fnode(13.2, 4.2, "f4\nMobile unit\nJetson-class", 4, h=1.55)
 
     # (a, b, label, label offset, directed a -> b?)
-    links = [(1, 2, "800 Mbp/s", (0, 0.62), True, 0),
-             (1, 3, "80 Mbp/s", (-1.0, 0.0), True, 0),
-             (2, 4, "500 Mbp/s", (1.0, 0.0), True, 0),
-             (3, 4, "400 Mbp/s", (0.1, 0.62), True, 0)]
+    links = [(1, 2, "800 Mbp/s\nWi-Fi 6", (0, -0.75), True, 0),
+             (1, 3, "80 Mbp/s\nLTE backup", (-1.45, 0.0), True, 0),
+             (2, 4, "500 Mbp/s\nWi-Fi", (1.45, 0.0), True, 0),
+             (3, 4, "400 Mbp/s\nWi-Fi", (0.55, 0.72), True, 0)]
     for a, b, lbl, (dx, dy), directed, rot in links:
         heavy = (a, b) == (1, 3)
         if a == 3 and b == 4:                # horizontal, right to right
@@ -327,7 +327,8 @@ def figure_dag():
     elb = [(12.15, 7.6), (11.6, 7.6), (11.6, 5.0), (9.2, 5.0)]
     xs, ys = zip(*elb)
     ax.plot(xs, ys, color=GREY, lw=1.0, ls=":", zorder=2)
-    ax.text(11.6, 5.75, "300 Mbp/s", fontsize=10.5, ha="center",
+    ax.text(10.6, 6.6, "300 Mbp/s\n(microwave)", fontsize=10.5,
+            ha="center",
             va="center", color="black", fontstyle="italic", zorder=5,
             bbox=dict(boxstyle="round,pad=0.15", fc="white",
                       ec="none", alpha=0.9))
