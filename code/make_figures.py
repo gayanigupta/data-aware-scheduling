@@ -90,12 +90,12 @@ def figure_architecture():
         ax.text(x, y, text, fontsize=FS_SM, ha=ha, va="center",
                 color=RED if heavy else DARK, zorder=6, linespacing=1.2)
 
-    def elbow(pts, dashed=False, color=DARK, lw=1.1, z=3):
+    def elbow(pts, dashed=False, color=DARK, lw=1.1, z=3, ls="-"):
         """Axis-aligned (orthogonal) connector: polyline plus arrowhead
         on the final straight segment."""
         xs = [p[0] for p in pts]; ys = [p[1] for p in pts]
         ax.plot(xs, ys, color=color, lw=lw, zorder=z,
-                linestyle=(0, (4, 3)) if dashed else "-")
+                linestyle=(0, (4, 3)) if dashed else ls)
         a = FancyArrowPatch(pts[-2], pts[-1], arrowstyle="-|>",
                             mutation_scale=11, linewidth=lw,
                             color=color, zorder=z + 1)
@@ -180,10 +180,10 @@ def figure_architecture():
     # f1 -> f2: straight vertical
     elbow([(5.6, 9.6), (5.6, 6.2)], color="#555555")
     pill(4.9, 7.9, "800 Mbp/s\nT3→T5: 0.9 GB", ha="right")
-    # f3 -> f2: elbow down, left, down
+    # f3 -- f2: present but carries no transfer (dotted, as in Fig. 2b)
     elbow([(20.2, 10.0), (20.2, 7.8), (7.2, 7.8), (7.2, 6.2)],
-          color="#555555")
-    pill(13.6, 8.15, "300 Mbp/s")
+          color="#555555", ls=":")
+    pill(13.6, 8.15, "300 Mbp/s (unused)")
     # f3 -> f4: straight down
     elbow([(21.0, 10.0), (21.0, 6.2)], color="#555555")
     pill(21.7, 8.1, "400 Mbp/s\nT4→T6: 0.35 GB", ha="left")
