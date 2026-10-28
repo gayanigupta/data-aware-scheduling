@@ -11,7 +11,7 @@ The four schedulers live in their own modules:
 Entry point (run from the project root):
 
     python3 code/fogsim.py gen    --tasks 50 --nodes 5 --seed 0
-    python3 code/fogsim.py sweep  slack --tasks 30 --nodes 4 --reps 5
+    python3 code/fogsim.py experiment  slack --tasks 30 --nodes 4 --reps 5
     python3 code/fogsim.py plot
 """
 
@@ -28,4 +28,4 @@ from .milp import run_milp
 from .rounding import run_rounding
 from .greedy import run_greedy
 from .ga import run_ga
-from .experiments import evaluate, sweep, plot
+from .experiments import evaluate, experiment, plot

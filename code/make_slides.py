@@ -975,7 +975,7 @@ s = slide("Experimental setup", notes=(
     "discrete-event simulator in NumPy with the "
     "HiGHS solver. The parameters are chosen so "
     "a transfer can genuinely rival a task, "
-    "which is the regime that matters. Four "
+    "which is the case that matters. Four "
     "datasets, five experiments, five fresh "
     "instances per point."))
 table(s, [

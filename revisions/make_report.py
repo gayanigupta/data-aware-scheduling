@@ -136,7 +136,7 @@ doc.add_paragraph(
     "generates its instance on the spot from the seed, and all four "
     "methods are run on that one generated object. So by construction "
     "they could not have seen different data. To be extra sure that my "
-    "reruns rebuilt the same instances the sweeps had used, I compared "
+    "reruns rebuilt the same instances the experiments had used, I compared "
     "each rebuilt instance's accuracy bound (the score obtained when "
     "every task runs in full) against the bound recorded in the result "
     "files. On all nine flagged instances the bounds matched to nine "
