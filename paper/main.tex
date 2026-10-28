@@ -20,6 +20,7 @@
 \usepackage{placeins}
 
 \usepackage[normalem]{ulem}
+\newcommand{\rev}[1]{\textcolor{blue}{#1}}
 
 % Compact float spacing for the 8-page limit
 \setlength{\textfloatsep}{9pt plus 2pt minus 3pt}
@@ -155,12 +156,12 @@ all predecessors can arrive in parallel when the links allow it, and
 concurrent tasks on the same node do not slow each other down. The
 important assumption is the last one: a task can run approximately, and
 executing fraction $l$ of it costs fraction $l$ of its full time and
-earns fraction $l$ of its accuracy. Running $T_i$ at $l_{ia}{=}0.5$
+earns fraction $l$ of its accuracy. \rev{Running $T_i$ at $l_{ia}{=}0.5$
 produces half of a full-quality result---an iterative solver stopped
 after half its iterations, a video pipeline processing every other
 frame. This linear trade-off is a first-order model, not a law, but it
 makes the deadline--accuracy trade-off explicit and keeps
-\eqref{eq:obj}--\eqref{eq:bin} linear.
+\eqref{eq:obj}--\eqref{eq:bin} linear.}
 
 \subsection{The Scheduling Problem}
 
@@ -215,7 +216,7 @@ subject to
  &e_{ia} \in\{0,1\}. && \label{eq:bin}
 \end{align}
 
-Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only run where it is placed, and at most one $l_{ia}$ per task is non-zero. The case $l_{ia}=0$ means the task is placed but never runs; it earns no accuracy, but it still hands its output data $D_{ji}$ to every successor, so the transfer cost in \eqref{eq:comm} is charged whether or not the task ran. Skipping is rare in practice (Fig.~\ref{fig:skipped}); every certified-optimal run executes all tasks at least partially. Constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} are quadratic; the Appendix gives the standard linearization ($z_{ia}=e_{ia}M_{ia}$) and the correctness argument.
+Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only run where it is placed, and at most one $l_{ia}$ per task is non-zero. \rev{The case $l_{ia}=0$ means the task is placed but never runs; it earns no accuracy, but it still hands its output data $D_{ji}$ to every successor, so the transfer cost in \eqref{eq:comm} is charged whether or not the task ran. Skipping is rare in practice (Fig.~\ref{fig:skipped}); every certified-optimal run executes all tasks at least partially.} Constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} are quadratic; the Appendix gives the standard linearization ($z_{ia}=e_{ia}M_{ia}$) and the correctness argument.
 
 Scheduling problems of this kind are NP-hard already on unrelated
 parallel machines \cite{lenstra1990approximation}, so we treat the MILP
@@ -322,7 +323,7 @@ Because the GA evaluates complete assignments instead of committing tasks one at
 
 \subsection{Experimental Setup}
 
-All experiments use a custom discrete-event simulator. Workloads are synthetic disaster-response DAGs serialized in JSON, each task carrying an execution-time vector $t_{ia}$, edge data sizes $D_{ji}$, a full-accuracy value $A_i$, and eligibility $P_{ia}$. The fog federation is generated with heterogeneous node speeds and link bandwidths, and communication delays follow Eq.~\eqref{eq:comm}. The parameters are chosen so that data transfers genuinely contest compute rather than being negligible or prohibitive: task times $t_{ia}\in[2,6]$, edge data sizes $D_{ji}\in[10,80]$, and link bandwidths $B_{ba}\in[10,80]$. Reading one time unit as 100\,s, one data unit as 100\,MB, and one bandwidth unit as 8\,Mbp/s, these correspond to task runtimes of roughly 3--10 minutes (analytics and inference steps on Jetson-class fog hardware), edge payloads of 1--8\,GB (drone imagery bundles and weather rasters), and link rates of 80--640\,Mbp/s (the Wi-Fi/LTE backhaul range shown in Fig.~\ref{fig:dag}), which keeps $D_{ji}/B_{ba}$ comparable to task execution time. Node speeds vary within $[0.8,1.25]\times$---a modest band, so that outcomes are decided by data movement rather than by which node happens to be fastest---and roughly 15\% of task--node pairs are ineligible, modeling missing sensor feeds or software dependencies.
+All experiments use a custom discrete-event simulator. Workloads are synthetic disaster-response DAGs serialized in JSON, each task carrying an execution-time vector $t_{ia}$, edge data sizes $D_{ji}$, a full-accuracy value $A_i$, and eligibility $P_{ia}$. The fog federation is generated with heterogeneous node speeds and link bandwidths, and communication delays follow Eq.~\eqref{eq:comm}. The parameters are chosen so that data transfers genuinely contest compute rather than being negligible or prohibitive: task times $t_{ia}\in[2,6]$, edge data sizes $D_{ji}\in[10,80]$, and link bandwidths $B_{ba}\in[10,80]$. \rev{Reading one time unit as 100\,s, one data unit as 100\,MB, and one bandwidth unit as 8\,Mbp/s, these correspond to task runtimes of roughly 3--10 minutes (analytics and inference steps on Jetson-class fog hardware), edge payloads of 1--8\,GB (drone imagery bundles and weather rasters), and link rates of 80--640\,Mbp/s (the Wi-Fi/LTE backhaul range shown in Fig.~\ref{fig:dag}), which keeps $D_{ji}/B_{ba}$ comparable to task execution time. Node speeds vary within $[0.8,1.25]\times$---a modest band, so that outcomes are decided by data movement rather than by which node happens to be fastest---and roughly 15\% of task--node pairs are ineligible, modeling missing sensor feeds or software dependencies.}
 
 We vary five factors. \emph{Test datasets} are four seeded instance
 sets: 10 tasks/3 nodes, 100 tasks/5 nodes, 500 tasks/8 nodes, and 1000
@@ -348,7 +349,7 @@ if transfers were free: it never runs the $\ell$-shrinking loop of
 Algorithm~\ref{alg:greedy}, so it reports bound-level scores even when
 its schedules miss the deadline under real link costs.
 
-Unless a varied parameter says otherwise, every instance uses the default configuration: $n{=}50$ tasks, $m{=}5$ fog nodes, slack $\alpha=1.5$, edge density $0.15$, and ten replications per point drawn from two independent seed sets of five, so the reported means do not hinge on a single instance draw. The MILP is solved with a 60\,s time limit and skipped above 800 assignment variables ($n\,m$); a time-limited run reports its best \emph{incumbent}, which can sit below an achievable bound the solve has not certified. Every MILP run that finished below another method on the same instance was therefore re-solved with a 300\,s limit and a $10^{-6}$ optimality gap, and the figures report these certified scores.
+Unless a varied parameter says otherwise, every instance uses the default configuration: $n{=}50$ tasks, $m{=}5$ fog nodes, slack $\alpha=1.5$, edge density $0.15$, \rev{and ten replications per point drawn from two independent seed sets of five, so the reported means do not hinge on a single instance draw}. The MILP is solved with a 60\,s time limit and skipped above 800 assignment variables ($n\,m$); a time-limited run reports its best \emph{incumbent}, which can sit below an achievable bound the solve has not certified. \rev{Every MILP run that finished below another method on the same instance was therefore re-solved with a 300\,s limit and a $10^{-6}$ optimality gap, and the figures report these certified scores.}
 
 Metrics recorded per run: the achieved accuracy score $\bar{A}=\frac{1}{n}\sum_i A_i\,\ell_i$, where $\ell_i=\sum_a l_{ia}$. Because each $A_i$ is an accuracy \emph{weight} rather than a probability, the score is not bounded by~1 and is read relative to the max-accuracy bound of the same instance, drawn as a dashed line in every figure. Makespan and deadline adherence are also recorded.
 
