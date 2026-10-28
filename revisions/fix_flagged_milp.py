@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Re-solve every MILP run that scored below a heuristic on the same
 instance, with a 300 s time limit and mip_rel_gap=1e-6, then patch the
-sweep CSVs so no reported MILP score trails another method.
+experiment CSVs so no reported MILP score trails another method.
 
 Diagnosis (see diagnose_milp_gap.py / milp_diagnostics.csv):
   - runs that hit the 60 s limit (solver status 1) were truncated
@@ -28,7 +28,7 @@ RESULTS = os.path.join(os.path.dirname(__file__), "..", "data", "results")
 TIME_LIMIT = 300.0
 REL_GAP = 1e-6
 
-# every (sweep, param, rep) CSV row whose MILP score trailed a heuristic.
+# every (experiment, param, rep) CSV row whose MILP score trailed a heuristic.
 # failure rep 1 appears once per failure rate -- same instance, same solve.
 FLAGGED = [
     ("slack", 1.2, 2), ("slack", 1.2, 3), ("slack", 1.2, 4),
@@ -42,7 +42,7 @@ FLAGGED = [
 
 
 def rebuild(kind, param, rep):
-    """Recreate the exact instance sweep() used for this point."""
+    """Recreate the exact instance experiment() used for this point."""
     seed = 1000 * rep
     if kind == "slack":
         inst = generate_instance(n_tasks=50, n_nodes=5, alpha=param,
@@ -107,7 +107,7 @@ for kind, param, rep in FLAGGED:
     df.to_csv(path, index=False)
 
 # final check: no heuristic may outscore the MILP on any same-instance row
-print("\nverifying all sweep CSVs ...")
+print("\nverifying all experiment CSVs ...")
 bad = 0
 for kind in ["slack", "nodes", "size", "failure", "bandwidth"]:
     df = pd.read_csv(os.path.join(RESULTS, kind + ".csv"))

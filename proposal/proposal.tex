@@ -167,7 +167,7 @@ algorithm---share the same cost model.
 platform.} A maximum-accuracy bound lets every method be scored
 against a reference; a retry-once failure model separates
 accuracy from deadline feasibility; a bandwidth-degradation
-sweep with a bandwidth-blind baseline shows that a scheduler
+experiment with a bandwidth-blind baseline shows that a scheduler
 can report a perfect score while producing a late schedule; and
 each solver's breaking point is measured rather than assumed.
 \item[Solution (c).] \textbf{Minimal-region repair.} On
@@ -498,7 +498,7 @@ option under pressure.
 \subsection{Objective (b) --- completed}
 
 The data-aware study~\cite{gupta2026dataaware} answers five
-questions, each isolated by a sweep over five fresh instances
+questions, each isolated by an experiment over five fresh instances
 per point:
 
 \begin{description}[leftmargin=!,labelwidth=2.6cm]
@@ -530,14 +530,14 @@ feasibility and degrade gracefully
 \hfill
 \includegraphics[width=0.49\textwidth]{perf_task_size_accuracy.png}
 \caption{Mean accuracy vs.\ the max-accuracy bound (dashed):
-left, deadline-slack sweep; right, workflow-size sweep.}
+left, deadline-slack experiment; right, workflow-size experiment.}
 \label{fig:slack}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.55\textwidth]{perf_bandwidth_accuracy.png}
-\caption{Bandwidth-degradation sweep: the blind baseline
+\caption{Bandwidth-degradation experiment: the blind baseline
 (dashed, bound-level scores) produces increasingly late
 schedules as links degrade.}
 \label{fig:bw}

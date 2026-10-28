@@ -64,7 +64,7 @@ TEST_DATASETS = [
 
 
 def rebuild(kind, param, rep):
-    """Same instance generation as experiments.sweep()."""
+    """Same instance generation as experiments.experiment()."""
     seed = 1000 * rep
     if kind == "slack":
         return generate_instance(n_tasks=50, n_nodes=5, alpha=param,

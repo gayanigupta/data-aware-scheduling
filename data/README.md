@@ -24,8 +24,8 @@ python3 code/fogsim.py gen --tasks 50 --nodes 5 --alpha 1.5 --seed 0
 
 ## `results/`
 
-Per-run sweep outputs written by `python3 code/fogsim.py sweep <kind>`
-(`slack`, `nodes`, `size`, `failure`), one CSV per sweep:
+Per-run experiment outputs written by `python3 code/fogsim.py experiment <kind>`
+(`slack`, `nodes`, `size`, `failure`), one CSV per experiment:
 
 | Column | Meaning |
 |---|---|
