@@ -240,33 +240,33 @@ def figure_dag():
         c = plt.Circle((x, y), r, facecolor=NODE_FC[f],
                        edgecolor=EDGE_BLUE, lw=1.6, zorder=3)
         ax.add_patch(c)
-        ax.text(x, y, name, ha="center", va="center", fontsize=9.5,
+        ax.text(x, y, name, ha="center", va="center", fontsize=8.5,
                 color="black", zorder=4, linespacing=1.2)
         return (x, y)
 
-    def fnode(x, y, name, f, w=2.15, h=1.1):
+    def fnode(x, y, name, f, w=2.5, h=1.1):
         b = FancyBboxPatch((x - w / 2, y - h / 2), w, h,
                            boxstyle="round,pad=0.02,rounding_size=0.18",
                            linewidth=1.6, edgecolor=EDGE_BLUE,
                            facecolor=NODE_FC[f])
         ax.add_patch(b)
-        ax.text(x, y, name, ha="center", va="center", fontsize=11,
+        ax.text(x, y, name, ha="center", va="center", fontsize=9.5,
                 color="black", zorder=4, linespacing=1.15)
         return (x, y)
 
     ax.text(3.5, 9.05, "(a) Wildfire response workflow", ha="center",
-            fontsize=14, color="black", fontweight="bold")
+            fontsize=12, color="black", fontweight="bold")
     ax.text(11.2, 9.05, "(b) Fog resource network", ha="center",
-            fontsize=14, color="black", fontweight="bold")
+            fontsize=12, color="black", fontweight="bold")
 
     # ---------- left: workflow DAG (circles) ----------
     T = {}
-    T[1] = tnode(3.5, 7.9, "T1\nCollect\nf1", 1, r=0.82)
-    T[2] = tnode(1.4, 5.7, "T2\nPrepare\nf1", 1, r=0.82)
-    T[3] = tnode(5.6, 5.7, "T3\nDetect\nf1", 1, r=0.82)
-    T[4] = tnode(1.4, 3.3, "T4\nPredict\nf3", 3, r=0.82)
-    T[5] = tnode(5.6, 3.3, "T5\nMap\nf2", 2, r=0.82)
-    T[6] = tnode(3.5, 1.3, "T6\nAssess\nf4", 4, r=0.82)
+    T[1] = tnode(3.5, 7.9, "T1", 1, r=0.55)
+    T[2] = tnode(1.4, 5.7, "T2", 1, r=0.55)
+    T[3] = tnode(5.6, 5.7, "T3", 1, r=0.55)
+    T[4] = tnode(1.4, 3.3, "T4", 3, r=0.55)
+    T[5] = tnode(5.6, 3.3, "T5", 2, r=0.55)
+    T[6] = tnode(3.5, 1.3, "T6", 4, r=0.55)
 
     edges = [(1, 2, "1.2 GB", (-0.85, 0.05)), (1, 3, "2.4 GB", (0.9, 0.05)),
              (2, 4, "0.45 GB", (-0.75, 0.05)), (3, 4, "1.8 GB", (0.5, -0.1)),
@@ -277,46 +277,46 @@ def figure_dag():
         ux, uy = T[b][0] - T[a][0], T[b][1] - T[a][1]
         d = math.hypot(ux, uy)
         ux, uy = ux / d, uy / d
-        p1 = (T[a][0] + ux * 0.84, T[a][1] + uy * 0.84)
-        p2 = (T[b][0] - ux * 0.84, T[b][1] - uy * 0.84)
+        p1 = (T[a][0] + ux * 0.57, T[a][1] + uy * 0.57)
+        p2 = (T[b][0] - ux * 0.57, T[b][1] - uy * 0.57)
         arrow(ax, p1, p2,
               color="#c0392b" if heavy else DARK,
               lw=2.0 if heavy else 1.1,
               rad=0.0,
-              label=lbl, fs=11,
+              label=lbl, fs=9.5,
               label_dx=dx, label_dy=dy,
               label_color="#c0392b" if heavy else "black")
 
     # ---------- right: resource network (rectangles) ----------
     F = {}
-    F[1] = fnode(9.2, 7.6, "f1\nGateway\nedge server + GPU", 1, h=1.55)
-    F[2] = fnode(13.2, 7.6, "f2\nShelter\nsmall edge server", 2, h=1.55)
-    F[3] = fnode(9.2, 4.2, "f3\nHospital\nedge server + GPU", 3, h=1.55)
-    F[4] = fnode(13.2, 4.2, "f4\nMobile unit\nJetson-class", 4, h=1.55)
+    F[1] = fnode(9.2, 7.6, "f1", 1, w=1.5, h=1.0)
+    F[2] = fnode(13.2, 7.6, "f2", 2, w=1.5, h=1.0)
+    F[3] = fnode(9.2, 4.2, "f3", 3, w=1.5, h=1.0)
+    F[4] = fnode(13.2, 4.2, "f4", 4, w=1.5, h=1.0)
 
     # (a, b, label, label offset, directed a -> b?)
-    links = [(1, 2, "800 Mbp/s\nWi-Fi 6", (0, -0.75), True, 0),
+    links = [(1, 2, "800 Mbp/s\nWi-Fi 6", (0, 0.9), True, 0),
              (1, 3, "80 Mbp/s\nLTE backup", (-1.45, 0.0), True, 0),
              (2, 4, "500 Mbp/s\nWi-Fi", (1.45, 0.0), True, 0),
              (3, 4, "400 Mbp/s\nWi-Fi", (0.55, 0.72), True, 0)]
     for a, b, lbl, (dx, dy), directed, rot in links:
         heavy = (a, b) == (1, 3)
         if a == 3 and b == 4:                # horizontal, right to right
-            p1 = (F[a][0] + 1.05, F[a][1])
-            p2 = (F[b][0] - 1.05, F[b][1])
+            p1 = (F[a][0] + 0.78, F[a][1])
+            p2 = (F[b][0] - 0.78, F[b][1])
         elif b in (3, 4):                    # vertical, top to bottom
-            p1 = (F[a][0], F[a][1] - 0.80)
-            p2 = (F[b][0], F[b][1] + 0.80)
+            p1 = (F[a][0], F[a][1] - 0.53)
+            p2 = (F[b][0], F[b][1] + 0.53)
         else:                                # horizontal, left to right
-            p1 = (F[a][0] + 1.05, F[a][1])
-            p2 = (F[b][0] - 1.05, F[b][1])
+            p1 = (F[a][0] + 0.78, F[a][1])
+            p2 = (F[b][0] - 0.78, F[b][1])
         col = "#c0392b" if heavy else GREY
         ax.add_patch(FancyArrowPatch(
             p1, p2, arrowstyle="-|>", mutation_scale=13,
             linewidth=2.0 if heavy else 1.1,
             color=col, zorder=2))
         ax.text((p1[0] + p2[0]) / 2 + dx, (p1[1] + p2[1]) / 2 + dy,
-                lbl, fontsize=10.5, ha="center", va="center",
+                lbl, fontsize=9, ha="center", va="center",
                 rotation=rot,
                 color="#c0392b" if heavy else "black",
                 fontstyle="italic", linespacing=1.25, zorder=5,
@@ -324,10 +324,10 @@ def figure_dag():
                           ec="none", alpha=0.9))
 
     # unused f2--f3 link: L-shaped dotted elbow, f2 left edge -> f3 top
-    elb = [(12.15, 7.6), (11.6, 7.6), (11.6, 5.0), (9.2, 5.0)]
+    elb = [(12.45, 7.6), (11.6, 7.6), (11.6, 4.73), (9.2, 4.73)]
     xs, ys = zip(*elb)
     ax.plot(xs, ys, color=GREY, lw=1.0, ls=":", zorder=2)
-    ax.text(10.6, 6.6, "300 Mbp/s\n(microwave)", fontsize=10.5,
+    ax.text(10.3, 6.3, "300 Mbp/s\n(microwave)", fontsize=9,
             ha="center",
             va="center", color="black", fontstyle="italic", zorder=5,
             bbox=dict(boxstyle="round,pad=0.15", fc="white",
@@ -338,31 +338,31 @@ def figure_dag():
     ax.add_patch(FancyArrowPatch((lx, ly + 1.6), (lx + 1.0, ly + 1.6),
         arrowstyle="-|>", mutation_scale=11, linewidth=1.1,
         color=GREY, zorder=5))
-    ax.text(lx + 1.2, ly + 1.6, "link in use", fontsize=9,
+    ax.text(lx + 1.2, ly + 1.6, "link in use", fontsize=8,
             va="center", color="black")
     ax.add_patch(FancyArrowPatch((lx, ly + 0.8), (lx + 1.0, ly + 0.8),
         arrowstyle="-|>", mutation_scale=11, linewidth=2.0,
         color="#c0392b", zorder=5))
-    ax.text(lx + 1.2, ly + 0.8, "bottleneck", fontsize=9,
+    ax.text(lx + 1.2, ly + 0.8, "bottleneck", fontsize=8,
             va="center", color="#c0392b")
     ax.plot([lx, lx + 1.0], [ly, ly], color=GREY, lw=1.0, ls=":",
             zorder=5)
-    ax.text(lx + 1.2, ly, "unused link", fontsize=9,
+    ax.text(lx + 1.2, ly, "unused link", fontsize=8,
             va="center", color="black")
 
     # ---------- payoff note under the network panel ----------
     ax.text(11.2, 1.85, "Highlighted transfer: T3 on f1 → T4 on f3",
-            ha="center", fontsize=10.5, color=DARK, zorder=2)
+            ha="center", fontsize=9.5, color=DARK, zorder=2)
     ax.text(11.2, 1.4, "Delay = data size / link bandwidth",
-            ha="center", fontsize=10, color=DARK, zorder=2)
+            ha="center", fontsize=9, color=DARK, zorder=2)
     ax.text(11.2, 0.85, "1.8 GB = 14.4 Gb / 80 Mbp/s = 180 s",
-            ha="center", fontsize=12, color="#c0392b",
+            ha="center", fontsize=10.5, color="#c0392b",
             fontweight="bold", zorder=2)
 
     ax.text(8.2, 0.0,
             "Task colours and fog IDs show placement.   Edge labels: "
             "data sizes.   Link labels: bandwidth.",
-            ha="center", va="bottom", fontsize=9.5, color=GREY)
+            ha="center", va="bottom", fontsize=8.5, color=GREY)
 
     fig.savefig(os.path.join(FIG, "disaster-response-dag.png"),
                 bbox_inches="tight", transparent=True, pad_inches=0.04)
