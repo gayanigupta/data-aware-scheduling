@@ -294,29 +294,27 @@ def figure_dag():
     F[3] = fnode(9.2, 4.2, "f3\nHospital\nedge server", 3, h=1.55)
     F[4] = fnode(13.2, 4.2, "f4\nMobile\nJetson-class", 4, h=1.55)
 
-    # (a, b, label, label offset, carries a transfer in direction a -> b?)
+    # (a, b, label, label offset, directed a -> b?)
     links = [(1, 2, "800 Mbp/s", (0, 0.62), True, 0),
              (1, 3, "80 Mbp/s", (-1.0, 0.0), True, 0),
              (2, 4, "500 Mbp/s", (1.0, 0.0), True, 0),
-             (3, 4, "400 Mbp/s", (0.1, 0.62), True, 0),
-             (2, 3, "300 Mbp/s", (-0.8, 0.5), False, 0)]
+             (3, 4, "400 Mbp/s", (0.1, 0.62), True, 0)]
     for a, b, lbl, (dx, dy), directed, rot in links:
         heavy = (a, b) == (1, 3)
-        if b in (3, 4):
+        if a == 3 and b == 4:                # horizontal, right to right
+            p1 = (F[a][0] + 1.05, F[a][1])
+            p2 = (F[b][0] - 1.05, F[b][1])
+        elif b in (3, 4):                    # vertical, top to bottom
             p1 = (F[a][0], F[a][1] - 0.80)
             p2 = (F[b][0], F[b][1] + 0.80)
-        else:
+        else:                                # horizontal, left to right
             p1 = (F[a][0] + 1.05, F[a][1])
             p2 = (F[b][0] - 1.05, F[b][1])
         col = "#c0392b" if heavy else GREY
-        if directed:
-            ax.add_patch(FancyArrowPatch(
-                p1, p2, arrowstyle="-|>", mutation_scale=13,
-                linewidth=2.0 if heavy else 1.1,
-                color=col, zorder=2))
-        else:
-            ax.plot([p1[0], p2[0]], [p1[1], p2[1]],
-                    color=col, lw=1.0, ls=":", zorder=2)
+        ax.add_patch(FancyArrowPatch(
+            p1, p2, arrowstyle="-|>", mutation_scale=13,
+            linewidth=2.0 if heavy else 1.1,
+            color=col, zorder=2))
         ax.text((p1[0] + p2[0]) / 2 + dx, (p1[1] + p2[1]) / 2 + dy,
                 lbl, fontsize=10.5, ha="center", va="center",
                 rotation=rot,
@@ -324,6 +322,32 @@ def figure_dag():
                 fontstyle="italic", linespacing=1.25, zorder=5,
                 bbox=dict(boxstyle="round,pad=0.15", fc="white",
                           ec="none", alpha=0.9))
+
+    # unused f2--f3 link: L-shaped dotted elbow, f2 left edge -> f3 top
+    elb = [(12.15, 7.6), (11.6, 7.6), (11.6, 5.0), (9.2, 5.0)]
+    xs, ys = zip(*elb)
+    ax.plot(xs, ys, color=GREY, lw=1.0, ls=":", zorder=2)
+    ax.text(11.6, 5.75, "300 Mbp/s", fontsize=10.5, ha="center",
+            va="center", color="black", fontstyle="italic", zorder=5,
+            bbox=dict(boxstyle="round,pad=0.15", fc="white",
+                      ec="none", alpha=0.9))
+
+    # ---------- line legend ----------
+    lx, ly = 14.35, 2.9
+    ax.add_patch(FancyArrowPatch((lx, ly + 1.6), (lx + 1.0, ly + 1.6),
+        arrowstyle="-|>", mutation_scale=11, linewidth=1.1,
+        color=GREY, zorder=5))
+    ax.text(lx + 1.2, ly + 1.6, "link in use", fontsize=9,
+            va="center", color="black")
+    ax.add_patch(FancyArrowPatch((lx, ly + 0.8), (lx + 1.0, ly + 0.8),
+        arrowstyle="-|>", mutation_scale=11, linewidth=2.0,
+        color="#c0392b", zorder=5))
+    ax.text(lx + 1.2, ly + 0.8, "bottleneck", fontsize=9,
+            va="center", color="#c0392b")
+    ax.plot([lx, lx + 1.0], [ly, ly], color=GREY, lw=1.0, ls=":",
+            zorder=5)
+    ax.text(lx + 1.2, ly, "unused link", fontsize=9,
+            va="center", color="black")
 
     # ---------- payoff note under the network panel ----------
     ax.text(11.2, 1.85, "Highlighted transfer: T3 on f1 → T4 on f3",

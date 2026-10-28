@@ -107,13 +107,7 @@ accuracy. Partitioning a task graph for data-intensive workflows has
 been studied before \cite{ahmad2014workflow}, but without per-link
 bandwidth or partial execution.
 
-Fog and edge resource allocation is surveyed in \cite{hong2019survey,mao2017survey}, and federating nearby fog sites has been proposed for industrial settings \cite{fgcs2024}. Inside a federation, prior work optimizes component placement for throughput \cite{faticanti2020partitioning} and quality-of-service targets \cite{russo2024qos}. These approaches share the limitation that matters
-here: they are compute-centric. The data that must move between
-dependent tasks enters their models weakly or not at all, yet in a
-federated fog the inter-node links are the scarce resource. Our
-formulation puts the data volume on every edge and the bandwidth on
-every link directly into the optimization, together with partial
-execution.
+Fog and edge resource allocation is surveyed in \cite{hong2019survey,mao2017survey}, and federating nearby fog sites has been proposed for industrial settings \cite{fgcs2024}. Inside such a federation, existing schedulers mostly worry about compute: where to place components for throughput \cite{faticanti2020partitioning} or how to meet quality-of-service targets \cite{russo2024qos}. What they largely ignore is the data that must travel between dependent tasks. In a federated fog the links between sites are the scarce resource, so a scheduler that ignores them can pick a plan that looks fast on paper but misses its deadline in the field. Our formulation avoids that by putting the data volume on every edge and the bandwidth on every link directly into the optimization, together with partial execution.
 
 Trading result quality for resources is not new. Probabilistic task
 pruning drops low-value tasks to keep a schedule feasible under load
