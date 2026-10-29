@@ -146,7 +146,7 @@ This is the central cost in the model: placing a task is not only about how fast
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\linewidth]{Figures/disaster-response-dag.png}
-\caption{A wildfire-response workflow (a) mapped onto a federated fog network (b): imagery is ingested, environmental data prepared, smoke detected, the fire spread predicted and mapped, and damage assessed. Edge labels are data sizes $D_{ji}$; link labels are bandwidths $B_{ba}$; the fog node inside each task shows its placement $e_{ia}$. The highlighted transfer---smoke-detection frames $T_3$ on $f_1$ feeding spread prediction $T_4$ on $f_3$---pays $D_{ji}/B_{ba} = 14400\,\mathrm{Mb}/80\,\mathrm{Mbp/s} = 180\,\mathrm{s}$ (1800 MB expressed in megabits), the transfer delay of Eq.~\eqref{eq:comm}.}
+\caption{A wildfire-response workflow (a) mapped onto a federated fog network (b): imagery is ingested, environmental data prepared, smoke detected, the fire spread predicted and mapped, and damage assessed. Edge labels are data sizes $D_{ji}$; link labels are bandwidths $B_{ba}$; the fog node inside each task shows its placement $e_{ia}$. The highlighted transfer---smoke-detection frames $T_3$ on $f_1$ feeding spread prediction $T_4$ on $f_3$---pays $D_{ji}/B_{ba} = 14.4\,\mathrm{Gb}/80\,\mathrm{Mbp/s} = 180\,\mathrm{s}$ (1.8 GB expressed in gigabits), the transfer delay of Eq.~\eqref{eq:comm}.}
 \label{fig:dag}
 \end{figure}
 
