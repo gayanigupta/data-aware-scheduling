@@ -1,0 +1,105 @@
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{#1}
+\csname url@samestyle\endcsname
+\providecommand{\newblock}{\relax}
+\providecommand{\bibinfo}[2]{#2}
+\providecommand{\BIBentrySTDinterwordspacing}{\spaceskip=0pt\relax}
+\providecommand{\BIBentryALTinterwordstretchfactor}{4}
+\providecommand{\BIBentryALTinterwordspacing}{\spaceskip=\fontdimen2\font plus
+\BIBentryALTinterwordstretchfactor\fontdimen3\font minus
+  \fontdimen4\font\relax}
+\providecommand{\BIBforeignlanguage}[2]{{%
+\expandafter\ifx\csname l@#1\endcsname\relax
+\typeout{** WARNING: IEEEtran.bst: No hyphenation pattern has been}%
+\typeout{** loaded for the language `#1'. Using the pattern for}%
+\typeout{** the default language instead.}%
+\fi
+\language=\csname l@#1\endcsname
+#2}}
+\providecommand{\BIBdecl}{\relax}
+\BIBdecl
+
+\bibitem{fgcs2024}
+R.~F. Hussain and M.~A. Salehi, ``Resource allocation of {Industry} 4.0
+  micro-service applications across serverless fog federation,'' \emph{Future
+  Generation Computer Systems}, vol. 154, pp. 479--490, 2024.
+
+\bibitem{hong2019survey}
+C.-H. Hong and B. Varghese, ``Resource management in fog/edge computing: A
+  survey on provisioning, infrastructure, and algorithms,'' \emph{ACM Computing
+  Surveys}, vol. 52, no. 5, pp. 1--37, 2019.
+
+\bibitem{gupta2025efficient}
+G. Gupta, A. Gupta, M.~A. Salehi, A. Fern\'andez Anta, S. Bhowmick, J. Aguilar,
+  and M. Kourouma, ``Towards efficient allocation of tasks in {DAG}-based
+  workflows across federated fog systems,'' in \emph{2025 IEEE Cloud Summit},
+  pp. 124--129, 2025.
+
+\bibitem{topcuoglu2002heft}
+H. Topcuoglu, S. Hariri, and M.-Y. Wu, ``Performance-effective and
+  low-complexity task scheduling for heterogeneous computing,'' \emph{IEEE
+  Transactions on Parallel and Distributed Systems}, vol. 13, no. 3, pp.
+  260--274, 2002.
+
+\bibitem{li2023dagmec}
+G. Li, H. Tan, L. Liu, H. Zhou, S. Jiang, Z. Han, X.-Y. Li, and G. Chen, ``{DAG}
+  scheduling in mobile edge computing,'' \emph{ACM Transactions on Sensor
+  Networks}, 2023.
+
+\bibitem{sharma2025grapheonrl}
+A.~K. Sharma and J. Kunkel, ``{GrapheonRL}: A graph neural network and
+  reinforcement learning framework for constraint and data-aware workflow
+  mapping and scheduling in heterogeneous {HPC} systems,'' in \emph{Proc. IEEE
+  Computer Software and Applications Conference (COMPSAC)}, 2025.
+
+\bibitem{ahmad2014workflow}
+S.~G. Ahmad, C.~S. Liew, M.~M. Rafique, E.~U. Munir, and S.~U. Khan,
+  ``Data-intensive workflow optimization based on application task graph
+  partitioning in heterogeneous computing systems,'' in \emph{2014 IEEE Fourth
+  International Conference on Big Data and Cloud Computing}, pp. 129--136, 2014.
+
+\bibitem{mao2017survey}
+Y. Mao, C. You, J. Zhang, K. Huang, and K.~B. Letaief, ``A survey on mobile edge
+  computing: The communication perspective,'' \emph{IEEE Communications Surveys
+  \& Tutorials}, vol. 19, no. 4, pp. 2322--2358, 2017.
+
+\bibitem{faticanti2020partitioning}
+F. Faticanti, F.~De Pellegrini, D. Siracusa, D. Santoro, and S. Cretti,
+  ``Throughput-aware partitioning and placement of applications in fog
+  computing,'' \emph{IEEE Transactions on Network and Service Management},
+  vol. 17, pp. 2436--2450, 2020.
+
+\bibitem{russo2024qos}
+G. Russo, D. Ferrarelli, D. Pasquali, V. Cardellini, and F.~Lo Presti,
+  ``{QoS}-aware offloading policies for serverless functions in the
+  cloud-to-edge continuum,'' \emph{Future Generation Computer Systems},
+  vol. 156, pp. 1--15, 2024.
+
+\bibitem{gentry2019taskpruning}
+J. Gentry, C. Denninnart, and M. Salehi, ``Robust dynamic resource allocation
+  via probabilistic task pruning in heterogeneous computing systems,'' in
+  \emph{Proceedings of IEEE International Parallel and Distributed Processing
+  Symposium (IPDPS)}, pp. 375--384, 2019.
+
+\bibitem{Salehi2016}
+M.~A. Salehi, J. Smith, A.~A. Maciejewski, H.~J. Siegel, E.~K. Chong,
+  J. Apodaca, L.~D. Briceno, T. Renner, V. Shestak, J. Ladd, \emph{et al.},
+  ``Stochastic-based robust dynamic resource allocation for independent tasks in
+  a heterogeneous computing system,'' \emph{Journal of Parallel and Distributed
+  Computing}, vol. 97, pp. 96--111, 2016.
+
+\bibitem{lenstra1990approximation}
+J.~K. Lenstra, D.~B. Shmoys, and \'E. Tardos, ``Approximation algorithms for
+  scheduling unrelated parallel machines,'' \emph{Mathematical Programming},
+  vol. 46, pp. 259--271, 1990.
+
+\bibitem{raghavan1987randomized}
+P. Raghavan and C.~D. Thompson, ``Randomized rounding: A technique for provably
+  good algorithms and algorithmic proofs,'' \emph{Combinatorica}, vol. 7,
+  no. 4, pp. 365--374, 1987.
+
+\bibitem{gupta2025code}
+G. Gupta, ``Data-aware scheduling: Simulator and experiments.''
+  \url{https://github.com/gayanigupta/data-aware-scheduling}, 2026.
+
+\end{thebibliography}
