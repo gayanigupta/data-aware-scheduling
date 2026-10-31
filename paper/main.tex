@@ -18,6 +18,8 @@
 \usepackage{xcolor}
 \usepackage{cleveref}
 \usepackage{placeins}
+\usepackage{silence}
+\WarningFilter{caption}{Unknown document class}
 
 \usepackage[normalem]{ulem}
 \newcommand{\rev}[1]{\textcolor{blue}{#1}}
@@ -143,7 +145,7 @@ If task $T_j$ runs on node $f_b$ and its successor $T_i$ runs on node $f_a$, the
 \end{equation}
 This is the central cost in the model: placing a task is not only about how fast a node computes, but also about how long its input data take to arrive.
 
-\begin{figure}[h!]
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=\linewidth]{Figures/disaster-response-dag.png}
 \caption{A wildfire-response workflow (a) mapped onto a federated fog network (b): imagery is ingested, environmental data prepared, smoke detected, the fire spread predicted and mapped, and damage assessed. Edge labels are data sizes $D_{ji}$; link labels are bandwidths $B_{ba}$; the fog node inside each task shows its placement $e_{ia}$. The highlighted transfer---smoke-detection frames $T_3$ on $f_1$ feeding spread prediction $T_4$ on $f_3$---pays $D_{ji}/B_{ba} = 14.4\,\mathrm{Gb}/80\,\mathrm{Mbp/s} = 180\,\mathrm{s}$ (1.8 GB expressed in gigabits), the transfer delay of Eq.~\eqref{eq:comm}.}
