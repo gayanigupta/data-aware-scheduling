@@ -370,21 +370,21 @@ so their bounds differ from these values.}
 \toprule
 Dataset & $n$ & $m$ & Method & Score & Makespan & Time (s) \\
 \midrule
-small  & 10   & 3  & MILP      & 1.637 & 17.98 & 0.013 \\
-       &      &    & Rounding  & 1.637 & 17.98 & 0.16  \\
-       &      &    & Greedy    & 1.637 & 16.84 & 0.000 \\
-       &      &    & GA        & 1.637 & 18.90 & 0.27  \\
+small  & 10   & 3  & MILP      & 1.637 & 32.35 & 0.004 \\
+       &      &    & Rounding  & 1.637 & 32.35 & 0.17  \\
+       &      &    & Greedy    & 1.637 & 30.29 & 0.000 \\
+       &      &    & GA        & 1.637 & 35.93 & 0.27  \\
 \midrule
-medium & 100  & 5  & MILP      & 1.443 & 60.94 & 1.37  \\
-       &      &    & Rounding  & 1.324 & 62.17 & 24.83 \\
-       &      &    & Greedy    & 1.443 & 43.11 & 0.003 \\
-       &      &    & GA        & 1.274 & 61.26 & 5.19  \\
+medium & 100  & 5  & MILP      & 1.443 & 119.15 & 0.39  \\
+       &      &    & Rounding  & 1.443 & 118.83 & 26.59 \\
+       &      &    & Greedy    & 1.443 & 82.51 & 0.003 \\
+       &      &    & GA        & 1.360 & 117.20 & 5.37  \\
 \midrule
-large  & 500  & 8  & Greedy    & 1.419 & 50.15 & 0.04  \\
-       &      &    & GA        & 1.173 & 71.26 & 21.43 \\
+large  & 500  & 8  & Greedy    & 1.419 & 101.88 & 0.04  \\
+       &      &    & GA        & 1.200 & 132.65 & 21.44 \\
 \midrule
-xlarge & 1000 & 10 & Greedy    & 1.406 & 83.14 & 0.14  \\
-       &      &    & GA        & 1.126 & 119.85& 73.01 \\
+xlarge & 1000 & 10 & Greedy    & 1.406 & 170.41 & 0.15  \\
+       &      &    & GA        & 1.128 & 216.02 & 73.13 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -399,7 +399,7 @@ fully and placement only moves the makespan; and the GA's score drops as
 the workflow grows, because its fixed population budget must cover an
 $n$-dimensional search space. Note that the MILP maximizes accuracy, not
 makespan: on the medium dataset it and the greedy reach the same score
-while their makespans differ (60.94 vs.\ 43.11), since any placement that
+while their makespans differ (119.15 vs.\ 82.51), since any placement that
 runs all tasks fully and meets the deadline is optimal for the objective.
 
 \emph{Reproducibility.} The simulator, instances, per-run results, MILP solver logs, and an executed notebook are publicly available at \url{https://github.com/gayanigupta/data-aware-scheduling}~\cite{gupta2025code}; the implementation depends only on NumPy, SciPy (HiGHS), and pandas.
@@ -447,7 +447,7 @@ scheduler matters most when the deadline binds: at $\alpha{=}1.0$ the
 methods separate with the MILP ahead, while by $\alpha{=}1.5$ the MILP
 and the greedy coincide with the bound. Second, accuracy under a
 binding deadline is not free in wall time: at 1000 tasks the greedy
-finishes in about 0.15\,s, rounding spends about 372\,s per run, and
+finishes in about 0.15\,s, rounding spends about 304\,s per run, and
 the GA about 159\,s for a markedly worse score (experiment means;
 Table~\ref{tab:runs}'s seeded dataset differs, e.g.\ 73\,s for the GA).
 Third, under the

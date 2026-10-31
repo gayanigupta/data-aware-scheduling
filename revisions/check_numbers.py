@@ -43,12 +43,12 @@ check("small MILP score (Table II)", 1.637,
 check("small bound = score of all methods", 1.637,
       float(s.score.max()), tol=0.001)
 m = runs[runs.dataset == "medium"]
-check("medium MILP makespan (text)", 60.94,
+check("medium MILP makespan (text)", 119.15,
       float(m[m.method == "milp"].makespan.iloc[0]), tol=0.01)
-check("medium greedy makespan (text)", 43.11,
+check("medium greedy makespan (text)", 82.51,
       float(m[m.method == "greedy"].makespan.iloc[0]), tol=0.01)
 x = runs[runs.dataset == "xlarge"]
-check("xlarge GA runtime 73.01 s (Table II)", 73.01,
+check("xlarge GA runtime 73.13 s (Table II)", 73.13,
       float(x[x.method == "ga"].runtime_s.iloc[0]), tol=0.01)
 
 # --- Fig. 5 (size experiment) ---
@@ -58,22 +58,22 @@ sz = size.groupby(["param", "method"]).agg(
 def get(p, me, col):
     return float(sz[(sz.param == p) & (sz.method == me)][col].iloc[0])
 
-check("n=10 bound ~1.41 (V-F text)", 1.41, get(10, "milp", "bound"),
+check("n=10 bound ~1.44 (V-F text)", 1.44, get(10, "milp", "bound"),
       tol=0.01)
 check("n=100 greedy score ~1.40 (V-F)", 1.40, get(100, "greedy", "score"),
       tol=0.01)
-check("n=100 rounding ~1.35 (V-F)", 1.35, get(100, "rounding", "score"),
+check("n=100 rounding ~1.39 (V-F)", 1.39, get(100, "rounding", "score"),
       tol=0.01)
-check("n=100 GA ~1.26 (V-F)", 1.26, get(100, "ga", "score"), tol=0.01)
+check("n=100 GA ~1.31 (V-F)", 1.31, get(100, "ga", "score"), tol=0.01)
 check("n=1000 greedy ~1.40 (V-F)", 1.40, get(1000, "greedy", "score"),
       tol=0.01)
-check("n=1000 rounding ~1.37 (V-F)", 1.37, get(1000, "rounding", "score"),
+check("n=1000 rounding ~1.39 (V-F)", 1.39, get(1000, "rounding", "score"),
       tol=0.01)
-check("n=1000 GA ~1.10 (V-F)", 1.10, get(1000, "ga", "score"), tol=0.01)
+check("n=1000 GA ~1.12 (V-F)", 1.12, get(1000, "ga", "score"), tol=0.01)
 check("n=1000 greedy runtime ~0.15 s", 0.15, get(1000, "greedy", "rt"),
       tol=0.05)
 check("n=1000 GA runtime ~159 s", 159.0, get(1000, "ga", "rt"), tol=5.0)
-check("n=1000 rounding runtime ~372 s", 372.0,
+check("n=1000 rounding runtime ~304 s", 304.0,
       get(1000, "rounding", "rt"), tol=10.0)
 
 # --- MILP solver statistics (bottlenecks paragraph) ---
