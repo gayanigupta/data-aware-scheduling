@@ -46,34 +46,17 @@ G. Li, H. Tan, L. Liu, H. Zhou, S. Jiang, Z. Han, X.-Y. Li, and G. Chen, ``{DAG}
   scheduling in mobile edge computing,'' \emph{ACM Transactions on Sensor
   Networks}, 2023.
 
-\bibitem{sharma2025grapheonrl}
-A.~K. Sharma and J. Kunkel, ``{GrapheonRL}: A graph neural network and
-  reinforcement learning framework for constraint and data-aware workflow
-  mapping and scheduling in heterogeneous {HPC} systems,'' in \emph{Proc. IEEE
-  Computer Software and Applications Conference (COMPSAC)}, 2025.
-
 \bibitem{ahmad2014workflow}
 S.~G. Ahmad, C.~S. Liew, M.~M. Rafique, E.~U. Munir, and S.~U. Khan,
   ``Data-intensive workflow optimization based on application task graph
   partitioning in heterogeneous computing systems,'' in \emph{2014 IEEE Fourth
   International Conference on Big Data and Cloud Computing}, pp. 129--136, 2014.
 
-\bibitem{mao2017survey}
-Y. Mao, C. You, J. Zhang, K. Huang, and K.~B. Letaief, ``A survey on mobile edge
-  computing: The communication perspective,'' \emph{IEEE Communications Surveys
-  \& Tutorials}, vol. 19, no. 4, pp. 2322--2358, 2017.
-
 \bibitem{faticanti2020partitioning}
 F. Faticanti, F.~De Pellegrini, D. Siracusa, D. Santoro, and S. Cretti,
   ``Throughput-aware partitioning and placement of applications in fog
   computing,'' \emph{IEEE Transactions on Network and Service Management},
   vol. 17, pp. 2436--2450, 2020.
-
-\bibitem{russo2024qos}
-G. Russo, D. Ferrarelli, D. Pasquali, V. Cardellini, and F.~Lo Presti,
-  ``{QoS}-aware offloading policies for serverless functions in the
-  cloud-to-edge continuum,'' \emph{Future Generation Computer Systems},
-  vol. 156, pp. 1--15, 2024.
 
 \bibitem{gentry2019taskpruning}
 J. Gentry, C. Denninnart, and M. Salehi, ``Robust dynamic resource allocation
