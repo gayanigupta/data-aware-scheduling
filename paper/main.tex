@@ -102,15 +102,14 @@ on the processor where it finishes earliest. Our model uses the same
 convention that the transfer cost lives on the DAG edge. The difference
 is what a task is allowed to be: HEFT assumes a task runs completely or
 not at all, and so do the DAG schedulers used in mobile edge computing
-\cite{li2023dagmec} and the learned schedulers built on graph neural
-networks \cite{sharma2025grapheonrl}. In our model a task can run
+\cite{li2023dagmec} and so do recent learned schedulers. In our model a task can run
 partially; the execution fraction $l_{ia}$ is a decision variable, so a
 workflow that cannot finish at full quality can still finish with less
 accuracy. Partitioning a task graph for data-intensive workflows has
 been studied before \cite{ahmad2014workflow}, but without per-link
 bandwidth or partial execution.
 
-Fog and edge resource allocation is surveyed in \cite{hong2019survey,mao2017survey}, and federating nearby fog sites has been proposed for industrial settings \cite{fgcs2024}. Inside such a federation, existing schedulers mostly worry about compute: where to place components for throughput \cite{faticanti2020partitioning} or how to meet quality-of-service targets \cite{russo2024qos}. What they largely ignore is the data that must travel between dependent tasks. In a federated fog the links between sites are the scarce resource, so a scheduler that ignores them can pick a plan that looks fast on paper but misses its deadline in the field. Our formulation avoids that by putting the data volume on every edge and the bandwidth on every link directly into the optimization, together with partial execution.
+Fog and edge resource allocation is surveyed in \cite{hong2019survey}, and federating nearby fog sites has been proposed for industrial settings \cite{fgcs2024}. Inside such a federation, existing schedulers mostly worry about compute: where to place components for throughput \cite{faticanti2020partitioning} or quality-of-service targets. What they largely ignore is the data that must travel between dependent tasks. In a federated fog the links between sites are the scarce resource, so a scheduler that ignores them can pick a plan that looks fast on paper but misses its deadline in the field. Our formulation avoids that by putting the data volume on every edge and the bandwidth on every link directly into the optimization, together with partial execution.
 
 Trading result quality for resources is not new. Probabilistic task
 pruning drops low-value tasks to keep a schedule feasible under load
@@ -569,9 +568,8 @@ $e_{ia}=0$ by \eqref{eq:frac}, \eqref{eq:compllin} reduces to
 formulations, so their feasible $(e,l)$ sets and optima coincide.
 \end{proof}
 
-\enlargethispage{11\baselineskip}
-{\scriptsize
-\linespread{0.85}\selectfont
+\enlargethispage{9\baselineskip}
+{\fontsize{6.5}{7.5}\selectfont
 \bibliographystyle{ieeetr}
 \bibliography{cas-refs}}
 
