@@ -119,6 +119,36 @@ def _binding_path(inst, assign, y):
     return path
 
 
+def run_dagmec(inst, beta=0.5):
+    """Mobile-edge DAG baseline (full-or-nothing tasks).
+
+    Same list-scheduling structure as the greedy, but every task runs
+    at ell=1: edge-transfer costs are counted when picking nodes, yet
+    nothing can shrink to meet the deadline.  The schedule is returned
+    as built; evaluate() marks it infeasible when it misses t_max.
+    """
+    n = inst.n
+    mean_bw = float(np.mean(inst.B[np.isfinite(inst.B)]))
+    cp = np.zeros(n)
+    for i in reversed(inst.order):
+        base = float(np.min(inst.t[i][inst.P[i] == 1]))
+        nxt = max((cp[j] + inst.D[i, j] / mean_bw for j in range(n)
+                   if inst.D[i, j] > 0), default=0.0)
+        cp[i] = base + nxt
+    priority = beta * inst.A + (1 - beta) * cp
+    denom = np.array([np.mean(inst.t[i][inst.P[i] == 1])
+                      for i in range(n)])
+    density = inst.A / denom
+    succ = [[] for _ in range(n)]
+    for (j, i) in inst.edges:
+        succ[j].append(i)
+    indeg0 = [len(inst.preds[i]) for i in range(n)]
+    assign, y = _schedule(inst, np.ones(n), priority, density, succ, indeg0)
+    if assign is None:
+        return None
+    return assign, np.ones(n)
+
+
 def run_greedy_cp(inst, beta=0.5, delta=0.005, ell_min=0.0):
     """Greedy variant that shrinks the fraction only on the longest path.
 
