@@ -149,8 +149,11 @@ def plot():
                     label="Max-accuracy bound")
         for meth, g in df_s.groupby("method"):
             mean = g.groupby("param")["score"].mean()
-            ax.plot(mean.index, mean.values, **style[meth], lw=1.9, ms=6,
-                    mec="white", mew=0.7)
+            std = g.groupby("param")["score"].std().fillna(0.0)
+            ax.errorbar(mean.index, mean.values, yerr=std.values,
+                        capsize=2.5, elinewidth=0.9,
+                        **style[meth], lw=1.9, ms=6,
+                        mec="white", mew=0.7)
         ax.set_xlabel(xlabel[kind], fontsize=11)
         ax.set_ylabel("average accuracy score", fontsize=11)
         ax.tick_params(labelsize=10)
@@ -177,8 +180,10 @@ def plot():
             else:
                 for meth, g in df.groupby("method"):
                     feas = g.groupby("param")["feasible"].mean()
-                    ax2.plot(feas.index, feas.values, **style[meth],
-                             lw=1.9, ms=6, mec="white", mew=0.7)
+                    fstd = g.groupby("param")["feasible"].std().fillna(0.0)
+                    ax2.errorbar(feas.index, feas.values, yerr=fstd.values,
+                                 capsize=2.5, elinewidth=0.9, **style[meth],
+                                 lw=1.9, ms=6, mec="white", mew=0.7)
                 ax2.set_ylabel("deadline feasibility rate", fontsize=11)
                 ax2.set_ylim(-0.05, 1.05)
             ax2.set_xlabel(xlabel[kind], fontsize=11)
