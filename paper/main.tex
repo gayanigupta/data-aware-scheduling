@@ -283,7 +283,7 @@ The scheduler keeps a single global execution fraction $\ell\in[\ell_{\min},1]$,
 
 The greedy is a practical method rather than just a baseline: it accounts for the deadline through $\ell$, bandwidth through $c_{ji}^{ba}$, and node speed through $t_{ia}$. What it cannot do is look ahead---a cheap early decision can force an expensive one later---which the genetic algorithm addresses.
 
-\rev{A variant replaces the global $\ell$ with per-task fractions: it schedules, backtraces the chain that sets the makespan, and lowers $\ell_i$ only on those tasks. On the instances of Fig.~\ref{fig:tight} this nearly doubles the uniform version's score at $\alpha{=}0.5$ (0.74 vs.\ 0.41 of the bound at $n{=}100$) while meeting the same deadlines; the two coincide once $\alpha\ge1.2$.}
+\rev{We also tried a variant that keeps a separate fraction per task. After each pass it finds the chain of tasks that sets the finish time and cuts only those; the rest keep their full accuracy. Cutting the whole workflow wastes work on tasks that were never in the way, and the difference is large: at $\alpha{=}0.5$ this version reaches 0.74 of the bound at $n{=}100$ against 0.41 for the uniform one, while still meeting every deadline. Once the deadline is loose ($\alpha\ge1.2$) the two are identical.}
 
 \subsection{Genetic-Algorithm Scheduler}
 \label{sec:ga}
