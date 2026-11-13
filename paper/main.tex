@@ -445,17 +445,17 @@ Fig.~\ref{fig:bandwidth} shows the two metrics that matter. On score alone, the 
 \subsection{Discussion}
 
 The experiments point to three conclusions. First, the choice of
-scheduler matters most when the deadline binds, and the separation
+scheduler matters most when the deadline binds, \rev{and the separation
 widens as it tightens: at $\alpha{=}0.5$, where partial execution is
 forced, the MILP holds about 76\% of the bound against the greedy's
-46\%, while by $\alpha{=}1.5$ the feasible methods coincide. Second,
+46\%,} while by $\alpha{=}1.5$ the \rev{feasible} methods coincide. Second,
 accuracy under a binding deadline is not free in wall time: at 1000
 tasks the greedy finishes in about 0.15\,s, rounding spends about
-304\,s per run, and the GA about 159\,s for a markedly worse score,
-while at 100 tasks and $\alpha\le0.9$ every MILP solve exhausted its
-60\,s limit. Third, feasibility is the real differentiator under
+304\,s per run, and the GA about 159\,s for a markedly worse score
+\rev{(at 100 tasks and $\alpha\le0.9$ every MILP solve exhausted its
+60\,s limit)}. Third, \rev{feasibility is the real differentiator under
 stress: the GA turns infeasible at tight deadlines, and only the
-data-aware methods survive degraded bandwidth.
+data-aware methods survive degraded bandwidth.}
 
 \textbf{Bottlenecks and shortcomings.} The evaluation surfaced limits
 that delimit where the formulation applies. (i)~\emph{MILP
@@ -466,10 +466,10 @@ at $\alpha{=}1.0$ or under degraded bandwidth---exactly the hard
 cases. (ii)~\emph{LP model size}: the relaxation introduces one
 start-time constraint per (task, predecessor, node) triple, about
 $10^5$ rows at $n{=}1000$; constraints must be assembled sparsely, a
-cost rounding pays per trial. (iii)~\emph{GA under stress}: the population does not grow with $n$,
-so its score degrades in Fig.~\ref{fig:tasksize}, and its
+cost rounding pays per trial. (iii)~\emph{\rev{GA under stress}}: the population does not grow with $n$,
+so its score degrades in Fig.~\ref{fig:tasksize}, \rev{and its
 penalty-weighted fitness does not enforce feasibility, hence the
-infeasible plans at $\alpha\le0.8$. (iv)~\emph{Failure semantics}: retry-once differentiates
+infeasible plans at $\alpha\le0.8$}. (iv)~\emph{Failure semantics}: retry-once differentiates
 schedulers through feasibility, but replication and checkpointing are
 left out of the model. (v)~\emph{Dense instances}: per-edge data is
 stored densely, so the $10^6$-task structures generated in the notebook
@@ -481,7 +481,7 @@ deployments.
 
 We set out to answer a practical question: when the cloud is unreachable, how should a federation of nearby fog machines share a deadline-bound workflow whose tasks can be run partially? This paper gives the problem a cost model that charges real money for moving data between sites, writes it as a mixed-integer linear program, and offers three faster schedulers that all work under the same model.
 
-The experiments tell a consistent story. When the deadline is generous, every reasonable method runs every task fully and the choice of scheduler barely matters. As the deadline tightens below the point where full execution fits, the methods spread apart: the MILP sacrifices the least accuracy, the uniform-fraction greedy the most, and at 100 tasks the GA stops finding feasible schedules at all. Failures and degraded links separate the methods on feasibility rather than score, and the bandwidth-blind baseline shows exactly what goes wrong when placement ignores data movement---perfect-looking accuracy with deadlines missed.
+The experiments tell a consistent story. \rev{When the deadline is generous, every reasonable method runs every task fully and the choice of scheduler barely matters. As the deadline tightens below the point where full execution fits, the methods spread apart: the MILP sacrifices the least accuracy, the uniform-fraction greedy the most, and at 100 tasks the GA stops finding feasible schedules at all.} Failures and degraded links separate the methods on feasibility rather than score, and the bandwidth-blind baseline shows exactly what goes wrong when placement ignores data movement---perfect-looking accuracy with deadlines missed.
 
 Future work follows the shortcomings we documented: larger workflows need decomposed or sparser formulations, the GA needs a budget that grows with problem size and a feasibility-first fitness, and the failure model should grow beyond retry-once, with validation on a real federated fog testbed.
 
