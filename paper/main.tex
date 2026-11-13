@@ -219,7 +219,7 @@ subject to
 Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only run where it is placed, and at most one $l_{ia}$ per task is non-zero. \rev{The case $l_{ia}=0$ means the task is placed but never runs; it earns no accuracy, but it still hands its output data $D_{ji}$ to every successor, so the transfer cost in \eqref{eq:comm} is charged whether or not the task ran. Skipping is rare in practice: across our runs it occurs only in time-limited MILP solves, never in a certified optimum.} Constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} are quadratic; the Appendix gives the standard linearization ($z_{ia}=e_{ia}M_{ia}$) and the correctness argument.
 
 Scheduling problems of this kind are NP-hard already on unrelated
-parallel machines \cite{lenstra1990approximation}, so we treat the MILP
+parallel machines, so we treat the MILP
 as the benchmark: it gives the best achievable accuracy on instances
 small enough to solve exactly and defines the constraints every scalable
 method must respect. For larger workflows we use three cheaper methods:
@@ -351,7 +351,7 @@ if transfers were free: it never runs the $\ell$-shrinking loop of
 Algorithm~\ref{alg:greedy}, so it reports bound-level scores even when
 its schedules miss the deadline under real link costs.
 
-Unless a varied parameter says otherwise, every instance uses the default configuration: $n{=}50$ tasks, $m{=}5$ fog nodes, slack $\alpha=1.5$, edge density $0.15$, \rev{and ten replications per point drawn from two independent seed sets of five, so the reported means do not hinge on a single instance draw}. The MILP is solved with a 60\,s time limit and skipped above 800 assignment variables ($n\,m$); a time-limited run reports its best \emph{incumbent}, which can sit below an achievable bound the solve has not certified. \rev{Every MILP run that finished below another method on the same instance was therefore re-solved with a 300\,s limit and a $10^{-6}$ optimality gap, and the figures report these certified scores.}
+Unless a varied parameter says otherwise, every instance uses the default configuration: $n{=}50$ tasks, $m{=}5$ fog nodes, slack $\alpha=1.5$, edge density $0.15$, \rev{and ten replications per point drawn from two independent seed sets of five, so the reported means do not hinge on a single instance draw}. \rev{Error bars show one standard deviation; randomized methods are repeated over seeds $0$--$9$ (reported in the artifact).} The MILP is solved with a 60\,s time limit and skipped above 800 assignment variables ($n\,m$); a time-limited run reports its best \emph{incumbent}, which can sit below an achievable bound the solve has not certified. \rev{Every MILP run that finished below another method on the same instance was therefore re-solved with a 300\,s limit and a $10^{-6}$ optimality gap, and the figures report these certified scores.}
 
 Metrics recorded per run: the achieved accuracy score $\bar{A}=\frac{1}{n}\sum_i A_i\,\ell_i$, where $\ell_i=\sum_a l_{ia}$. Because each $A_i$ is an accuracy \emph{weight} rather than a probability, the score is not bounded by~1 and is read relative to the max-accuracy bound of the same instance, drawn as a dashed line in every figure. Makespan and deadline adherence are also recorded.
 
@@ -452,8 +452,8 @@ forced, the MILP holds about 76\% of the bound against the greedy's
 accuracy under a binding deadline is not free in wall time: at 1000
 tasks the greedy finishes in about 0.15\,s, rounding spends about
 304\,s per run, and the GA about 159\,s for a markedly worse score
-\rev{(at 100 tasks and $\alpha\le0.9$ every MILP solve exhausted its
-60\,s limit)}. Third, \rev{feasibility is the real differentiator under
+\rev{(at 100 tasks the MILP
+caps at 60\,s)}. Third, \rev{feasibility is the real differentiator under
 stress: the GA turns infeasible at tight deadlines, and only the
 data-aware methods survive degraded bandwidth.}
 
@@ -571,8 +571,8 @@ $e_{ia}=0$ by \eqref{eq:frac}, \eqref{eq:compllin} reduces to
 formulations, so their feasible $(e,l)$ sets and optima coincide.
 \end{proof}
 
-\enlargethispage{9\baselineskip}
-\vspace*{-2em}
+\enlargethispage{10\baselineskip}
+\vspace*{-2.5em}
 {\fontsize{6.2}{7.2}\selectfont
 \bibliographystyle{ieeetr}
 \bibliography{cas-refs}}
