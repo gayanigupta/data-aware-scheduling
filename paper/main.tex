@@ -22,7 +22,7 @@
 \usepackage{placeins}
 
 \usepackage[normalem]{ulem}
-\newcommand{\rev}[1]{#1}% set to \textcolor{blue}{#1} for revision drafts
+\newcommand{\rev}[1]{\textcolor{blue}{#1}}% set to #1 for the submission build
 
 % Compact float spacing for the 8-page limit
 \setlength{\textfloatsep}{9pt plus 2pt minus 3pt}
@@ -452,7 +452,7 @@ relative to the full-execution bound; deadline met is the
 feasible-run share.}
 \label{tab:baselines}
 \centering\scriptsize
-\begin{tabular}{lccc}
+\rev{\begin{tabular}{lccc}
 \toprule
 Setting & Method & Score/bound & Deadline met\\
 \midrule
@@ -465,7 +465,7 @@ BW scale $0.1$ & DAG-MEC~\cite{li2023dagmec} & 1.00 & 10\%\\
  & Blind greedy & 1.00 & 10\%\\
  & MILP (ours) & 0.98 & 100\%\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \subsection{Discussion}
