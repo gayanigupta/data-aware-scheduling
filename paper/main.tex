@@ -408,7 +408,7 @@ runs all tasks fully and meets the deadline is optimal for the objective.
 
 Fig.~\ref{fig:slack} shows the reported accuracy score against the slack factor $\alpha$. The methods separate at the tight deadline: at $\alpha=1.0$ the MILP stays within about 2\% of the bound (1.40 vs.\ 1.43), rounding and the greedy follow at about 1.32, and the GA is lowest at 1.26, about 12\% below the bound. From $\alpha=1.2$ onward the greedy reaches the bound exactly, and after the certification re-solves so does the MILP: the runs that were still improving when the 60\,s limit hit all certified the bound within 300\,s, confirming that the gap was a truncated incumbent rather than a weaker optimum. The two stochastic methods never fully close the gap: rounding sits about 3\% below at $\alpha=1.2$ and reaches the bound at $\alpha=1.5$--2.0, while the GA trails by about 1--5\% across the range. The scheduling choice matters most when the workflow barely fits its deadline, and a fixed sampling budget does not recover the bound even when one exists.
 
-\rev{Pushing $\alpha$ below 1.0 forces partial execution: no schedule can run every task fully, so a method must choose what to sacrifice (Fig.~\ref{fig:tight}). At $\alpha=0.5$ the methods spread clearly---MILP holds about 76\% of the bound, the GA 71\%, rounding 68\%, and the greedy 46\% (74\% for its path-shrinking variant of Section~\ref{sec:greedy})---and the ranking holds at 100 tasks. \rev{A full-or-nothing baseline that counts transfers but cannot shrink execution~\cite{li2023dagmec} reports the bound on every instance yet meets almost no deadline below $\alpha{=}1.2$: without the execution fraction, tight deadlines are impossible.} Two limits surface there: the GA returns infeasible schedules at $\alpha\le0.8$, and every 100-task MILP solve at $\alpha\le0.9$ exhausted the 60\,s limit (incumbents, not optima), with rounding and the greedy far cheaper. From $\alpha\approx1.2$ all feasible methods reach the bound.}
+\rev{Pushing $\alpha$ below 1.0 forces partial execution: no schedule can run every task fully, so a method must choose what to sacrifice (Fig.~\ref{fig:tight}). At $\alpha=0.5$ the methods spread clearly---MILP holds about 76\% of the bound, the GA 71\%, rounding 68\%, and the greedy 46\% (74\% for its path-shrinking variant of Section~\ref{sec:greedy})---and the ranking holds at 100 tasks. Two limits surface there: the GA returns infeasible schedules at $\alpha\le0.8$, and every 100-task MILP solve at $\alpha\le0.9$ exhausted the 60\,s limit (incumbents, not optima), with rounding and the greedy far cheaper. From $\alpha\approx1.2$ all feasible methods reach the bound.}
 
 \subsection{Federation Size}
 
@@ -421,12 +421,12 @@ Fig.~\ref{fig:tasksize} shows accuracy for DAGs of 10, 100, and 1000 tasks (thes
 
 \begin{figure*}[t]
 \centering
-\subcaptionbox{Accuracy vs.\ deadline slack $\alpha$.\label{fig:slack}}[0.26\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_slack_accuracy.png}}\hfill
-\subcaptionbox{Accuracy vs.\ federation size $N$.\label{fig:nodes}}[0.26\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_nodes_accuracy.png}}\hfill
-\subcaptionbox{Accuracy vs.\ workflow size $n$.\label{fig:tasksize}}[0.26\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_task_size_acc_only.png}}\hfill
-\subcaptionbox{Score normalized by the bound as $\alpha$ drops below 1.0 (10- and 100-task workflows); circled points are infeasible.\label{fig:tight}}[0.28\textwidth]{\includegraphics[width=\linewidth]{Figures/fig_tight_deadline.png}}\\[1ex]
-\subcaptionbox{Accuracy (left) and deadline feasibility (right) vs.\ task failure rate.\label{fig:failure}}[0.42\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_failure_accuracy.png}}\hfill
-\subcaptionbox{Accuracy (left) and deadline feasibility (right) as all link bandwidths are scaled down.\label{fig:bandwidth}}[0.42\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_bandwidth_accuracy.png}}
+\subcaptionbox{Accuracy vs.\ deadline slack $\alpha$.\label{fig:slack}}[0.24\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_slack_accuracy.png}}\hfill
+\subcaptionbox{Accuracy vs.\ federation size $N$.\label{fig:nodes}}[0.24\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_nodes_accuracy.png}}\hfill
+\subcaptionbox{Accuracy vs.\ workflow size $n$.\label{fig:tasksize}}[0.24\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_task_size_acc_only.png}}\hfill
+\subcaptionbox{Score normalized by the bound as $\alpha$ drops below 1.0 (10- and 100-task workflows); circled points are infeasible.\label{fig:tight}}[0.26\textwidth]{\includegraphics[width=\linewidth]{Figures/fig_tight_deadline.png}}\\[0.5ex]
+\subcaptionbox{Accuracy (left) and deadline feasibility (right) vs.\ task failure rate.\label{fig:failure}}[0.40\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_failure_accuracy.png}}\hfill
+\subcaptionbox{Accuracy (left) and deadline feasibility (right) as all link bandwidths are scaled down.\label{fig:bandwidth}}[0.40\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_bandwidth_accuracy.png}}
 \caption{Reported average-accuracy score and deadline feasibility across the five experiments. The methods separate most when the deadline binds (a); extra nodes open placements rather than raising accuracy (b); the greedy tracks the bound at every size in fractions of a second (c); below $\alpha{=}1.0$ the methods spread out and the GA loses feasibility at scale (d); retries preserve accuracy, so methods separate on feasibility (e); and the bandwidth-blind baseline reports bound-level scores while missing the deadline below half bandwidth (f).}
 \label{fig:experiments}
 \end{figure*}
@@ -441,6 +441,32 @@ We model failures with a retry-once rule: when task $T_i$ fails on its node, it 
 The final experiment stresses the communication cost that motivates the model. On the default instance ($n{=}50$, $m{=}5$, $\alpha{=}1.5$), every inter-node bandwidth $B_{ba}$ is multiplied by a factor from 1.0 down to 0.05 with the deadline fixed, modeling links deteriorating during an event. To show what data-aware placement is worth, we add a bandwidth-blind baseline: the same greedy algorithm as Section~\ref{sec:greedy}, but choosing placements as if all transfers were free, and then evaluated against the real communication delays.
 
 Fig.~\ref{fig:bandwidth} shows the two metrics that matter. On score alone, the blind baseline looks perfect---it runs every task fully and reports the bound at every level. The right panel shows why that is misleading: the blind schedules miss the deadline already at half bandwidth and are infeasible in every run at 0.1 and below. The data-aware schedulers behave differently. The MILP stays feasible at every level and loses only about 9\% of score at 0.05, shrinking execution fractions to fit the deadline. The greedy stays feasible down to 0.1 but pays in accuracy (0.86 at 0.1, mostly infeasible at 0.05). The GA is mostly feasible down to 0.2, survives in only 20\% of runs at 0.1, and fails at 0.05. Rounding holds at 0.5 and survives in about 70\% of runs at 0.2, but its sampled assignments largely stop passing the feasibility LP below that; this is a limit of our implementation, not a proof that no feasible rounding exists.
+
+\subsection{Baseline Comparison}
+
+\rev{Table~\ref{tab:baselines} compares against both classes of baselines: the literature method of~\cite{li2023dagmec}, which counts transfers but runs every task in full, and two ablations of our own schedulers. Each term the model carries fails exactly where the baseline lacking it fails.}
+
+\begin{table}[t]
+\caption{Baselines on the hardest settings (10-run means). Score is
+relative to the full-execution bound; deadline met is the
+feasible-run share.}
+\label{tab:baselines}
+\centering\scriptsize
+\begin{tabular}{lccc}
+\toprule
+Setting & Method & Score/bound & Deadline met\\
+\midrule
+$\alpha{=}0.5$, $n{=}100$ & DAG-MEC~\cite{li2023dagmec} & 1.00 & 0\%\\
+ & Greedy (uniform) & 0.41 & 100\%\\
+ & Greedy (path-shrink) & 0.74 & 100\%\\
+ & MILP (ours) & 0.72 & 100\%\\
+\midrule
+BW scale $0.1$ & DAG-MEC~\cite{li2023dagmec} & 1.00 & 10\%\\
+ & Blind greedy & 1.00 & 10\%\\
+ & MILP (ours) & 0.98 & 100\%\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Discussion}
 
