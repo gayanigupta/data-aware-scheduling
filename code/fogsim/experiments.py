@@ -12,7 +12,7 @@ from . import RES_DIR, FIG_DIR
 from .instance import generate_instance
 from .milp import run_milp
 from .rounding import run_rounding
-from .greedy import run_greedy
+from .greedy import run_greedy, run_greedy_cp
 
 
 def run_blind(inst):
@@ -22,7 +22,8 @@ def run_blind(inst):
 from .ga import run_ga
 
 METHODS = {"milp": run_milp, "rounding": run_rounding,
-           "greedy": run_greedy, "ga": run_ga}
+           "greedy": run_greedy, "greedy_cp": run_greedy_cp,
+           "ga": run_ga}
 MILP_CAP = 800          # skip the MILP beyond n*m = 800 (keeps runs bounded)
 
 
