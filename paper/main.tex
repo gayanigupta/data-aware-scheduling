@@ -351,9 +351,9 @@ if transfers were free: it never runs the $\ell$-shrinking loop of
 Algorithm~\ref{alg:greedy}, so it reports bound-level scores even when
 its schedules miss the deadline under real link costs.
 
-Unless a varied parameter says otherwise, every instance uses the default configuration: $n{=}50$ tasks, $m{=}5$ fog nodes, slack $\alpha=1.5$, edge density $0.15$, \rev{and ten replications per point drawn from two independent seed sets of five, so the reported means do not hinge on a single instance draw}. \rev{Error bars show one standard deviation; randomized methods are repeated over seeds $0$--$9$ (reported in the artifact).} The MILP is solved with a 60\,s time limit and skipped above 800 assignment variables ($n\,m$); a time-limited run reports its best \emph{incumbent}, which can sit below an achievable bound the solve has not certified. \rev{Every MILP run that finished below another method on the same instance was therefore re-solved with a 300\,s limit and a $10^{-6}$ optimality gap, and the figures report these certified scores.}
+Unless a varied parameter says otherwise, every instance uses the default configuration: $n{=}50$ tasks, $m{=}5$ fog nodes, slack $\alpha=1.5$, edge density $0.15$, \rev{and ten replications per point drawn from two independent seed sets of five, so the reported means do not hinge on a single instance draw}. \rev{Error bars show one standard deviation; randomized methods are repeated over seeds $0$--$9$.} The MILP is solved with a 60\,s time limit and skipped above 800 assignment variables ($n\,m$); a time-limited run reports its best \emph{incumbent}, which can sit below an achievable bound the solve has not certified. \rev{Every MILP run that finished below another method on the same instance was therefore re-solved with a 300\,s limit and a $10^{-6}$ optimality gap, and the figures report these certified scores.}
 
-Metrics recorded per run: the achieved accuracy score $\bar{A}=\frac{1}{n}\sum_i A_i\,\ell_i$, where $\ell_i=\sum_a l_{ia}$. Because each $A_i$ is an accuracy \emph{weight} rather than a probability, the score is not bounded by~1 and is read relative to the max-accuracy bound of the same instance, drawn as a dashed line in every figure. Makespan and deadline adherence are also recorded.
+Metrics recorded per run: the achieved accuracy score $\bar{A}=\frac{1}{n}\sum_i A_i\,\ell_i$, where $\ell_i=\sum_a l_{ia}$. Because each $A_i$ is an accuracy \emph{weight} rather than a probability, the score is read relative to the max-accuracy bound of the same instance, drawn dashed in every figure. Makespan and deadline adherence are also recorded.
 
 \begin{table}[t]
 \centering
@@ -408,7 +408,7 @@ runs all tasks fully and meets the deadline is optimal for the objective.
 
 Fig.~\ref{fig:slack} shows the reported accuracy score against the slack factor $\alpha$. The methods separate at the tight deadline: at $\alpha=1.0$ the MILP stays within about 2\% of the bound (1.40 vs.\ 1.43), rounding and the greedy follow at about 1.32, and the GA is lowest at 1.26, about 12\% below the bound. From $\alpha=1.2$ onward the greedy reaches the bound exactly, and after the certification re-solves so does the MILP: the runs that were still improving when the 60\,s limit hit all certified the bound within 300\,s, confirming that the gap was a truncated incumbent rather than a weaker optimum. The two stochastic methods never fully close the gap: rounding sits about 3\% below at $\alpha=1.2$ and reaches the bound at $\alpha=1.5$--2.0, while the GA trails by about 1--5\% across the range. The scheduling choice matters most when the workflow barely fits its deadline, and a fixed sampling budget does not recover the bound even when one exists.
 
-\rev{Pushing $\alpha$ below 1.0 forces partial execution: no schedule can run every task fully, so a method must choose what to sacrifice (Fig.~\ref{fig:tight}). At $\alpha=0.5$ the methods spread clearly---MILP holds about 76\% of the bound, the GA 71\%, rounding 68\%, and the greedy 46\% (74\% for its path-shrinking variant of Section~\ref{sec:greedy})---and the ranking holds at 100 tasks. Two limits surface there: the GA returns infeasible schedules at $\alpha\le0.8$, and every 100-task MILP solve at $\alpha\le0.9$ exhausted the 60\,s limit (incumbents, not optima), with rounding and the greedy far cheaper. From $\alpha\approx1.2$ all feasible methods reach the bound.}
+\rev{Pushing $\alpha$ below 1.0 forces partial execution: no schedule can run every task fully, so a method must choose what to sacrifice (Fig.~\ref{fig:tight}). At $\alpha=0.5$ the methods spread clearly---MILP holds about 76\% of the bound, the GA 71\%, rounding 68\%, and the greedy 46\% (74\% for its path-shrinking variant of Section~\ref{sec:greedy})---and the ranking holds at 100 tasks. \rev{A full-or-nothing baseline that counts transfers but cannot shrink execution~\cite{li2023dagmec} reports the bound on every instance yet meets almost no deadline below $\alpha{=}1.2$: without the execution fraction, tight deadlines are impossible.} Two limits surface there: the GA returns infeasible schedules at $\alpha\le0.8$, and every 100-task MILP solve at $\alpha\le0.9$ exhausted the 60\,s limit (incumbents, not optima), with rounding and the greedy far cheaper. From $\alpha\approx1.2$ all feasible methods reach the bound.}
 
 \subsection{Federation Size}
 
@@ -451,9 +451,8 @@ forced, the MILP holds about 76\% of the bound against the greedy's
 46\%,} while by $\alpha{=}1.5$ the \rev{feasible} methods coincide. Second,
 accuracy under a binding deadline is not free in wall time: at 1000
 tasks the greedy finishes in about 0.15\,s, rounding spends about
-304\,s per run, and the GA about 159\,s for a markedly worse score
-\rev{(at 100 tasks the MILP
-caps at 60\,s)}. Third, \rev{feasibility is the real differentiator under
+304\,s per run, and the GA about 159\,s for a markedly worse score.
+Third, \rev{feasibility is the real differentiator under
 stress: the GA turns infeasible at tight deadlines, and only the
 data-aware methods survive degraded bandwidth.}
 
@@ -472,10 +471,8 @@ penalty-weighted fitness does not enforce feasibility, hence the
 infeasible plans at $\alpha\le0.8$}. (iv)~\emph{Failure semantics}: retry-once differentiates
 schedulers through feasibility, but replication and checkpointing are
 left out of the model. (v)~\emph{Dense instances}: per-edge data is
-stored densely, so the $10^6$-task structures generated in the notebook
-cannot yet be carried as schedulable instances; sparse storage and
-decomposed formulations would extend the same model to genuinely large
-deployments.
+stored densely, so the $10^6$-task structures we generate cannot yet be
+scheduled; sparse storage would extend the model to large deployments.
 
 \section{Conclusion and Future Work}
 
@@ -571,9 +568,9 @@ $e_{ia}=0$ by \eqref{eq:frac}, \eqref{eq:compllin} reduces to
 formulations, so their feasible $(e,l)$ sets and optima coincide.
 \end{proof}
 
-\enlargethispage{10\baselineskip}
+\enlargethispage{6\baselineskip}
 \vspace*{-2.5em}
-{\fontsize{6.2}{7.2}\selectfont
+{\fontsize{6.0}{7.0}\selectfont
 \bibliographystyle{ieeetr}
 \bibliography{cas-refs}}
 
