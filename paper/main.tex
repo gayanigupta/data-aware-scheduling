@@ -111,10 +111,9 @@ bandwidth or partial execution.
 
 Fog and edge resource allocation is surveyed in \cite{hong2019survey}, and federating nearby fog sites has been proposed for industrial settings \cite{fgcs2024}. Inside such a federation, existing schedulers mostly worry about compute: where to place components for throughput \cite{faticanti2020partitioning} or quality-of-service targets. What they largely ignore is the data that must travel between dependent tasks. In a federated fog the links between sites are the scarce resource, so a scheduler that ignores them can pick a plan that looks fast on paper but misses its deadline in the field. Our formulation avoids that by putting the data volume on every edge and the bandwidth on every link directly into the optimization, together with partial execution.
 
-Trading result quality for resources is not new. Probabilistic task
+Trading result quality for resources is not new: probabilistic task
 pruning drops low-value tasks to keep a schedule feasible under load
-\cite{gentry2019taskpruning}, and stochastic optimization makes
-allocations robust to uncertain runtimes \cite{Salehi2016}. We use a
+\cite{gentry2019taskpruning}. We use a
 softer version: instead of dropping a task, the scheduler can run part
 of it. That difference matters in disaster response, where dropping the
 alerting task is not an option but running a faster, slightly less
@@ -217,7 +216,7 @@ subject to
  &e_{ia} \in\{0,1\}. && \label{eq:bin}
 \end{align}
 
-Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only run where it is placed, and at most one $l_{ia}$ per task is non-zero. \rev{The case $l_{ia}=0$ means the task is placed but never runs; it earns no accuracy, but it still hands its output data $D_{ji}$ to every successor, so the transfer cost in \eqref{eq:comm} is charged whether or not the task ran. Skipping is rare in practice (Fig.~\ref{fig:skipped}); every certified-optimal run executes all tasks at least partially.} Constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} are quadratic; the Appendix gives the standard linearization ($z_{ia}=e_{ia}M_{ia}$) and the correctness argument.
+Constraints \eqref{eq:one}--\eqref{eq:elig} place every task on exactly one permitted node. Constraint \eqref{eq:frac} ties the execution fraction to the assignment: a task can only run where it is placed, and at most one $l_{ia}$ per task is non-zero. \rev{The case $l_{ia}=0$ means the task is placed but never runs; it earns no accuracy, but it still hands its output data $D_{ji}$ to every successor, so the transfer cost in \eqref{eq:comm} is charged whether or not the task ran. Skipping is rare in practice: across our runs it occurs only in time-limited MILP solves, never in a certified optimum.} Constraint \eqref{eq:start} is the data-aware term: a task cannot start before every predecessor has finished \emph{and} its output has crossed the link. Equation \eqref{eq:compl} defines the completion time and \eqref{eq:deadline} enforces the deadline. The products $e_{ia}M_{ia}$ in \eqref{eq:compl} are quadratic; the Appendix gives the standard linearization ($z_{ia}=e_{ia}M_{ia}$) and the correctness argument.
 
 Scheduling problems of this kind are NP-hard already on unrelated
 parallel machines \cite{lenstra1990approximation}, so we treat the MILP
@@ -401,11 +400,13 @@ makespan: on the medium dataset it and the greedy reach the same score
 while their makespans differ (119.15 vs.\ 82.51), since any placement that
 runs all tasks fully and meets the deadline is optimal for the objective.
 
-\emph{Reproducibility.} The simulator, instances, per-run results, MILP solver logs, and an executed notebook are publicly available at \url{https://github.com/gayanigupta/data-aware-scheduling}~\cite{gupta2025code}; the implementation depends only on NumPy, SciPy (HiGHS), and pandas.
+\emph{Reproducibility.} The simulator, instances, per-run results, MILP solver logs, and an executed notebook are publicly available at \url{https://github.com/gayanigupta/data-aware-scheduling}; the implementation depends only on NumPy, SciPy (HiGHS), and pandas.
 
 \subsection{Deadline Slack}
 
 Fig.~\ref{fig:slack} shows the reported accuracy score against the slack factor $\alpha$. The methods separate at the tight deadline: at $\alpha=1.0$ the MILP stays within about 2\% of the bound (1.40 vs.\ 1.43), rounding and the greedy follow at about 1.32, and the GA is lowest at 1.26, about 12\% below the bound. From $\alpha=1.2$ onward the greedy reaches the bound exactly, and after the certification re-solves so does the MILP: the runs that were still improving when the 60\,s limit hit all certified the bound within 300\,s, confirming that the gap was a truncated incumbent rather than a weaker optimum. The two stochastic methods never fully close the gap: rounding sits about 3\% below at $\alpha=1.2$ and reaches the bound at $\alpha=1.5$--2.0, while the GA trails by about 1--5\% across the range. The scheduling choice matters most when the workflow barely fits its deadline, and a fixed sampling budget does not recover the bound even when one exists.
+
+\rev{Pushing $\alpha$ below 1.0 forces partial execution: no schedule can run every task fully, so a method must choose what to sacrifice (Fig.~\ref{fig:tight}; 10- and 100-task instances at five nodes, scores normalized by the full-execution bound). At $\alpha=0.5$ the methods spread clearly: the MILP holds about 76\% of the bound at 10 tasks, the GA 71\%, rounding 68\%, and the greedy 46\%, which shrinks every task on the critical path instead of choosing what to cut. The ranking holds at 100 tasks, but there the GA's schedules are infeasible at $\alpha\le0.8$: once most tasks must shrink, its fitness penalty cannot reliably find a feasible plan. From $\alpha\approx1.2$ all feasible methods reach the bound.}
 
 \subsection{Federation Size}
 
@@ -421,10 +422,10 @@ Fig.~\ref{fig:tasksize} shows accuracy for DAGs of 10, 100, and 1000 tasks (thes
 \subcaptionbox{Accuracy vs.\ deadline slack $\alpha$.\label{fig:slack}}[0.28\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_slack_accuracy.png}}\hfill
 \subcaptionbox{Accuracy vs.\ federation size $N$.\label{fig:nodes}}[0.28\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_nodes_accuracy.png}}\hfill
 \subcaptionbox{Accuracy vs.\ workflow size $n$.\label{fig:tasksize}}[0.28\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_task_size_acc_only.png}}\hfill
-\subcaptionbox{Skipped tasks ($\ell_i{=}0$) per setting; they occur only in runs stopped at the time limit, never in certified optima.\label{fig:skipped}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/skipped_tasks.png}}\\[1ex]
+\subcaptionbox{Score normalized by the full-execution bound as $\alpha$ drops below 1.0, for 10- and 100-task workflows; circled points are infeasible runs.\label{fig:tight}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/fig_tight_deadline.png}}\\[1ex]
 \subcaptionbox{Accuracy (left) and deadline feasibility (right) vs.\ task failure rate.\label{fig:failure}}[0.44\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_failure_accuracy.png}}\hfill
 \subcaptionbox{Accuracy (left) and deadline feasibility (right) as all link bandwidths are scaled down.\label{fig:bandwidth}}[0.44\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_bandwidth_accuracy.png}}
-\caption{Reported average-accuracy score and deadline feasibility across the five experiments. The methods separate most when the deadline binds (a); extra nodes open placements rather than raising accuracy (b); the greedy tracks the bound at every size while answering in fractions of a second (c); under the retry-once model, retries preserve accuracy so methods separate on feasibility (e); and the bandwidth-blind baseline reports bound-level scores while missing the deadline below half bandwidth, where the data-aware methods trade accuracy for feasibility (f).}
+\caption{Reported average-accuracy score and deadline feasibility across the five experiments. The methods separate most when the deadline binds (a); extra nodes open placements rather than raising accuracy (b); the greedy tracks the bound at every size in fractions of a second (c); below $\alpha{=}1.0$ the methods spread out and the GA loses feasibility at scale (d); retries preserve accuracy, so methods separate on feasibility (e); and the bandwidth-blind baseline reports bound-level scores while missing the deadline below half bandwidth (f).}
 \label{fig:experiments}
 \end{figure*}
 
@@ -475,11 +476,11 @@ deployments.
 
 \section{Conclusion and Future Work}
 
-This paper formulated data- and bandwidth-aware scheduling of approximate DAG workflows in federated fog systems as a mixed-integer linear program, and gave three scalable schedulers built on the same cost model. In simulation, the MILP earns a clear accuracy advantage when deadlines are tight; with generous slack the MILP and the greedy coincide at the bound; and at large workflow sizes the lightweight greedy holds its own while the GA's fixed search budget becomes its weakness. Under the retry-once failure model, the schedulers separate on deadline feasibility rather than accuracy.
+We set out to answer a practical question: when the cloud is unreachable, how should a federation of nearby fog machines share a deadline-bound workflow whose tasks can be run partially? This paper gives the problem a cost model that charges real money for moving data between sites, writes it as a mixed-integer linear program, and offers three faster schedulers that all work under the same model.
 
-Together, these results close the loop on the problem set out in the introduction: placements now pay the true cost of moving data between fog sites---the blind baseline shows what goes wrong without that term---and the execution fraction lets a workflow finish at reduced accuracy when full quality would miss the deadline.
+The experiments tell a consistent story. When the deadline is generous, every reasonable method runs every task fully and the choice of scheduler barely matters. As the deadline tightens below the point where full execution fits, the methods spread apart: the MILP sacrifices the least accuracy, the greedy the most, and at 100 tasks the GA stops finding feasible schedules at all. Failures and degraded links separate the methods on feasibility rather than score, and the bandwidth-blind baseline shows exactly what goes wrong when placement ignores data movement---perfect-looking accuracy with deadlines missed.
 
-Future work follows the shortcomings documented above: sparse storage and decomposed formulations to reach the $10^6$-task graphs we can already generate structurally; adaptive GA budgets that scale with $n$; richer failure semantics such as replication and checkpointing; and online re-scheduling with validation on a real federated fog testbed.
+Future work follows the shortcomings we documented: larger workflows need decomposed or sparser formulations, the GA needs a search budget that grows with problem size and a better feasibility mechanism under tight deadlines, and the failure model should grow beyond retry-once toward replication and checkpointing, with validation on a real federated fog testbed.
 
 \section*{Acknowledgments}
 
