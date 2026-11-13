@@ -279,9 +279,11 @@ The scheduler keeps a single global execution fraction $\ell\in[\ell_{\min},1]$,
 \end{algorithmic}
 \end{algorithm}
 
-\paragraph*{Complexity} One pass costs $O(nm+m|E|)$---each task scans all $m$ nodes and maximizes over its in-neighbours---and the number of passes is bounded by $\lceil(1-\ell_{\min})/\delta\rceil$. The floor matters when communication alone already exceeds $t_{\max}$, as in the $0.05$-bandwidth case of Section~\ref{sec:eval-bw}.
+\paragraph*{Complexity} One pass costs $O(nm+m|E|)$---each task scans all $m$ nodes and maximizes over its in-neighbours---and the number of passes is bounded by $\lceil(1-\ell_{\min})/\delta\rceil$.
 
 The greedy is a practical method rather than just a baseline: it accounts for the deadline through $\ell$, bandwidth through $c_{ji}^{ba}$, and node speed through $t_{ia}$. What it cannot do is look ahead---a cheap early decision can force an expensive one later---which the genetic algorithm addresses.
+
+\rev{A variant replaces the global $\ell$ with per-task fractions: it schedules, backtraces the chain that sets the makespan, and lowers $\ell_i$ only on those tasks. On the instances of Fig.~\ref{fig:tight} this nearly doubles the uniform version's score at $\alpha{=}0.5$ (0.74 vs.\ 0.41 of the bound at $n{=}100$) while meeting the same deadlines; the two coincide once $\alpha\ge1.2$.}
 
 \subsection{Genetic-Algorithm Scheduler}
 \label{sec:ga}
@@ -406,7 +408,7 @@ runs all tasks fully and meets the deadline is optimal for the objective.
 
 Fig.~\ref{fig:slack} shows the reported accuracy score against the slack factor $\alpha$. The methods separate at the tight deadline: at $\alpha=1.0$ the MILP stays within about 2\% of the bound (1.40 vs.\ 1.43), rounding and the greedy follow at about 1.32, and the GA is lowest at 1.26, about 12\% below the bound. From $\alpha=1.2$ onward the greedy reaches the bound exactly, and after the certification re-solves so does the MILP: the runs that were still improving when the 60\,s limit hit all certified the bound within 300\,s, confirming that the gap was a truncated incumbent rather than a weaker optimum. The two stochastic methods never fully close the gap: rounding sits about 3\% below at $\alpha=1.2$ and reaches the bound at $\alpha=1.5$--2.0, while the GA trails by about 1--5\% across the range. The scheduling choice matters most when the workflow barely fits its deadline, and a fixed sampling budget does not recover the bound even when one exists.
 
-\rev{Pushing $\alpha$ below 1.0 forces partial execution: no schedule can run every task fully, so a method must choose what to sacrifice (Fig.~\ref{fig:tight}). At $\alpha=0.5$ the methods spread clearly---MILP holds about 76\% of the bound, the GA 71\%, rounding 68\%, and the greedy 46\%---and the ranking holds at 100 tasks. Two limits surface there: the GA returns infeasible schedules at $\alpha\le0.8$, and every 100-task MILP solve at $\alpha\le0.9$ exhausted the 60\,s limit (incumbents, not optima), while rounding took about 25\,s and the greedy under a second. From $\alpha\approx1.2$ all feasible methods reach the bound.}
+\rev{Pushing $\alpha$ below 1.0 forces partial execution: no schedule can run every task fully, so a method must choose what to sacrifice (Fig.~\ref{fig:tight}). At $\alpha=0.5$ the methods spread clearly---MILP holds about 76\% of the bound, the GA 71\%, rounding 68\%, and the greedy 46\% (74\% for its path-shrinking variant of Section~\ref{sec:greedy})---and the ranking holds at 100 tasks. Two limits surface there: the GA returns infeasible schedules at $\alpha\le0.8$, and every 100-task MILP solve at $\alpha\le0.9$ exhausted the 60\,s limit (incumbents, not optima), with rounding and the greedy far cheaper. From $\alpha\approx1.2$ all feasible methods reach the bound.}
 
 \subsection{Federation Size}
 
@@ -479,7 +481,7 @@ deployments.
 
 We set out to answer a practical question: when the cloud is unreachable, how should a federation of nearby fog machines share a deadline-bound workflow whose tasks can be run partially? This paper gives the problem a cost model that charges real money for moving data between sites, writes it as a mixed-integer linear program, and offers three faster schedulers that all work under the same model.
 
-The experiments tell a consistent story. When the deadline is generous, every reasonable method runs every task fully and the choice of scheduler barely matters. As the deadline tightens below the point where full execution fits, the methods spread apart: the MILP sacrifices the least accuracy, the greedy the most, and at 100 tasks the GA stops finding feasible schedules at all. Failures and degraded links separate the methods on feasibility rather than score, and the bandwidth-blind baseline shows exactly what goes wrong when placement ignores data movement---perfect-looking accuracy with deadlines missed.
+The experiments tell a consistent story. When the deadline is generous, every reasonable method runs every task fully and the choice of scheduler barely matters. As the deadline tightens below the point where full execution fits, the methods spread apart: the MILP sacrifices the least accuracy, the uniform-fraction greedy the most, and at 100 tasks the GA stops finding feasible schedules at all. Failures and degraded links separate the methods on feasibility rather than score, and the bandwidth-blind baseline shows exactly what goes wrong when placement ignores data movement---perfect-looking accuracy with deadlines missed.
 
 Future work follows the shortcomings we documented: larger workflows need decomposed or sparser formulations, the GA needs a budget that grows with problem size and a feasibility-first fitness, and the failure model should grow beyond retry-once, with validation on a real federated fog testbed.
 
