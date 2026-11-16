@@ -16,7 +16,7 @@
         <mxCell id="f1" value="&lt;b&gt;f1 — Gateway&lt;/b&gt;&lt;br&gt;T1: Collect data&lt;br&gt;T2: Prepare data&lt;br&gt;T3: Detect smoke" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbe9f6;strokeColor=#2c7fb8;fontSize=12;align=center;" vertex="1" parent="1">
           <mxGeometry x="120" y="230" width="190" height="110" as="geometry" />
         </mxCell>
-        <mxCell id="f3" value="&lt;b&gt;f3 — Hospital&lt;/b&gt;&lt;br&gt;T4: Predict spread" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dff0e6;strokeColor=#2c7fb8;fontSize=12;align=center;" vertex="1" parent="1">
+        <mxCell id="f3" value="&lt;b&gt;f3 — Base station&lt;/b&gt;&lt;br&gt;T4: Predict spread" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dff0e6;strokeColor=#2c7fb8;fontSize=12;align=center;" vertex="1" parent="1">
           <mxGeometry x="270" y="380" width="190" height="70" as="geometry" />
         </mxCell>
         <mxCell id="f2" value="&lt;b&gt;f2 — Shelter&lt;/b&gt;&lt;br&gt;T5: Map fire" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8e4f3;strokeColor=#2c7fb8;fontSize=12;align=center;" vertex="1" parent="1">

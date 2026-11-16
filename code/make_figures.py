@@ -163,7 +163,7 @@ def figure_architecture():
         "T3: Detect smoke", fc="white", ec=EDGE_BLUE, fs=FS,
         square=True)
     box(ax, 16.8, 10.0, 6.8, 3.2,
-        "f3 — Hospital\nT4: Predict fire spread",
+        "f3 — Base station\nT4: Predict fire spread",
         fc="white", ec=EDGE_BLUE, fs=FS, square=True)
     box(ax, 2.2, 3.2, 6.8, 3.0,
         "f2 — Shelter\nT5: Map fire",

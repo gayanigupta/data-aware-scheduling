@@ -72,7 +72,7 @@ Data-aware scheduling, federated fog systems, directed acyclic graphs, approxima
 
 Industrial and emergency applications increasingly run on fog computers: small compute sites close to the sensors, deployed where the data is produced. This is especially important in remote or extreme environments like offshore platforms, deep-sea facilities, or disaster zones, where the link to a cloud data center is slow, intermittent, or simply absent. When the cloud cannot be reached, a local fog site must handle time-critical work on its own, and a single site often does not have enough capacity to finish a workflow before its deadline.
 
-A practical way to add capacity is to federate nearby fog sites. During a wildfire, for example, the computers at an evacuation shelter, a field hospital, and a mobile command unit can still reach each other over local radio links even when the wide-area network is down. A federated fog then works like a small local cloud: tasks can be placed on any node, and nodes share data over the inter-fog links \cite{fgcs2024,hong2019survey}.
+A practical way to add capacity is to federate nearby fog sites. During a wildfire, for example, the computers at an evacuation shelter, a cellular base station, and a mobile command unit can still reach each other over local radio links even when the wide-area network is down. A federated fog then works like a small local cloud: tasks can be placed on any node, and nodes share data over the inter-fog links \cite{fgcs2024,hong2019survey}.
 
 Federation, however, makes scheduling harder, not easier. Real-time industrial applications are usually written as directed acyclic graphs (DAGs), where an edge means that one task must receive another task's output before it can start. Those edges carry real data, such as sensor streams, simulation checkpoints, or model features. Moving that data between nodes takes time that depends on the link bandwidth. Most existing fog schedulers reason only about compute: they ask where a task runs fastest, but not how long it takes to get the task's input there. In a disaster-response workflow, this omission is costly because a ``fast'' remote placement can lose more time to data transfer than it saves in execution.
 
@@ -124,12 +124,12 @@ accurate version of it may be.
 
 \subsection{Setting}
 
-We consider a federation of fog nodes $F=\{f_1,\ldots,f_m\}$ deployed across a wildfire-prone region---a gateway at the field station, a shelter, a hospital, and a mobile response unit (Fig.~\ref{fig:architecture}). Each pair of nodes is connected by a link of known bandwidth, and the federation keeps working when the link to the cloud is down, which during a fire is the common case rather than the exception. A workflow arrives as a DAG $G=(T,E)$, where each node $T_i\in T$ is a computational task, and each edge $(T_j,T_i)\in E$ is both a precedence constraint and a data transfer of size $D_{ji}$.
+We consider a federation of fog nodes $F=\{f_1,\ldots,f_m\}$ deployed across a wildfire-prone region---a gateway at the field station, a shelter, a base station, and a mobile response unit (Fig.~\ref{fig:architecture}). Each pair of nodes is connected by a link of known bandwidth, and the federation keeps working when the link to the cloud is down, which during a fire is the common case rather than the exception. A workflow arrives as a DAG $G=(T,E)$, where each node $T_i\in T$ is a computational task, and each edge $(T_j,T_i)\in E$ is both a precedence constraint and a data transfer of size $D_{ji}$.
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.72\textwidth]{Figures/federated-fog-architecture.png}
-\caption{Federated fog deployment for wildfire response. Smoke cameras, drones, and weather stations feed a workflow of dependent tasks; the scheduler assigns each task to one fog node ($f_1$ Gateway, $f_2$ Shelter, $f_3$ Hospital, $f_4$ Mobile --- the same nodes as Fig.~\ref{fig:dag}), priced by both compute time and inter-node data-transfer cost.}
+\caption{Federated fog deployment for wildfire response. Smoke cameras, drones, and weather stations feed a workflow of dependent tasks; the scheduler assigns each task to one fog node ($f_1$ Gateway, $f_2$ Shelter, $f_3$ Base station, $f_4$ Mobile --- the same nodes as Fig.~\ref{fig:dag}), priced by both compute time and inter-node data-transfer cost.}
 \label{fig:architecture}
 \end{figure*}
 
