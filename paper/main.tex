@@ -325,7 +325,7 @@ Because the GA evaluates complete assignments instead of committing tasks one at
 
 \subsection{Experimental Setup}
 
-All experiments use a custom discrete-event simulator. Workloads are synthetic disaster-response DAGs serialized in JSON, each task carrying an execution-time vector $t_{ia}$, edge data sizes $D_{ji}$, a full-accuracy value $A_i$, and eligibility $P_{ia}$. The fog federation is generated with heterogeneous node speeds and link bandwidths, and communication delays follow Eq.~\eqref{eq:comm}. The parameters are chosen so that data transfers genuinely contest compute rather than being negligible or prohibitive: task times $t_{ia}\in[2,6]$, edge data sizes $D_{ji}\in[10,80]$, and link bandwidths $B_{ba}\in[10,80]$. \rev{Reading one time unit as 100\,s, one data unit as 100\,MB, and one bandwidth unit as 8\,Mbp/s, these correspond to task runtimes of roughly 3--10 minutes (analytics and inference steps on Jetson-class fog hardware), edge payloads of 1--8\,GB (drone imagery bundles and weather rasters), and link rates of 80--640\,Mbp/s (the Wi-Fi/LTE backhaul range shown in Fig.~\ref{fig:dag}), which keeps $D_{ji}/B_{ba}$ comparable to task execution time. Node speeds vary within $[0.8,1.25]\times$---a modest band, so that outcomes are decided by data movement rather than by which node happens to be fastest---and roughly 15\% of task--node pairs are ineligible, modeling missing sensor feeds or software dependencies.}
+All experiments use a custom discrete-event simulator. Workloads are synthetic disaster-response DAGs serialized in JSON, each task carrying an execution-time vector $t_{ia}$, edge data sizes $D_{ji}$, a full-accuracy value $A_i$, and eligibility $P_{ia}$. The fog federation is generated with heterogeneous node speeds and link bandwidths, and communication delays follow Eq.~\eqref{eq:comm}. The parameters are chosen so that data transfers actually compete with compute rather than being negligible or prohibitive: task times $t_{ia}\in[2,6]$, edge data sizes $D_{ji}\in[10,80]$, and link bandwidths $B_{ba}\in[10,80]$. \rev{Reading one time unit as 100\,s, one data unit as 100\,MB, and one bandwidth unit as 8\,Mbp/s, these correspond to task runtimes of roughly 3--10 minutes (analytics and inference steps on Jetson-class fog hardware), edge payloads of 1--8\,GB (drone imagery bundles and weather rasters), and link rates of 80--640\,Mbp/s (the Wi-Fi/LTE backhaul range shown in Fig.~\ref{fig:dag}), which keeps $D_{ji}/B_{ba}$ comparable to task execution time. Node speeds vary within $[0.8,1.25]\times$---a modest band, so that outcomes are decided by data movement rather than by which node happens to be fastest---and roughly 15\% of task--node pairs are ineligible, modeling missing sensor feeds or software dependencies.}
 
 We vary five factors. \emph{Test datasets} are four seeded instance
 sets: 10 tasks/3 nodes, 100 tasks/5 nodes, 500 tasks/8 nodes, and 1000
@@ -351,7 +351,7 @@ if transfers were free: it never runs the $\ell$-shrinking loop of
 Algorithm~\ref{alg:greedy}, so it reports bound-level scores even when
 its schedules miss the deadline under real link costs.
 
-Unless a varied parameter says otherwise, every instance uses the default configuration: $n{=}50$ tasks, $m{=}5$ fog nodes, slack $\alpha=1.5$, edge density $0.15$, \rev{and ten replications per point drawn from two independent seed sets of five, so the reported means do not hinge on a single instance draw}. \rev{Error bars show one standard deviation; randomized methods are repeated over seeds $0$--$9$.} The MILP is solved with a 60\,s time limit and skipped above 800 assignment variables ($n\,m$); a time-limited run reports its best \emph{incumbent}, which can sit below an achievable bound the solve has not certified. \rev{Every MILP run that finished below another method on the same instance was therefore re-solved with a 300\,s limit and a $10^{-6}$ optimality gap, and the figures report these certified scores.}
+Unless a varied parameter says otherwise, every instance uses the default configuration: $n{=}50$ tasks, $m{=}5$ fog nodes, slack $\alpha=1.5$, edge density $0.15$, \rev{and ten replications per point drawn from two independent seed sets of five, so the reported means do not depend on one lucky instance draw}. \rev{Error bars show one standard deviation; randomized methods are repeated over seeds $0$--$9$.} The MILP is solved with a 60\,s time limit and skipped above 800 assignment variables ($n\,m$); a time-limited run reports its best \emph{incumbent}, which can sit below an achievable bound the solve has not certified. \rev{Every MILP run that finished below another method on the same instance was therefore re-solved with a 300\,s limit and a $10^{-6}$ optimality gap, and the figures report these certified scores.}
 
 Metrics recorded per run: the achieved accuracy score $\bar{A}=\frac{1}{n}\sum_i A_i\,\ell_i$, where $\ell_i=\sum_a l_{ia}$. Because each $A_i$ is an accuracy \emph{weight} rather than a probability, the score is read relative to the max-accuracy bound of the same instance, drawn dashed in every figure. Makespan and deadline adherence are also recorded.
 
@@ -408,7 +408,7 @@ runs all tasks fully and meets the deadline is optimal for the objective.
 
 Fig.~\ref{fig:slack} shows the reported accuracy score against the slack factor $\alpha$. The methods separate at the tight deadline: at $\alpha=1.0$ the MILP stays within about 2\% of the bound (1.40 vs.\ 1.43), rounding and the greedy follow at about 1.32, and the GA is lowest at 1.26, about 12\% below the bound. From $\alpha=1.2$ onward the greedy reaches the bound exactly, and after the certification re-solves so does the MILP: the runs that were still improving when the 60\,s limit hit all certified the bound within 300\,s, confirming that the gap was a truncated incumbent rather than a weaker optimum. The two stochastic methods never fully close the gap: rounding sits about 3\% below at $\alpha=1.2$ and reaches the bound at $\alpha=1.5$--2.0, while the GA trails by about 1--5\% across the range. The scheduling choice matters most when the workflow barely fits its deadline, and a fixed sampling budget does not recover the bound even when one exists.
 
-\rev{Pushing $\alpha$ below 1.0 forces partial execution: no schedule can run every task fully, so a method must choose what to sacrifice (Fig.~\ref{fig:tight}). At $\alpha=0.5$ the methods spread clearly---MILP holds about 76\% of the bound, the GA 71\%, rounding 68\%, and the greedy 46\% (74\% for its path-shrinking variant of Section~\ref{sec:greedy})---and the ranking holds at 100 tasks. Two limits surface there: the GA returns infeasible schedules at $\alpha\le0.8$, and every 100-task MILP solve at $\alpha\le0.9$ exhausted the 60\,s limit (incumbents, not optima), with rounding and the greedy far cheaper. From $\alpha\approx1.2$ all feasible methods reach the bound.}
+\rev{Pushing $\alpha$ below 1.0 forces partial execution: no schedule can run every task fully, so a method must choose what to sacrifice (Fig.~\ref{fig:tight}). At $\alpha=0.5$ the methods spread clearly---MILP holds about 76\% of the bound, the GA 71\%, rounding 68\%, and the greedy 46\% (74\% for its path-shrinking variant of Section~\ref{sec:greedy})---and the ranking holds at 100 tasks. Two limits show up there: the GA returns infeasible schedules at $\alpha\le0.8$, and every 100-task MILP solve at $\alpha\le0.9$ exhausted the 60\,s limit (incumbents, not optima), with rounding and the greedy far cheaper. From $\alpha\approx1.2$ all feasible methods reach the bound.}
 
 \subsection{Federation Size}
 
@@ -473,7 +473,7 @@ BW scale $0.1$ & DAG-MEC~\cite{li2023dagmec} & 1.00 & 10\%\\
 \end{tabular}}
 \end{table}
 
-\rev{Baselines look perfect on score yet miss deadlines---nothing lets them trade accuracy for time; ours make that trade to deliver on time.}
+\rev{The baseline scores look strong, but those schedules miss their deadlines: they have no way to give up accuracy to save time. Our schedulers can, which is why they stay feasible.}
 
 \subsection{Discussion}
 
@@ -485,9 +485,9 @@ forced, the MILP holds about 76\% of the bound against the greedy's
 accuracy under a binding deadline is not free in wall time: at 1000
 tasks the greedy finishes in about 0.15\,s, rounding spends about
 304\,s per run, and the GA about 159\,s for a markedly worse score.
-Third, \rev{what separates the methods under stress is not the score but meeting the deadline at all: the GA returns infeasible plans at tight deadlines, and only data-aware methods finish on time as links degrade.}
+Third, \rev{under stress the score matters less than whether the deadline is met: the GA returns infeasible plans at tight deadlines, and only data-aware methods finish on time as links degrade.}
 
-\textbf{Bottlenecks and shortcomings.} The evaluation surfaced limits
+\textbf{Bottlenecks and shortcomings.} The evaluation also turned up limits
 that delimit where the formulation applies. (i)~\emph{MILP
 scalability}: the model has $n\,N_{\mathrm{fog}}$ binary assignment
 variables; we cap runs at 800 with a 60\,s limit (300\,s for
@@ -509,7 +509,7 @@ scheduled; sparse storage would extend the model to large deployments.
 
 We set out to answer a practical question: when the cloud is unreachable, how should a federation of nearby fog machines share a deadline-bound workflow whose tasks can be run partially? This paper gives the problem a cost model that charges real money for moving data between sites, writes it as a mixed-integer linear program, and offers three faster schedulers that all work under the same model.
 
-The experiments tell a consistent story. \rev{When the deadline is generous, every reasonable method runs every task fully and the choice of scheduler barely matters. As the deadline tightens below the point where full execution fits, the methods spread apart: the MILP sacrifices the least accuracy, the uniform-fraction greedy the most, and at 100 tasks the GA stops finding feasible schedules at all.} Failures and degraded links separate the methods on feasibility rather than score, and the bandwidth-blind baseline shows exactly what goes wrong when placement ignores data movement---perfect-looking accuracy with deadlines missed.
+The same pattern shows up across the experiments. \rev{When the deadline is generous, every reasonable method runs every task fully and the choice of scheduler barely matters. Once the deadline drops below what full execution needs, the methods spread apart: the MILP gives up the least accuracy, the uniform-fraction greedy the most, and at 100 tasks the GA stops finding feasible schedules at all.} Failures and degraded links separate the methods on feasibility rather than score, and the bandwidth-blind baseline shows what happens when placement ignores data movement: its accuracy looks perfect while its deadlines are missed.
 
 Future work follows the shortcomings we documented: larger workflows need decomposed or sparser formulations, the GA needs a budget that grows with problem size and a feasibility-first fitness, and the failure model should grow beyond retry-once, with validation on a real federated fog testbed.
 
