@@ -449,7 +449,7 @@ Fig.~\ref{fig:bandwidth} shows the two metrics that matter. On score alone, the 
 
 \subsection{Baseline Comparison}
 
-\rev{Table~\ref{tab:baselines} compares against both classes of baselines. For the literature baseline we reimplemented the mobile-edge DAG scheduler of~\cite{li2023dagmec} on our cost model: it is a list scheduler that counts edge transfers when ranking and placing tasks, but executes every task in full ($\ell_i{=}1$), so a plan that misses the deadline is simply infeasible. The two ablations modify our own greedy: the blind version prices transfers as free when placing, and the uniform version shrinks one global $\ell$ instead of the per-task path-shrinking variant. All baselines ran on the same instances, harness, and metrics (score vs.\ bound; deadline-met share). Each model term fails exactly where the baseline lacking it fails.}
+\rev{Table~\ref{tab:baselines} compares against both classes of baselines. For the literature one we reimplemented the mobile-edge DAG scheduler of~\cite{li2023dagmec} on our cost model: it ranks and places tasks counting edge transfers but runs every task in full, so a plan that misses the deadline is infeasible. The two ablations modify our greedy: the blind version prices transfers as free, and the uniform version shrinks one global $\ell$ rather than the binding path only. All ran on the same instances, harness, and metrics.}
 
 \begin{table}[t]
 \caption{Baselines on the hardest settings (10-run means). Score is
@@ -472,6 +472,8 @@ BW scale $0.1$ & DAG-MEC~\cite{li2023dagmec} & 1.00 & 10\%\\
 \bottomrule
 \end{tabular}}
 \end{table}
+
+\rev{The baselines look perfect on score yet miss deadlines, because nothing lets them trade accuracy for time; our schedulers make exactly that trade to deliver on time.}
 
 \subsection{Discussion}
 
