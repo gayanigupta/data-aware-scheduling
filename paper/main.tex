@@ -106,7 +106,7 @@ not at all, and so do the DAG schedulers used in mobile edge computing
 partially; the execution fraction $l_{ia}$ is a decision variable, so a
 workflow that cannot finish at full quality can still finish with less
 accuracy. Partitioning a task graph for data-intensive workflows has
-been studied before \cite{ahmad2014workflow}, but without per-link
+been studied before, but without per-link
 bandwidth or partial execution.
 
 Fog and edge resource allocation is surveyed in \cite{hong2019survey}, and federating nearby fog sites has been proposed for industrial settings \cite{fgcs2024}. Inside such a federation, existing schedulers mostly worry about compute: where to place components for throughput \cite{faticanti2020partitioning} or quality-of-service targets. What they largely ignore is the data that must travel between dependent tasks. In a federated fog the links between sites are the scarce resource, so a scheduler that ignores them can pick a plan that looks fast on paper but misses its deadline in the field. Our formulation avoids that by putting the data volume on every edge and the bandwidth on every link directly into the optimization, together with partial execution.
@@ -520,8 +520,7 @@ This research is supported by the National Science Foundation (NSF).
 \label{app:proofs}
 This appendix shows that the formulation of Section~\ref{sec:milp} means
 what it should. A solution is \emph{feasible} if every task is placed on
-exactly one permitted node, at most one $l_{ia}$ per task is non-zero,
-and all tasks complete by $t_{\max}$.
+exactly one permitted node and completes by $t_{\max}$.
 
 \begin{lemma}
 \label{lem:wellformed}
@@ -591,8 +590,8 @@ $e_{ia}=0$ \eqref{eq:frac}, \eqref{eq:compllin} reduces to
 $(e,l)$ sets and optima coincide.
 \end{proof}
 
-\enlargethispage{8\baselineskip}
-\vspace*{-2.5em}
+\enlargethispage{10\baselineskip}
+\vspace*{-0.8em}
 {\fontsize{6.0}{7.0}\selectfont
 \bibliographystyle{ieeetr}
 \bibliography{cas-refs}}
