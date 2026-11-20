@@ -417,30 +417,33 @@ Fig.~\ref{fig:nodes} shows the reported accuracy score as the federation grows f
 \subsection{Workflow Size}
 \label{sec:eval-size}
 
-Fig.~\ref{fig:tasksize} shows accuracy for DAGs of 10, 100, and 1000 tasks (these instances use different seeds than Table~\ref{tab:runs}, so the bounds differ). At 10 tasks all four methods sit on the bound (1.44); at 100 the MILP and the greedy match it (1.39), rounding follows at 1.39, and the GA drifts first at 1.31. At 1000 tasks the MILP exceeds our 800-variable cap, the greedy stays on the bound (1.39), rounding follows at 1.39 with its trial count cut to four, and the GA falls to 1.12: its fixed population budget must cover a search space that grows with $n$. On wall time, at 1000 tasks the greedy answers in about 0.1\,s, the GA in roughly $10^2$\,s, and rounding a few hundred seconds more.
+Fig.~\ref{fig:tasksize} shows accuracy for DAGs of 10, 100, and 1000 tasks (these instances use different seeds than Table~\ref{tab:runs}, so the bounds differ). At 10 tasks all four methods sit on the bound (1.44); at 100 the MILP and the greedy match it (1.39), rounding follows at 1.39, and the GA drifts first at 1.31. At 1000 tasks the MILP exceeds our 800-variable cap, the greedy stays on the bound (1.39), rounding follows at 1.39 with its trial count cut to four, and the GA falls to 1.12: its fixed population budget must cover a search space that grows with $n$. Fig.~\ref{fig:sizeruntime} gives the wall times.
 
 \begin{figure*}[t]
 \centering
-\subcaptionbox{Accuracy vs.\ deadline slack $\alpha$.\label{fig:slack}}[0.24\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_slack_accuracy.png}}\hfill
-\subcaptionbox{Accuracy vs.\ federation size $N$.\label{fig:nodes}}[0.24\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_nodes_accuracy.png}}\hfill
-\subcaptionbox{Accuracy vs.\ workflow size $n$.\label{fig:tasksize}}[0.24\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_task_size_acc_only.png}}\hfill
-\subcaptionbox{Score normalized by the bound as $\alpha$ drops below 1.0 (10- and 100-task workflows); circled points are infeasible.\label{fig:tight}}[0.26\textwidth]{\includegraphics[width=\linewidth]{Figures/fig_tight_deadline.png}}\\[0.5ex]
-\subcaptionbox{Accuracy (left) and deadline feasibility (right) vs.\ task failure rate.\label{fig:failure}}[0.40\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_failure_accuracy.png}}\hfill
-\subcaptionbox{Accuracy (left) and deadline feasibility (right) as all link bandwidths are scaled down.\label{fig:bandwidth}}[0.40\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_bandwidth_accuracy.png}}
-\caption{Reported average-accuracy score and deadline feasibility across the five experiments. The methods separate most when the deadline binds (a); extra nodes open placements rather than raising accuracy (b); the greedy tracks the bound at every size in fractions of a second (c); below $\alpha{=}1.0$ the methods spread out and the GA loses feasibility at scale (d); retries preserve accuracy, so methods separate on feasibility (e); and the bandwidth-blind baseline reports bound-level scores while missing the deadline below half bandwidth (f).}
+\subcaptionbox{Accuracy vs.\ deadline slack $\alpha$.\label{fig:slack}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_slack_accuracy.png}}\hfill
+\subcaptionbox{Accuracy vs.\ federation size $N$.\label{fig:nodes}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_nodes_accuracy.png}}\hfill
+\subcaptionbox{Accuracy vs.\ workflow size $n$.\label{fig:tasksize}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_size_accuracy.png}}\\[0.2ex]
+\subcaptionbox{Wall-clock runtime vs.\ workflow size $n$.\label{fig:sizeruntime}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_size_runtime.png}}\hfill
+\subcaptionbox{Accuracy vs.\ task failure rate.\label{fig:failure}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_failure_accuracy.png}}\hfill
+\subcaptionbox{Deadline feasibility vs.\ task failure rate.\label{fig:failurefeas}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_failure_feasibility.png}}\\[0.2ex]
+\subcaptionbox{Accuracy vs.\ link-bandwidth scale.\label{fig:bandwidth}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_bandwidth_accuracy.png}}\hfill
+\subcaptionbox{Deadline feasibility vs.\ link-bandwidth scale.\label{fig:bandwidthfeas}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/perf_bandwidth_feasibility.png}}\hfill
+\subcaptionbox{Score normalized by the bound as $\alpha$ drops below 1.0 (10- and 100-task workflows); circled points are infeasible.\label{fig:tight}}[0.30\textwidth]{\includegraphics[width=\linewidth]{Figures/fig_tight_deadline.png}}
+\caption{Accuracy score, runtime, and deadline feasibility across the five experiments: separation grows as the deadline binds (a,i); extra nodes open placements, not accuracy (b); greedy stays fast at every size (c,d); retries preserve accuracy, so methods separate on feasibility (e,f); and the blind baseline reports bound-level scores while missing deadlines below half bandwidth (g,h).}
 \label{fig:experiments}
 \end{figure*}
 
 \subsection{Task Failures}
 
-We model failures with a retry-once rule: when task $T_i$ fails on its node, it runs once more in place, paying $t_{ia}$ a second time, and it keeps its accuracy if the retry still finishes by the deadline. Fig.~\ref{fig:failure} shows score and deadline feasibility as the per-task failure rate rises from 0\% to 50\%. Scores do not move, since retries preserve accuracy; the methods separate on feasibility instead. The greedy is the only method whose schedule stays feasible at every rate: its placements leave enough slack to absorb the retries, while the GA meets the deadline in about 90\% of runs, the MILP in about 60\%, and rounding in about 50\% once failures occur. The curves are nearly flat: at 50 tasks even a 10\% rate makes some failure almost certain, so feasibility depends on schedule slack, not the rate itself.
+We model failures with a retry-once rule: when task $T_i$ fails on its node, it runs once more in place, paying $t_{ia}$ a second time, and it keeps its accuracy if the retry still finishes by the deadline. Figs.~\ref{fig:failure} and~\ref{fig:failurefeas} show score and deadline feasibility as the per-task failure rate rises from 0\% to 50\%. Scores do not move, since retries preserve accuracy; the methods separate on feasibility instead. The greedy is the only method whose schedule stays feasible at every rate: its placements leave enough slack to absorb the retries, while the GA meets the deadline in about 90\% of runs, the MILP in about 60\%, and rounding in about 50\% once failures occur. The curves are nearly flat: at 50 tasks even a 10\% rate makes some failure almost certain, so feasibility depends on schedule slack, not the rate itself.
 
 \subsection{Link Bandwidth Degradation}
 \label{sec:eval-bw}
 
 The final experiment stresses the communication cost that motivates the model. On the default instance ($n{=}50$, $m{=}5$, $\alpha{=}1.5$), every inter-node bandwidth $B_{ba}$ is multiplied by a factor from 1.0 down to 0.05 with the deadline fixed, modeling links deteriorating during an event. To show what data-aware placement is worth, we add a bandwidth-blind baseline: the same greedy algorithm as Section~\ref{sec:greedy}, but choosing placements as if all transfers were free, and then evaluated against the real communication delays.
 
-Fig.~\ref{fig:bandwidth} shows the two metrics that matter. On score alone, the blind baseline looks perfect---it runs every task fully and reports the bound at every level. The right panel shows why that is misleading: the blind schedules already miss the deadline at half bandwidth, meet it in only 10\% of runs at 0.1, and never at 0.05. The data-aware schedulers behave differently. The MILP stays feasible at every level and loses only about 9\% of score at 0.05, shrinking execution fractions to fit the deadline. The greedy stays feasible down to 0.1 but pays in accuracy (0.86 at 0.1, mostly infeasible at 0.05). The GA is mostly feasible down to 0.2, survives in only 20\% of runs at 0.1, and fails at 0.05. Rounding holds at 0.5 and survives in about 70\% of runs at 0.2, but its sampled assignments largely stop passing the feasibility LP below that; this is a limit of our implementation, not a proof that no feasible rounding exists.
+Fig.~\ref{fig:bandwidth} shows the two metrics that matter. On score alone, the blind baseline looks perfect---it runs every task fully and reports the bound at every level. Fig.~\ref{fig:bandwidthfeas} shows why that is misleading: the blind schedules already miss the deadline at half bandwidth, meet it in only 10\% of runs at 0.1, and never at 0.05. The data-aware schedulers behave differently. The MILP stays feasible at every level and loses only about 9\% of score at 0.05, shrinking execution fractions to fit the deadline. The greedy stays feasible down to 0.1 but pays in accuracy (0.86 at 0.1, mostly infeasible at 0.05). The GA is mostly feasible down to 0.2, survives in only 20\% of runs at 0.1, and fails at 0.05. Rounding holds at 0.5 and survives in about 70\% of runs at 0.2, but its sampled assignments largely stop passing the feasibility LP below that; this is a limit of our implementation, not a proof that no feasible rounding exists.
 
 \subsection{Baseline Comparison}
 
@@ -540,8 +543,7 @@ source: a source has $M_{ia}=0$ by \eqref{eq:startsrc}; for any other
 task, \eqref{eq:start} gives
 $M_{ia}\ge\max_{j\in\mathrm{in}_i}(y_j+\sum_{b}e_{jb}c_{ji}^{ba})$,
 exactly the data-arrival bound. (v) is \eqref{eq:compl}, (vi) is
-\eqref{eq:deadline}. The model only lower-bounds $M_{ia}$; the
-earliest-start schedule is a special case.
+\eqref{eq:deadline}.
 \end{proof}
 
 \begin{theorem}
@@ -553,19 +555,15 @@ are in one-to-one correspondence, and the optimal value of
 \begin{proof}
 Lemma~\ref{lem:wellformed} shows a feasible $(e,l,M,y)$ is a valid
 schedule whose accuracy \eqref{eq:obj} counts exactly. Conversely, from
-any valid schedule set $e_{ia}=1$ on the node running $T_i$, $l_{ia}$
-to the fraction executed, $M_{ia}$ and $y_i$ to the realized times;
+any valid schedule set $e_{ia}=1$ on its node, $l_{ia}$ to the fraction
+executed, $M_{ia}$ and $y_i$ to the realized times;
 validity implies \eqref{eq:one}--\eqref{eq:bin} with equal objective
-value. The two sets correspond, so the MILP optimum equals the best
-achievable accuracy.
+value, so the MILP optimum equals the best achievable accuracy.
 \end{proof}
 
 For an MILP solver, \eqref{eq:compl} contains the quadratic products
-$e_{ia}M_{ia}$. With $U=t_{\max}+\max_{j,i,b,a}\{c_{ji}^{ba}\}$, bound
-\begin{align}
-M_{ia} &\le U, && \forall f_a,\ T_i, \label{eq:Mia}
-\end{align}
-introduce $z_{ia}=e_{ia}M_{ia}$, and replace \eqref{eq:compl} with
+$e_{ia}M_{ia}$. With $U=t_{\max}+\max_{j,i,b,a}\{c_{ji}^{ba}\}$,
+bound $M_{ia}\le U$, introduce $z_{ia}=e_{ia}M_{ia}$, and replace \eqref{eq:compl} with
 \begin{align}
 y_i&=\sum_{f_a\in F} z_{ia}+\sum_{f_a\in F} t_{ia}l_{ia}, && \forall T_i, \label{eq:compllin}
 \end{align}
@@ -582,19 +580,18 @@ pairs as \eqref{eq:obj}--\eqref{eq:bin}, and attains the same optimal
 value of \eqref{eq:obj}.
 \end{theorem}
 \begin{proof}
-No $M_{ia}$ needs to exceed $U$: every lower bound in \eqref{eq:start}
-is at most $y_j+\max c_{ji}^{ba}\le U$, so larger values can be clamped
-without touching the objective, and $M_{ia}\ge 0$ holds by
-\eqref{eq:startsrc}--\eqref{eq:start}. When $e_{ia}=1$,
-\eqref{eq:z2} squeezes $z_{ia}=M_{ia}=e_{ia}M_{ia}$; when $e_{ia}=0$,
-\eqref{eq:z1} forces $z_{ia}=0=e_{ia}M_{ia}$. Hence
+No $M_{ia}$ exceeds $U$: every lower bound in \eqref{eq:start} is at
+most $y_j+\max c_{ji}^{ba}\le U$, so larger values clamp without effect,
+and $M_{ia}\ge 0$ by \eqref{eq:startsrc}--\eqref{eq:start}. At
+$e_{ia}=1$, \eqref{eq:z2} gives $z_{ia}=M_{ia}=e_{ia}M_{ia}$; at
+$e_{ia}=0$, \eqref{eq:z1} gives $z_{ia}=0=e_{ia}M_{ia}$. Thus
 $z_{ia}=e_{ia}M_{ia}$ in all cases, and since $l_{ia}=0$ whenever
-$e_{ia}=0$ by \eqref{eq:frac}, \eqref{eq:compllin} reduces to
-\eqref{eq:compl}. Every other constraint is shared by both
-formulations, so their feasible $(e,l)$ sets and optima coincide.
+$e_{ia}=0$ \eqref{eq:frac}, \eqref{eq:compllin} reduces to
+\eqref{eq:compl}; all other constraints are shared, so the feasible
+$(e,l)$ sets and optima coincide.
 \end{proof}
 
-\enlargethispage{6\baselineskip}
+\enlargethispage{8\baselineskip}
 \vspace*{-2.5em}
 {\fontsize{6.0}{7.0}\selectfont
 \bibliographystyle{ieeetr}
