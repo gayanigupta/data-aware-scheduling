@@ -8,7 +8,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from . import RES_DIR, FIG_DIR
+from . import RES_DIR, FIG_DIR, ROOT
 from .instance import generate_instance
 from .milp import run_milp
 from .rounding import run_rounding
@@ -121,7 +121,11 @@ def plot():
              "ga": dict(marker="D", ls="-.", color="#8e44ad",
                         label="Metaheuristic (GA)"),
              "blind": dict(marker="v", ls=":", color="#7f8c8d",
-                           label="Greedy (bandwidth-blind)")}
+                           label="Greedy (bandwidth-blind)"),
+             "dagmec": dict(marker="P", ls="-", color="#d35400",
+                            label="DAG-MEC baseline"),
+             "greedy_cp": dict(marker="X", ls="-", color="#16a085",
+                               label="Greedy (path-shrink)")}
     xlabel = {"slack": r"slack factor $\alpha$",
               "nodes": "federated fog nodes $N$",
               "size": "workflow size (tasks)",
@@ -133,6 +137,14 @@ def plot():
         if not os.path.exists(csv):
             continue
         df = pd.read_csv(csv)
+        base_csv = os.path.join(ROOT, "revisions", "results",
+                                "2026-11-12", "dagmec_experiments.csv")
+        if os.path.exists(base_csv):
+            bdf = pd.read_csv(base_csv)
+            bdf = bdf[bdf["experiment"] == kind][
+                ["experiment", "param", "method", "rep", "bound",
+                 "score", "makespan", "feasible", "runtime_s"]]
+            df = pd.concat([df, bdf], ignore_index=True)
 
         # ---------- accuracy panel ----------
         fig, ax = plt.subplots(figsize=(3.8, 2.1), dpi=300)

@@ -447,7 +447,7 @@ Fig.~\ref{fig:bandwidth} shows the two metrics that matter. On score alone, the 
 
 \subsection{Baseline Comparison}
 
-\rev{Table~\ref{tab:baselines} compares against both classes of baselines. For the literature baseline we reimplemented the mobile-edge DAG scheduler of~\cite{li2023dagmec} on our cost model: it is a list scheduler that counts edge transfers when ranking and placing tasks, but executes every task in full ($\ell_i{=}1$), so a plan that misses the deadline is simply infeasible. The two ablations modify our own greedy: the blind version prices transfers as free when placing, and the uniform version shrinks one global $\ell$ instead of the per-task path-shrinking variant. Every baseline ran on the same instances through the same evaluation harness and metrics as our methods---score relative to the full-execution bound and share of runs meeting the deadline. Each term the model carries fails exactly where the baseline lacking it fails.}
+\rev{Table~\ref{tab:baselines} compares against both classes of baselines. For the literature baseline we reimplemented the mobile-edge DAG scheduler of~\cite{li2023dagmec} on our cost model: it is a list scheduler that counts edge transfers when ranking and placing tasks, but executes every task in full ($\ell_i{=}1$), so a plan that misses the deadline is simply infeasible. The two ablations modify our own greedy: the blind version prices transfers as free when placing, and the uniform version shrinks one global $\ell$ instead of the per-task path-shrinking variant. All baselines ran on the same instances, harness, and metrics (score vs.\ bound; deadline-met share). Each model term fails exactly where the baseline lacking it fails.}
 
 \begin{table}[t]
 \caption{Baselines on the hardest settings (10-run means). Score is
@@ -519,8 +519,7 @@ This research is supported by the National Science Foundation (NSF).
 \section{Correctness and Linearization}
 \label{app:proofs}
 This appendix shows that the formulation of Section~\ref{sec:milp} means
-what it should. A solution is \emph{feasible} if every task is placed on
-exactly one permitted node and completes by $t_{\max}$.
+what it should.
 
 \begin{lemma}
 \label{lem:wellformed}
