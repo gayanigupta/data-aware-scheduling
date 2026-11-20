@@ -485,9 +485,7 @@ forced, the MILP holds about 76\% of the bound against the greedy's
 accuracy under a binding deadline is not free in wall time: at 1000
 tasks the greedy finishes in about 0.15\,s, rounding spends about
 304\,s per run, and the GA about 159\,s for a markedly worse score.
-Third, \rev{feasibility is the real differentiator under
-stress: the GA turns infeasible at tight deadlines, and only the
-data-aware methods survive degraded bandwidth.}
+Third, \rev{what separates the methods under stress is not the score but whether the schedule meets the deadline at all: the GA returns infeasible plans at tight deadlines, and only methods that charge for data movement still finish on time when links degrade.}
 
 \textbf{Bottlenecks and shortcomings.} The evaluation surfaced limits
 that delimit where the formulation applies. (i)~\emph{MILP
