@@ -473,7 +473,7 @@ BW scale $0.1$ & DAG-MEC~\cite{li2023dagmec} & 1.00 & 10\%\\
 \end{tabular}}
 \end{table}
 
-\rev{The baselines look perfect on score yet miss deadlines, because nothing lets them trade accuracy for time; our schedulers make exactly that trade to deliver on time.}
+\rev{Baselines look perfect on score yet miss deadlines---nothing lets them trade accuracy for time; ours make that trade to deliver on time.}
 
 \subsection{Discussion}
 
@@ -485,7 +485,7 @@ forced, the MILP holds about 76\% of the bound against the greedy's
 accuracy under a binding deadline is not free in wall time: at 1000
 tasks the greedy finishes in about 0.15\,s, rounding spends about
 304\,s per run, and the GA about 159\,s for a markedly worse score.
-Third, \rev{what separates the methods under stress is not the score but whether the schedule meets the deadline at all: the GA returns infeasible plans at tight deadlines, and only methods that charge for data movement still finish on time when links degrade.}
+Third, \rev{what separates the methods under stress is not the score but meeting the deadline at all: the GA returns infeasible plans at tight deadlines, and only data-aware methods finish on time as links degrade.}
 
 \textbf{Bottlenecks and shortcomings.} The evaluation surfaced limits
 that delimit where the formulation applies. (i)~\emph{MILP
@@ -520,8 +520,6 @@ This research is supported by the National Science Foundation (NSF).
 \appendix
 \section{Correctness and Linearization}
 \label{app:proofs}
-This appendix shows that the formulation of Section~\ref{sec:milp} means
-what it should.
 
 \begin{lemma}
 \label{lem:wellformed}
@@ -591,7 +589,7 @@ $e_{ia}=0$ \eqref{eq:frac}, \eqref{eq:compllin} reduces to
 $(e,l)$ sets and optima coincide.
 \end{proof}
 
-\enlargethispage{10\baselineskip}
+\enlargethispage{12\baselineskip}
 \vspace*{-0.8em}
 {\fontsize{6.0}{7.0}\selectfont
 \bibliographystyle{ieeetr}
