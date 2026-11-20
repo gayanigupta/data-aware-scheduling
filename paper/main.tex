@@ -447,7 +447,7 @@ Fig.~\ref{fig:bandwidth} shows the two metrics that matter. On score alone, the 
 
 \subsection{Baseline Comparison}
 
-\rev{Table~\ref{tab:baselines} compares against both classes of baselines: the literature method of~\cite{li2023dagmec}, which counts transfers but runs every task in full, and two ablations of our own schedulers. Every baseline ran on the same instances through the same evaluation harness and metrics as our methods---score relative to the full-execution bound and share of runs meeting the deadline. Each term the model carries fails exactly where the baseline lacking it fails.}
+\rev{Table~\ref{tab:baselines} compares against both classes of baselines. For the literature baseline we reimplemented the mobile-edge DAG scheduler of~\cite{li2023dagmec} on our cost model: it is a list scheduler that counts edge transfers when ranking and placing tasks, but executes every task in full ($\ell_i{=}1$), so a plan that misses the deadline is simply infeasible. The two ablations modify our own greedy: the blind version prices transfers as free when placing, and the uniform version shrinks one global $\ell$ instead of the per-task path-shrinking variant. Every baseline ran on the same instances through the same evaluation harness and metrics as our methods---score relative to the full-execution bound and share of runs meeting the deadline. Each term the model carries fails exactly where the baseline lacking it fails.}
 
 \begin{table}[t]
 \caption{Baselines on the hardest settings (10-run means). Score is
