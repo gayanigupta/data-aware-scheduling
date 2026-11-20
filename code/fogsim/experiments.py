@@ -147,7 +147,7 @@ def plot():
             df = pd.concat([df, bdf], ignore_index=True)
 
         # ---------- accuracy panel ----------
-        fig, ax = plt.subplots(figsize=(3.8, 2.1), dpi=300)
+        fig, ax = plt.subplots(figsize=(3.8, 2.0), dpi=300)
         df_s = df.dropna(subset=["score"])
         if "bound" in df_s.columns:
             bnd = df_s.groupby("param")["bound"].mean()
@@ -164,7 +164,6 @@ def plot():
         ax.set_ylabel("average accuracy score", fontsize=13)
         ax.tick_params(labelsize=11.5)
         ax.grid(alpha=0.3, lw=0.5)
-        ax.legend(fontsize=9, framealpha=0.95, loc="best")
         if kind == "size":
             ax.set_xscale("log")
             ax.set_xticks([10, 100, 1000])
@@ -176,9 +175,24 @@ def plot():
         plt.close(fig)
         print("wrote", out)
 
+        if kind == "slack":          # one shared legend for the whole grid
+            handles, labels = ax.get_legend_handles_labels()
+            for m, st in style.items():
+                if st["label"] not in labels:
+                    ln, = ax.plot([], [], **{k: v for k, v in st.items()
+                                             if k != "label"})
+                    handles.append(ln); labels.append(st["label"])
+            figl = plt.figure(figsize=(10.2, 0.5), dpi=300)
+            figl.legend(handles, labels, loc="center", ncol=len(labels),
+                        fontsize=9, frameon=False)
+            figl.savefig(os.path.join(FIG_DIR, "perf_legend.png"),
+                         bbox_inches="tight", facecolor="white")
+            plt.close(figl)
+            print("wrote legend strip")
+
         # ---------- second panel (feasibility / runtime) ----------
         if kind == "size":
-            fig, ax2 = plt.subplots(figsize=(3.8, 2.1), dpi=300)
+            fig, ax2 = plt.subplots(figsize=(3.8, 2.0), dpi=300)
             for meth, g in df.groupby("method"):
                 rt = g.groupby("param")["runtime_s"].mean()
                 ax2.plot(rt.index, rt.values, **style[meth], lw=2.0,
@@ -198,7 +212,7 @@ def plot():
             plt.close(fig)
             print("wrote", out)
         elif kind in ("failure", "bandwidth"):
-            fig, ax2 = plt.subplots(figsize=(3.8, 2.1), dpi=300)
+            fig, ax2 = plt.subplots(figsize=(3.8, 2.0), dpi=300)
             for meth, g in df.groupby("method"):
                 feas = g.groupby("param")["feasible"].mean()
                 fstd = g.groupby("param")["feasible"].std().fillna(0.0)
